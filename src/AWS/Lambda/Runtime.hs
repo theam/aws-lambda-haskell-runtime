@@ -24,7 +24,6 @@ startWithConfig
   -> IO ()
 startWithConfig f Env.ProviderCapability {..} r = do
   let showError = error . toText . Error.runtimeErrorMsg
-  -- endpoint         <- either showError id <$> getRuntimeApiEndpoint
   functionSettings <- either showError id <$> getFunctionSettings
   runtimeClient    <- either showError id <$> newRuntimeClient
   startWithRuntimeClient f functionSettings runtimeClient
