@@ -1,0 +1,48 @@
+name: aws-lambda-haskell-runtime
+version: 0.1.0
+github: "theam/aws-lambda-haskell-runtime"
+license: Apache-2.0
+author: Nikita Tchayka
+maintainer: hackers@theagilemonkeys.com
+copyright: 2018 The Agile Monkeys SL
+
+extra-source-files:
+  - README.md
+  - ChangeLog.md
+
+synopsis: Haskell runtime for AWS Lambda
+category: AWS
+description: Please see the README on GitHub at <https://github.com/githubuser/aws-lambda-haskell-runtime#readme>
+
+dependencies:
+  - base >= 4.7 && < 5
+  - aeson
+  - loch-th
+  - relude
+  - time
+
+library:
+  source-dirs: src
+
+tests:
+  aws-lambda-haskell-runtime-test:
+    main: Spec.hs
+    source-dirs: test
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+    dependencies:
+      - aws-lambda-haskell-runtime
+      - hspec
+
+default-extensions:
+  - TemplateHaskell
+  - OverloadedStrings
+  - RecordWildCards
+  - ScopedTypeVariables
+  - NoImplicitPrelude
+
+ghc-options:
+  - -Wall
+  - -Werror
