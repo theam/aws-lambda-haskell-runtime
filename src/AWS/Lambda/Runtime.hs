@@ -22,7 +22,7 @@ startWithConfig
   -> Env.ProviderCapability
   -> Option runtime
   -> IO ()
-startWithConfig f Env.ProviderCapability {..} r = do
+startWithConfig f Env.ProviderCapability {..} _ = do
   let showError = error . toText . Error.runtimeErrorMsg
   functionSettings <- either showError id <$> getFunctionSettings
   runtimeClient    <- either showError id <$> newRuntimeClient
