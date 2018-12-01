@@ -43,6 +43,7 @@ default-extensions:
   - RecordWildCards
   - ScopedTypeVariables
   - NoImplicitPrelude
+  - DeriveGeneric
 
 ghc-options:
   - -Wall
