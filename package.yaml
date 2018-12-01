@@ -35,6 +35,7 @@ tests:
     dependencies:
       - aws-lambda-haskell-runtime
       - hspec
+      - QuickCheck
 
 default-extensions:
   - TemplateHaskell
@@ -45,4 +46,3 @@ default-extensions:
 
 ghc-options:
   - -Wall
-  - -Werror
