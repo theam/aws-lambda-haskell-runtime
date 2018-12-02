@@ -18,8 +18,11 @@ dependencies:
   - base >= 4.7 && < 5
   - aeson
   - loch-th
+  - bytestring
   - relude
   - time
+  - wreq
+  - microlens-platform
 
 library:
   source-dirs: src
@@ -44,6 +47,7 @@ default-extensions:
   - ScopedTypeVariables
   - NoImplicitPrelude
   - DeriveGeneric
+  - TypeApplications
 
 ghc-options:
   - -Wall

@@ -1,17 +1,15 @@
 import           Relude                  hiding ( head )
-import           Relude.Unsafe
 
 import           Test.Hspec
-import           Test.QuickCheck
 
+import           AWS.Lambda.Runtime
+
+
+handler :: Text -> c -> IO (Either String Int)
+handler t _ = do
+  putTextLn t
+  return $ Right (42 :: Int)
 
 main :: IO ()
-main = hspec $ describe "Prelude.head" $ do
-  it "returns the first element of a list" $ do
-    head [23 ..] `shouldBe` (23 :: Int)
-
-  it "returns the first element of an *arbitrary* list" $ property $ \x xs ->
-    head (x : xs) == (x :: Int)
-
-  it "throws an exception if used with an empty list" $ do
-    evaluateWHNF (head []) `shouldThrow` anyException
+main = hspec $ describe "Impure lambda handler" $ do
+  it "runs" $ lambda handler

@@ -1,111 +1,88 @@
 module AWS.Lambda.Runtime where
 
-import           Relude
+import           Relude                  hiding ( identity )
 
 import           Data.Aeson
-
-import qualified AWS.Lambda.Context            as Context
-import qualified AWS.Lambda.Env                as Env
-import qualified AWS.Lambda.Error              as Error
-
-defaultMaxRetries :: Int
-defaultMaxRetries = 3
-
-type Handler e o = e -> Context.Context -> IO (Either Error.HandlerError o)
-
-start :: (FromJSON e, ToJSON o) => Handler e o -> Option runtime -> IO ()
-start f = startWithConfig f Env.envConfig
-
-startWithConfig
-  :: (FromJSON e, ToJSON o)
-  => Handler e o
-  -> Env.ProviderCapability
-  -> Option runtime
-  -> IO ()
-startWithConfig f Env.ProviderCapability {..} _ = do
-  let showError = error . toText . Error.runtimeErrorMsg
-  functionSettings <- either showError id <$> getFunctionSettings
-  runtimeClient    <- either showError id <$> newRuntimeClient
-  startWithRuntimeClient f functionSettings runtimeClient
+import           Data.Time.Clock.POSIX
+import           System.Environment
+import qualified Network.Wreq                  as Wreq
+import           Lens.Micro.Platform
 
 
-startWithRuntimeClient
-  :: (FromJSON e, ToJSON o)
-  => Handler e o
-  -> Env.FunctionSettings
-  -> RuntimeClient
-  -> IO ()
-startWithRuntimeClient = undefined
-
-data Runtime e o = Runtime
-  { runtimeClient :: RuntimeClient
-  , handler :: Handler e o
-  , maxRetries :: Int
-  , settings :: Env.FunctionSettings
+data Context = Context
+  { memoryLimitInMb :: Int
+  , functionName :: String
+  , functionVersion :: String
+  , invokedFunctionArn :: String
+  , awsRequestId :: String
+  , xrayTraceId :: String
+  , logStreamName :: String
+  , logGroupName :: String
+  , clientContext :: Maybe ClientContext
+  , identity :: Maybe CognitoIdentity
+  , deadline :: Word
   }
 
-data RuntimeClient
+initializeContext :: IO (Either String Context)
+initializeContext = do
+  functionName <- lookupEnv "AWS_LAMBDA_FUNCTION_NAME"
+  version      <- lookupEnv "AWS_LAMBDA_FUNCTION_VERSION"
+  logStream    <- lookupEnv "AWS_LAMBDA_LOG_STREAM_NAME"
+  logGroup     <- lookupEnv "AWS_LAMBDA_LOG_GROUP_NAME"
+  memoryStr    <- lookupEnv "AWS_LAMBDA_FUNCTION_MEMORY_SIZE"
+  let parsedMemory = memoryStr >>= readMaybe
+  case parsedMemory of
+    Nothing -> do
+      let err =
+            "Could not parse memory value: "
+              <> (memoryStr ?: "<NOTHING>")
+              <> "\nMemory value from environment is not an 'Int'"
+      return $ Left err
 
-newRuntimeClient :: IO (Either Error.RuntimeError RuntimeClient)
-newRuntimeClient = undefined
+    Just (mem :: Int) -> return $ Right $ Context
+      { functionName       = functionName ?: ""
+      , functionVersion    = version ?: ""
+      , logStreamName      = logStream ?: ""
+      , logGroupName       = logGroup ?: ""
+      , memoryLimitInMb    = mem
+      , invokedFunctionArn = ""
+      , xrayTraceId        = ""
+      , awsRequestId       = ""
+      , clientContext      = Nothing
+      , identity           = Nothing
+      , deadline           = 0
+      }
 
-eventResponse :: RuntimeClient -> String -> w -> Maybe a
-eventResponse = undefined
 
-eventError :: RuntimeClient -> String -> Maybe a
-eventError = undefined
+getTimeRemainingMillis :: Context -> IO Int
+getTimeRemainingMillis Context {..} = do
+  millis <- getPOSIXTime
+  return (fromIntegral deadline - round millis)
 
-startRuntime :: Runtime e o -> IO ()
-startRuntime = loopRuntime
- where
-  loopRuntime Runtime {..} = do
-    (event, ctx) <- getNextEvent 0 Nothing
-    let requestId                 = Context.awsRequestId ctx
-    let err :: Error.RuntimeError = undefined
-    res <- event ctx
-    case res of
-      Just (response :: Int) -> do
-        let responseBytes = encode response
-        case eventResponse runtimeClient requestId responseBytes of
-          Just _ ->
-            putTextLn
-              $  "Response for"
-              <> show requestId
-              <> "accepted by Runtime API"
-          Nothing -> do
-            putTextLn
-              $  "Could not send response for "
-              <> show requestId
-              <> " to Runtime API: "
-              <> show err
-            unless
-              (Error.runtimeErrorRecoverable err)
-              (putTextLn
-                "Error is not recoverable, sending fail_init signal and panicking."
-              )
+getRuntimeApiEndpoint :: IO (Either String String)
+getRuntimeApiEndpoint = do
+  endpoint <- lookupEnv "AWS_LAMBDA_RUNTIME_API"
+  case endpoint of
+    Nothing -> do
+      let err = "Could not read endpoint, was it set?"
+      return $ Left err
+    Just ep -> return $ Right ep
 
-      Nothing -> do
-        putTextLn
-          $  "Handler returned an error for "
-          <> show requestId
-          <> ": "
-          <> show err
-          <> ""
+lambda
+  :: (FromJSON input, ToJSON output)
+  => (input -> Context -> IO (Either String output))
+  -> IO ()
+lambda _ = do
+  api <- getRuntimeApiEndpoint
+  case api of
+    Right awsLambdaRuntimeApi -> do
+      x <- Wreq.get
+        (  "http://"
+        <> awsLambdaRuntimeApi
+        <> "/2018-06-01/runtime/invocation/next"
+        )
+      putTextLn (decodeUtf8 $ toStrict $ x ^. Wreq.responseBody)
+    Left err -> putTextLn $ toText err
 
-        case eventError runtimeClient requestId of
-          Just _  -> putTextLn "Error accepted by Runtime API"
-          Nothing -> do
-            putTextLn
-              $  "Could not send response for "
-              <> show requestId
-              <> " to Runtime API: "
-              <> show err
-
-            unless
-              (Error.runtimeErrorRecoverable err)
-              (putTextLn
-                "Error is not recoverable, sending fail_init signal and panicking."
-              )
-
-getNextEvent :: Int -> Maybe error -> IO (e, Context.Context)
-getNextEvent = undefined
+data ClientContext
+data CognitoIdentity
