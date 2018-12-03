@@ -1,11 +1,13 @@
 module AWS.Lambda.Runtime where
 
-import           Relude                  hiding ( identity )
+import           Relude                  hiding ( identity
+                                                , get
+                                                )
 
 import           Data.Aeson
 import           Data.Time.Clock.POSIX
 import           System.Environment
-import qualified Network.Wreq                  as Wreq
+import           Network.Wreq
 import           Lens.Micro.Platform
 
 
@@ -20,16 +22,34 @@ data Context = Context
   , logGroupName :: String
   , clientContext :: Maybe ClientContext
   , identity :: Maybe CognitoIdentity
-  , deadline :: Word
+  , deadline :: Int
   }
 
 initializeContext :: IO (Either String Context)
 initializeContext = do
-  functionName <- lookupEnv "AWS_LAMBDA_FUNCTION_NAME"
-  version      <- lookupEnv "AWS_LAMBDA_FUNCTION_VERSION"
-  logStream    <- lookupEnv "AWS_LAMBDA_LOG_STREAM_NAME"
-  logGroup     <- lookupEnv "AWS_LAMBDA_LOG_GROUP_NAME"
-  memoryStr    <- lookupEnv "AWS_LAMBDA_FUNCTION_MEMORY_SIZE"
+  functionName        <- lookupEnv "AWS_LAMBDA_FUNCTION_NAME"
+  version             <- lookupEnv "AWS_LAMBDA_FUNCTION_VERSION"
+  logStream           <- lookupEnv "AWS_LAMBDA_LOG_STREAM_NAME"
+  logGroup            <- lookupEnv "AWS_LAMBDA_LOG_GROUP_NAME"
+  memoryStr           <- lookupEnv "AWS_LAMBDA_FUNCTION_MEMORY_SIZE"
+  awsLambdaRuntimeApi <- getRuntimeApiEndpoint
+  apiData             <- get
+    (  "http://"
+    <> fromRight "" awsLambdaRuntimeApi
+    <> "/2018-06-01/runtime/invocation/next"
+    )
+  let xrayTraceId :: String =
+        decodeUtf8 $ apiData ^. responseHeader "Lambda-Runtime-Trace-Id"
+  let awsRequestId :: String =
+        decodeUtf8 $ apiData ^. responseHeader "Lambda-Runtime-Aws-Request-Id"
+  setEnv "_X_AMZN_TRACE_ID" xrayTraceId
+  let invokedFunctionArn :: String = decodeUtf8 $ apiData ^. responseHeader
+        "Lambda-Runtime-Invoked-Function-Arn"
+  let deadline :: Maybe Int =
+        readMaybe $ decodeUtf8 $ apiData ^. responseHeader
+          "Lambda-Runtime-Deadline-Ms"
+
+  putTextLn (decodeUtf8 $ apiData ^. responseHeader "")
   let parsedMemory = memoryStr >>= readMaybe
   case parsedMemory of
     Nothing -> do
@@ -45,12 +65,12 @@ initializeContext = do
       , logStreamName      = logStream ?: ""
       , logGroupName       = logGroup ?: ""
       , memoryLimitInMb    = mem
-      , invokedFunctionArn = ""
-      , xrayTraceId        = ""
-      , awsRequestId       = ""
+      , invokedFunctionArn = invokedFunctionArn
+      , xrayTraceId        = xrayTraceId
+      , awsRequestId       = awsRequestId
       , clientContext      = Nothing
       , identity           = Nothing
-      , deadline           = 0
+      , deadline           = deadline ?: error "Could not parse deadline"
       }
 
 
@@ -76,12 +96,8 @@ lambda _ = do
   api <- getRuntimeApiEndpoint
   case api of
     Right awsLambdaRuntimeApi -> do
-      x <- Wreq.get
-        (  "http://"
-        <> awsLambdaRuntimeApi
-        <> "/2018-06-01/runtime/invocation/next"
-        )
-      putTextLn (decodeUtf8 $ toStrict $ x ^. Wreq.responseBody)
+      putTextLn "hi"
+      putTextLn "hi"
     Left err -> putTextLn $ toText err
 
 data ClientContext
