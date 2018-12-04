@@ -23,6 +23,7 @@ data RuntimeError
   | ApiHeaderNotSet Text
   | ParseError Text Text
   | InvocationError Text
+  | ResultPublishingError
   deriving (Show)
 instance Exception RuntimeError
 
@@ -40,6 +41,9 @@ data Context = Context
   } deriving (Generic)
 instance FromJSON Context
 instance ToJSON Context
+
+
+newtype LambdaResult = LambdaResult Text
 
 
 readEnvironmentVariable :: Text -> App Text
@@ -128,25 +132,40 @@ initializeContext apiData = do
     }
 
 
-invoke :: Text -> Context -> App ()
+invoke :: Text -> Context -> App LambdaResult
 invoke event context = do
   let contextJSON = decodeUtf8 $ encode context
   out <- liftIO (Process.readProcessWithExitCode "haskell_lambda" [ toString event, contextJSON ] "")
   case out of
-    (ExitSuccess, stdOut, _) -> putTextLn $ toText stdOut
+    (ExitSuccess, stdOut, _) -> pure (LambdaResult $ toText stdOut)
     (_, _, stdErr) -> throwError (InvocationError $ toText stdErr)
+
+
+publishResult :: Context -> Text -> LambdaResult -> App ()
+publishResult Context {..} lambdaApi (LambdaResult result) = do
+  let endpoint = "http://"<> lambdaApi <> "/2018-06-01/runtime/invocation/"<> awsRequestId <> "/response"
+  void $ liftIO $ Wreq.post (toString endpoint) (toJSON result)
 
 
 lambda :: App ()
 lambda = do
   lambdaApiEndpoint     <- readEnvironmentVariable "AWS_LAMBDA_RUNTIME_API"
   apiData               <- getApiData lambdaApiEndpoint
-  ctx <- initializeContext apiData
   let event = extractBody apiData
-  invoke event ctx
+  ctx <- initializeContext apiData
+  res <- invoke event ctx
+  publishResult ctx lambdaApiEndpoint res
+
+
+
+publishError :: RuntimeError -> IO ()
+publishError err =
+  die (show err)
 
 
 main :: IO ()
 main = do
   res <- runExceptT lambda
-  either (die . show) (putTextLn . decodeUtf8 . encode) res
+  case res of
+    Right _ -> exitSuccess
+    Left err -> publishError err
