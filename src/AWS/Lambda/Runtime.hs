@@ -1,104 +1,120 @@
 module AWS.Lambda.Runtime where
 
-import           Relude                  hiding ( identity
-                                                , get
-                                                )
+import Relude hiding (get, identity)
 
-import           Data.Aeson
-import           Data.Time.Clock.POSIX
-import           System.Environment
-import           Network.Wreq
-import           Lens.Micro.Platform
+import Control.Exception (IOException, try)
+import Control.Monad.Except (throwError)
+import Data.Aeson
+import Lens.Micro.Platform
+import qualified Network.Wreq as Wreq
+import qualified System.Environment as Environment
+
+
+type App a = ExceptT RuntimeError IO a
+
+data RuntimeError
+  = EnvironmentVariableNotSet Text
+  | ApiConnectionError
+  | ApiHeaderNotSet Text
+  | ParseError Text
+  | OtherError Text
+  deriving (Show)
+instance Exception RuntimeError
 
 
 data Context = Context
-  { memoryLimitInMb :: Int
-  , functionName :: String
-  , functionVersion :: String
-  , invokedFunctionArn :: String
-  , awsRequestId :: String
-  , xrayTraceId :: String
-  , logStreamName :: String
-  , logGroupName :: String
-  , clientContext :: Maybe ClientContext
-  , identity :: Maybe CognitoIdentity
-  , deadline :: Int
-  }
+  { memoryLimitInMb    :: !Int
+  , functionName       :: !Text
+  , functionVersion    :: !Text
+  , invokedFunctionArn :: !Text
+  , awsRequestId       :: !Text
+  , xrayTraceId        :: !Text
+  , logStreamName      :: !Text
+  , logGroupName       :: !Text
+  , deadline           :: !Int
+  } deriving (Generic)
 
-initializeContext :: IO (Either String Context)
+instance FromJSON Context
+instance ToJSON Context
+
+readEnvironmentVariable :: Text -> App Text
+readEnvironmentVariable envVar = do
+  v <- lift (Environment.lookupEnv $ toString envVar)
+  case v of
+    Nothing    -> throwError (EnvironmentVariableNotSet envVar)
+    Just value -> pure (toText value)
+
+readFunctionMemory :: App Int
+readFunctionMemory = do
+  let envVar = "AWS_LAMBDA_FUNCTION_MEMORY_SIZE"
+  let parseMemory txt = readMaybe (toString txt)
+  memoryValue <- readEnvironmentVariable envVar
+  case parseMemory memoryValue of
+    Just (value :: Int) -> pure value
+    Nothing ->
+      throwError
+        $  ParseError
+        $  "Could not parse memory size from environment variable "
+        <> envVar
+        <> " - value was "
+        <> memoryValue
+
+getApiData :: Text -> App (Wreq.Response LByteString)
+getApiData endpoint = do
+  apiData <- tryIO $ Wreq.get
+    ("http://" <> toString endpoint <> "/2018-06-01/runtime/invocation/next")
+  -- first (const ApiConnectionError) apiData
+  pure apiData
+ where
+  tryIO :: IO a -> App a
+  tryIO f =
+    try f
+    & catchApiException
+
+  catchApiException :: IO (Either IOException a) -> App a
+  catchApiException action =
+    action
+    & fmap (first $ const ApiConnectionError)
+    & ExceptT
+
+initializeContext :: App Context
 initializeContext = do
-  functionName        <- lookupEnv "AWS_LAMBDA_FUNCTION_NAME"
-  version             <- lookupEnv "AWS_LAMBDA_FUNCTION_VERSION"
-  logStream           <- lookupEnv "AWS_LAMBDA_LOG_STREAM_NAME"
-  logGroup            <- lookupEnv "AWS_LAMBDA_LOG_GROUP_NAME"
-  memoryStr           <- lookupEnv "AWS_LAMBDA_FUNCTION_MEMORY_SIZE"
-  awsLambdaRuntimeApi <- getRuntimeApiEndpoint
-  apiData             <- get
-    (  "http://"
-    <> fromRight "" awsLambdaRuntimeApi
-    <> "/2018-06-01/runtime/invocation/next"
-    )
-  let xrayTraceId :: String =
-        decodeUtf8 $ apiData ^. responseHeader "Lambda-Runtime-Trace-Id"
-  let awsRequestId :: String =
-        decodeUtf8 $ apiData ^. responseHeader "Lambda-Runtime-Aws-Request-Id"
-  setEnv "_X_AMZN_TRACE_ID" xrayTraceId
-  let invokedFunctionArn :: String = decodeUtf8 $ apiData ^. responseHeader
+  functionName      <- readEnvironmentVariable "AWS_LAMBDA_FUNCTION_NAME"
+  version           <- readEnvironmentVariable "AWS_LAMBDA_FUNCTION_VERSION"
+  logStream         <- readEnvironmentVariable "AWS_LAMBDA_LOG_STREAM_NAME"
+  logGroup          <- readEnvironmentVariable "AWS_LAMBDA_LOG_GROUP_NAME"
+  lambdaApiEndpoint <- readEnvironmentVariable "AWS_LAMBDA_RUNTIME_API"
+  memoryLimitInMb   <- readFunctionMemory
+  apiData           <- getApiData lambdaApiEndpoint
+  let xrayTraceId :: Text =
+        decodeUtf8 $ apiData ^. Wreq.responseHeader "Lambda-Runtime-Trace-Id"
+  let awsRequestId :: Text =
+        decodeUtf8 $ apiData ^. Wreq.responseHeader "Lambda-Runtime-Aws-Request-Id"
+  liftIO $ Environment.setEnv "_X_AMZN_TRACE_ID" $ toString xrayTraceId
+  let invokedFunctionArn :: Text = decodeUtf8 $ apiData ^. Wreq.responseHeader
         "Lambda-Runtime-Invoked-Function-Arn"
   let deadline :: Maybe Int =
-        readMaybe $ decodeUtf8 $ apiData ^. responseHeader
+        readMaybe $ decodeUtf8 $ apiData ^. Wreq.responseHeader
           "Lambda-Runtime-Deadline-Ms"
 
-  putTextLn (decodeUtf8 $ apiData ^. responseHeader "")
-  let parsedMemory = memoryStr >>= readMaybe
-  case parsedMemory of
-    Nothing -> do
-      let err =
-            "Could not parse memory value: "
-              <> (memoryStr ?: "<NOTHING>")
-              <> "\nMemory value from environment is not an 'Int'"
-      return $ Left err
-
-    Just (mem :: Int) -> return $ Right $ Context
-      { functionName       = functionName ?: ""
-      , functionVersion    = version ?: ""
-      , logStreamName      = logStream ?: ""
-      , logGroupName       = logGroup ?: ""
-      , memoryLimitInMb    = mem
-      , invokedFunctionArn = invokedFunctionArn
-      , xrayTraceId        = xrayTraceId
-      , awsRequestId       = awsRequestId
-      , clientContext      = Nothing
-      , identity           = Nothing
-      , deadline           = deadline ?: error "Could not parse deadline"
-      }
-
-
-getTimeRemainingMillis :: Context -> IO Int
-getTimeRemainingMillis Context {..} = do
-  millis <- getPOSIXTime
-  return (fromIntegral deadline - round millis)
-
-getRuntimeApiEndpoint :: IO (Either String String)
-getRuntimeApiEndpoint = do
-  endpoint <- lookupEnv "AWS_LAMBDA_RUNTIME_API"
-  case endpoint of
-    Nothing -> do
-      let err = "Could not read endpoint, was it set?"
-      return $ Left err
-    Just ep -> return $ Right ep
+  putTextLn (decodeUtf8 $ apiData ^. Wreq.responseHeader "")
+  pure $ Context
+    { functionName       = functionName
+    , functionVersion    = version
+    , logStreamName      = logStream
+    , logGroupName       = logGroup
+    , memoryLimitInMb    = memoryLimitInMb
+    , invokedFunctionArn = invokedFunctionArn
+    , xrayTraceId        = xrayTraceId
+    , awsRequestId       = awsRequestId
+    , deadline           = deadline ?: error "Could not parse deadline"
+    }
 
 lambda
   :: (FromJSON input, ToJSON output)
-  => (input -> Context -> IO (Either String output))
+  => (input -> Context -> IO (Either Text output))
   -> IO ()
-lambda _ = do
-  api <- getRuntimeApiEndpoint
-  case api of
-    Right awsLambdaRuntimeApi -> do
-      putTextLn "hi"
-      putTextLn "hi"
-    Left err -> putTextLn $ toText err
-
-data ClientContext
-data CognitoIdentity
+lambda handler = do
+  ctx <- runExceptT initializeContext
+  res <- handler undefined (fromRight (error "AAAAAAA") ctx)
+  either print (print . encode) res

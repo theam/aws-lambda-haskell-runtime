@@ -23,6 +23,7 @@ dependencies:
   - time
   - wreq
   - microlens-platform
+  - mtl
 
 library:
   source-dirs: src
