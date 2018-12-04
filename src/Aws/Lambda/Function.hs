@@ -16,5 +16,5 @@ instance Options.ParseRecord LambdaOptions
 mkMain :: Q [Dec]
 mkMain = do
   let mainName = mkName "main"
-  body <- [e|putStrLn "hi, im generated"|]
+  body <- [e|putStrLn ("hi, im generated" :: String)|]
   return [ FunD mainName [Clause [] (NormalB body) [] ]]
