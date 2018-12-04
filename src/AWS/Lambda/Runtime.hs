@@ -98,16 +98,16 @@ propagateXRayTrace xrayTraceId =
 
 initializeContext :: App Context
 initializeContext = do
-  functionName      <- readEnvironmentVariable "AWS_LAMBDA_FUNCTION_NAME"
-  version           <- readEnvironmentVariable "AWS_LAMBDA_FUNCTION_VERSION"
-  logStream         <- readEnvironmentVariable "AWS_LAMBDA_LOG_STREAM_NAME"
-  logGroup          <- readEnvironmentVariable "AWS_LAMBDA_LOG_GROUP_NAME"
-  lambdaApiEndpoint <- readEnvironmentVariable "AWS_LAMBDA_RUNTIME_API"
-  memoryLimitInMb   <- readFunctionMemory
-  apiData           <- getApiData lambdaApiEndpoint
-  deadline          <- extractIntHeader apiData "Lambda-Runtime-Deadline-Ms"
-  let xrayTraceId  = extractHeader apiData "Lambda-Runtime-Trace-Id"
-  let awsRequestId = extractHeader apiData "Lambda-Runtime-Aws-Request-Id"
+  functionName          <- readEnvironmentVariable "AWS_LAMBDA_FUNCTION_NAME"
+  version               <- readEnvironmentVariable "AWS_LAMBDA_FUNCTION_VERSION"
+  logStream             <- readEnvironmentVariable "AWS_LAMBDA_LOG_STREAM_NAME"
+  logGroup              <- readEnvironmentVariable "AWS_LAMBDA_LOG_GROUP_NAME"
+  lambdaApiEndpoint     <- readEnvironmentVariable "AWS_LAMBDA_RUNTIME_API"
+  memoryLimitInMb       <- readFunctionMemory
+  apiData               <- getApiData lambdaApiEndpoint
+  deadline              <- extractIntHeader apiData "Lambda-Runtime-Deadline-Ms"
+  let xrayTraceId        = extractHeader apiData "Lambda-Runtime-Trace-Id"
+  let awsRequestId       = extractHeader apiData "Lambda-Runtime-Aws-Request-Id"
   let invokedFunctionArn = extractHeader apiData "Lambda-Runtime-Invoked-Function-Arn"
   propagateXRayTrace xrayTraceId
   pure $ Context
