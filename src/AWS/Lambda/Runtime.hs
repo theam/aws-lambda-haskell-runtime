@@ -158,7 +158,6 @@ lambda = do
   publishResult ctx lambdaApiEndpoint res
 
 
-
 publishError :: RuntimeError -> IO ()
 publishError err =
   die (show err)
