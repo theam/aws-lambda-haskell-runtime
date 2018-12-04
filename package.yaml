@@ -25,6 +25,7 @@ dependencies:
   - microlens-platform
   - mtl
   - case-insensitive
+  - process
 
 library:
   source-dirs: src

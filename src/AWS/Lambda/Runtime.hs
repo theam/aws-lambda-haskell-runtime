@@ -1,14 +1,16 @@
 module AWS.Lambda.Runtime where
 
 import Relude hiding (get, identity)
-
 import Control.Exception (IOException, try)
 import Control.Monad.Except (throwError)
 import Data.Aeson
+import System.Exit (ExitCode(..))
+
 import qualified Data.CaseInsensitive as CI
 import Lens.Micro.Platform
 import qualified Network.Wreq as Wreq
 import qualified System.Environment as Environment
+import qualified System.Process as Process
 
 
 type App a =
@@ -20,7 +22,7 @@ data RuntimeError
   | ApiConnectionError
   | ApiHeaderNotSet Text
   | ParseError Text Text
-  | OtherError Text
+  | InvocationError Text
   deriving (Show)
 instance Exception RuntimeError
 
@@ -91,20 +93,23 @@ extractIntHeader apiData headerName = do
     Just value -> pure value
 
 
+extractBody :: Wreq.Response LByteString -> Text
+extractBody apiData =
+  decodeUtf8 (apiData ^. Wreq.responseBody)
+
+
 propagateXRayTrace :: Text -> App ()
 propagateXRayTrace xrayTraceId =
   liftIO $ Environment.setEnv "_X_AMZN_TRACE_ID" $ toString xrayTraceId
 
 
-initializeContext :: App Context
-initializeContext = do
+initializeContext :: Wreq.Response LByteString -> App Context
+initializeContext apiData = do
   functionName          <- readEnvironmentVariable "AWS_LAMBDA_FUNCTION_NAME"
   version               <- readEnvironmentVariable "AWS_LAMBDA_FUNCTION_VERSION"
   logStream             <- readEnvironmentVariable "AWS_LAMBDA_LOG_STREAM_NAME"
   logGroup              <- readEnvironmentVariable "AWS_LAMBDA_LOG_GROUP_NAME"
-  lambdaApiEndpoint     <- readEnvironmentVariable "AWS_LAMBDA_RUNTIME_API"
   memoryLimitInMb       <- readFunctionMemory
-  apiData               <- getApiData lambdaApiEndpoint
   deadline              <- extractIntHeader apiData "Lambda-Runtime-Deadline-Ms"
   let xrayTraceId        = extractHeader apiData "Lambda-Runtime-Trace-Id"
   let awsRequestId       = extractHeader apiData "Lambda-Runtime-Aws-Request-Id"
@@ -123,11 +128,25 @@ initializeContext = do
     }
 
 
-lambda
-  :: (FromJSON input, ToJSON output)
-  => (input -> Context -> IO (Either Text output))
-  -> IO ()
-lambda handler = do
-  ctx <- runExceptT initializeContext
-  res <- handler undefined (fromRight (error "AAAAAAA") ctx)
-  either print (print . encode) res
+invoke :: Text -> Context -> App ()
+invoke event context = do
+  let contextJSON = decodeUtf8 $ encode context
+  out <- liftIO (Process.readProcessWithExitCode "haskell_lambda" [ toString event, contextJSON ] "")
+  case out of
+    (ExitSuccess, stdOut, _) -> putTextLn $ toText stdOut
+    (_, _, stdErr) -> throwError (InvocationError $ toText stdErr)
+
+
+lambda :: App ()
+lambda = do
+  lambdaApiEndpoint     <- readEnvironmentVariable "AWS_LAMBDA_RUNTIME_API"
+  apiData               <- getApiData lambdaApiEndpoint
+  ctx <- initializeContext apiData
+  let event = extractBody apiData
+  invoke event ctx
+
+
+main :: IO ()
+main = do
+  res <- runExceptT lambda
+  either (die . show) (putTextLn . decodeUtf8 . encode) res
