@@ -1,7 +1,7 @@
 module Main where
 
 import Relude
-import AWS.Lambda.Runtime
+import Aws.Lambda.Runtime
 
 
 main :: IO ()

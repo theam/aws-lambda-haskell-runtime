@@ -27,11 +27,13 @@ dependencies:
   - case-insensitive
   - process
   - optparse-generic
+  - template-haskell
 
 library:
   source-dirs: src
   exposed-modules:
-    - AWS.Lambda.Runtime
+    - Aws.Lambda.Runtime
+    - Aws.Lambda.Function
 
 executables:
   bootstrap:
@@ -64,3 +66,4 @@ default-extensions:
 
 ghc-options:
   - -Wall
+  - -optP-Wno-nonportable-include-path

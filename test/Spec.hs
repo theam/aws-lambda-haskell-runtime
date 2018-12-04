@@ -2,7 +2,8 @@ import           Relude                  hiding ( head )
 
 import           Test.Hspec
 
-import           AWS.Lambda.Runtime
+import           Aws.Lambda.Runtime
+import           Aws.Lambda.Function
 
 
 handler :: Text -> c -> IO (Either String Int)
