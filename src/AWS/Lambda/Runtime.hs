@@ -1,7 +1,7 @@
 module AWS.Lambda.Runtime where
 
 import Control.Exception (IOException, try)
-import Control.Monad.Except (throwError, catchError)
+import Control.Monad.Except (catchError, throwError)
 import Data.Aeson
 import Relude hiding (get, identity)
 import System.Exit (ExitCode (..))
@@ -190,7 +190,7 @@ main = do
     apiData               <- getApiData lambdaApiEndpoint
     let event = extractBody apiData
     ctx <- initializeContext apiData
-    (lambda ctx event lambdaApiEndpoint) `catchError` (publishError ctx lambdaApiEndpoint)
+    lambda ctx event lambdaApiEndpoint `catchError` publishError ctx lambdaApiEndpoint
   case res of
-    Right _  -> exitSuccess
-    Left _ -> exitFailure
+    Right _ -> exitSuccess
+    Left _  -> exitFailure
