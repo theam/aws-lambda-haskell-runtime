@@ -26,6 +26,7 @@ dependencies:
   - mtl
   - case-insensitive
   - process
+  - optparse-generic
 
 library:
   source-dirs: src

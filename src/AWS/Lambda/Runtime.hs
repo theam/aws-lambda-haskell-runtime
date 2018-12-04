@@ -1,4 +1,4 @@
-module AWS.Lambda.Runtime where
+module Aws.Lambda.Runtime where
 
 import Control.Exception (IOException, try)
 import Control.Monad.Except (catchError, throwError)
@@ -158,8 +158,14 @@ initializeContext apiData = do
 
 invoke :: Text -> Context -> App LambdaResult
 invoke event context = do
+  handlerName <- readEnvironmentVariable "_HANDLER"
   let contextJSON = decodeUtf8 $ encode context
-  out <- liftIO (Process.readProcessWithExitCode "haskell_lambda" [ toString event, contextJSON ] "")
+  out <- liftIO $ Process.readProcessWithExitCode "haskell_lambda"
+                [ "--eventObject", toString event
+                , "--contextObject", contextJSON
+                , "--functionHandler", toString handlerName
+                ]
+                ""
   case out of
     (ExitSuccess, stdOut, _) -> pure (LambdaResult $ toText stdOut)
     (_, _, stdErr)           -> throwError (InvocationError $ toText stdErr)
