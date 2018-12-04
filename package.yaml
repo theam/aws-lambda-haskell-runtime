@@ -29,6 +29,15 @@ dependencies:
 
 library:
   source-dirs: src
+  exposed-modules:
+    - AWS.Lambda.Runtime
+
+executables:
+  bootstrap:
+    source-dirs: app
+    main: Main.hs
+    dependencies:
+      - aws-lambda-haskell-runtime
 
 tests:
   aws-lambda-haskell-runtime-test:

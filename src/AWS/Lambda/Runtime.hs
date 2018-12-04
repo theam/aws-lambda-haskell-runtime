@@ -171,8 +171,8 @@ publishResult Context {..} lambdaApi (LambdaResult result) = do
   void $ liftIO $ Wreq.post (toString endpoint) (toJSON result)
 
 
-lambda :: Context -> Text -> Text -> App ()
-lambda ctx event lambdaApiEndpoint = do
+invokeAndPublish :: Context -> Text -> Text -> App ()
+invokeAndPublish ctx event lambdaApiEndpoint = do
   res <- invoke event ctx
   publishResult ctx lambdaApiEndpoint res
 
@@ -183,14 +183,10 @@ publishError Context {..} lambdaApiEndpoint err = do
   void (liftIO $ Wreq.post (toString endpoint) (toJSON err))
 
 
-main :: IO ()
-main = do
-  res <- runExceptT $ do
-    lambdaApiEndpoint     <- readEnvironmentVariable "AWS_LAMBDA_RUNTIME_API"
-    apiData               <- getApiData lambdaApiEndpoint
-    let event = extractBody apiData
-    ctx <- initializeContext apiData
-    lambda ctx event lambdaApiEndpoint `catchError` publishError ctx lambdaApiEndpoint
-  case res of
-    Right _ -> exitSuccess
-    Left _  -> exitFailure
+lambdaRunner :: App ()
+lambdaRunner = do
+  lambdaApiEndpoint     <- readEnvironmentVariable "AWS_LAMBDA_RUNTIME_API"
+  apiData               <- getApiData lambdaApiEndpoint
+  let event = extractBody apiData
+  ctx <- initializeContext apiData
+  invokeAndPublish ctx event lambdaApiEndpoint `catchError` publishError ctx lambdaApiEndpoint
