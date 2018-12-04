@@ -1,13 +1,13 @@
 module AWS.Lambda.Runtime where
 
 import Control.Exception (IOException, try)
-import Control.Monad.Except (throwError)
+import Control.Monad.Except (throwError, catchError)
 import Data.Aeson
 import Relude hiding (get, identity)
 import System.Exit (ExitCode (..))
 
 import qualified Data.CaseInsensitive as CI
-import Lens.Micro.Platform
+import Lens.Micro.Platform hiding ((.=))
 import qualified Network.Wreq as Wreq
 import qualified System.Environment as Environment
 import qualified System.Process as Process
@@ -23,9 +23,32 @@ data RuntimeError
   | ApiHeaderNotSet Text
   | ParseError Text Text
   | InvocationError Text
-  | ResultPublishingError
   deriving (Show)
 instance Exception RuntimeError
+
+instance ToJSON RuntimeError where
+  toJSON (EnvironmentVariableNotSet msg) = object
+    [ "errorType" .= ("EnvironmentVariableNotSet" :: Text)
+    , "errorMessage" .= msg
+    ]
+
+  toJSON ApiConnectionError = object
+    [ "errorType" .= ("ApiConnectionError" :: Text)
+    , "errorMessage" .= ("Could not connect to API to retrieve AWS Lambda parameters" :: Text)
+    ]
+
+  toJSON (ApiHeaderNotSet headerName) = object
+    [ "errorType" .= ("ApiHeaderNotSet" :: Text)
+    , "errorMessage" .= headerName
+    ]
+
+  toJSON (ParseError objectBeingParsed value) = object
+    [ "errorType" .= ("ParseError" :: Text)
+    , "errorMessage" .= ("Parse error for " <> objectBeingParsed <> ", could not parse value '" <> value <> "'")
+    ]
+
+  -- We return the user error as it is
+  toJSON (InvocationError err) = toJSON err
 
 
 data Context = Context
@@ -148,24 +171,26 @@ publishResult Context {..} lambdaApi (LambdaResult result) = do
   void $ liftIO $ Wreq.post (toString endpoint) (toJSON result)
 
 
-lambda :: App ()
-lambda = do
-  lambdaApiEndpoint     <- readEnvironmentVariable "AWS_LAMBDA_RUNTIME_API"
-  apiData               <- getApiData lambdaApiEndpoint
-  let event = extractBody apiData
-  ctx <- initializeContext apiData
+lambda :: Context -> Text -> Text -> App ()
+lambda ctx event lambdaApiEndpoint = do
   res <- invoke event ctx
   publishResult ctx lambdaApiEndpoint res
 
 
-publishError :: RuntimeError -> IO ()
-publishError err =
-  die (show err)
+publishError :: Context -> Text -> RuntimeError -> App ()
+publishError Context {..} lambdaApiEndpoint err = do
+  let endpoint = "http://"<> lambdaApiEndpoint <> "/2018-06-01/runtime/invocation/"<> awsRequestId <> "/error"
+  void (liftIO $ Wreq.post (toString endpoint) (toJSON err))
 
 
 main :: IO ()
 main = do
-  res <- runExceptT lambda
+  res <- runExceptT $ do
+    lambdaApiEndpoint     <- readEnvironmentVariable "AWS_LAMBDA_RUNTIME_API"
+    apiData               <- getApiData lambdaApiEndpoint
+    let event = extractBody apiData
+    ctx <- initializeContext apiData
+    (lambda ctx event lambdaApiEndpoint) `catchError` (publishError ctx lambdaApiEndpoint)
   case res of
     Right _  -> exitSuccess
-    Left err -> publishError err
+    Left _ -> exitFailure
