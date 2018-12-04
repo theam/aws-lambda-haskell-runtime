@@ -5,18 +5,21 @@ import Relude hiding (get, identity)
 import Control.Exception (IOException, try)
 import Control.Monad.Except (throwError)
 import Data.Aeson
+import qualified Data.CaseInsensitive as CI
 import Lens.Micro.Platform
 import qualified Network.Wreq as Wreq
 import qualified System.Environment as Environment
 
 
-type App a = ExceptT RuntimeError IO a
+type App a =
+  ExceptT RuntimeError IO a
+
 
 data RuntimeError
   = EnvironmentVariableNotSet Text
   | ApiConnectionError
   | ApiHeaderNotSet Text
-  | ParseError Text
+  | ParseError Text Text
   | OtherError Text
   deriving (Show)
 instance Exception RuntimeError
@@ -33,9 +36,9 @@ data Context = Context
   , logGroupName       :: !Text
   , deadline           :: !Int
   } deriving (Generic)
-
 instance FromJSON Context
 instance ToJSON Context
+
 
 readEnvironmentVariable :: Text -> App Text
 readEnvironmentVariable envVar = do
@@ -44,6 +47,7 @@ readEnvironmentVariable envVar = do
     Nothing    -> throwError (EnvironmentVariableNotSet envVar)
     Just value -> pure (toText value)
 
+
 readFunctionMemory :: App Int
 readFunctionMemory = do
   let envVar = "AWS_LAMBDA_FUNCTION_MEMORY_SIZE"
@@ -51,21 +55,17 @@ readFunctionMemory = do
   memoryValue <- readEnvironmentVariable envVar
   case parseMemory memoryValue of
     Just (value :: Int) -> pure value
-    Nothing ->
-      throwError
-        $  ParseError
-        $  "Could not parse memory size from environment variable "
-        <> envVar
-        <> " - value was "
-        <> memoryValue
+    Nothing             -> throwError (ParseError envVar memoryValue)
+
 
 getApiData :: Text -> App (Wreq.Response LByteString)
-getApiData endpoint = do
-  apiData <- tryIO $ Wreq.get
-    ("http://" <> toString endpoint <> "/2018-06-01/runtime/invocation/next")
-  -- first (const ApiConnectionError) apiData
-  pure apiData
+getApiData endpoint =
+  tryIO (Wreq.get nextInvocationEndpoint)
  where
+  nextInvocationEndpoint :: String
+  nextInvocationEndpoint =
+    "http://" <> toString endpoint <> "/2018-06-01/runtime/invocation/next"
+
   tryIO :: IO a -> App a
   tryIO f =
     try f
@@ -77,6 +77,25 @@ getApiData endpoint = do
     & fmap (first $ const ApiConnectionError)
     & ExceptT
 
+
+extractHeader :: Wreq.Response LByteString -> Text -> Text
+extractHeader apiData header =
+  decodeUtf8 (apiData ^. (Wreq.responseHeader $ CI.mk $ encodeUtf8 header))
+
+
+extractIntHeader :: Wreq.Response LByteString -> Text -> App Int
+extractIntHeader apiData headerName = do
+  let header = extractHeader apiData headerName
+  case readMaybe $ toString header of
+    Nothing    -> throwError (ParseError "deadline" header)
+    Just value -> pure value
+
+
+propagateXRayTrace :: Text -> App ()
+propagateXRayTrace xrayTraceId =
+  liftIO $ Environment.setEnv "_X_AMZN_TRACE_ID" $ toString xrayTraceId
+
+
 initializeContext :: App Context
 initializeContext = do
   functionName      <- readEnvironmentVariable "AWS_LAMBDA_FUNCTION_NAME"
@@ -86,18 +105,11 @@ initializeContext = do
   lambdaApiEndpoint <- readEnvironmentVariable "AWS_LAMBDA_RUNTIME_API"
   memoryLimitInMb   <- readFunctionMemory
   apiData           <- getApiData lambdaApiEndpoint
-  let xrayTraceId :: Text =
-        decodeUtf8 $ apiData ^. Wreq.responseHeader "Lambda-Runtime-Trace-Id"
-  let awsRequestId :: Text =
-        decodeUtf8 $ apiData ^. Wreq.responseHeader "Lambda-Runtime-Aws-Request-Id"
-  liftIO $ Environment.setEnv "_X_AMZN_TRACE_ID" $ toString xrayTraceId
-  let invokedFunctionArn :: Text = decodeUtf8 $ apiData ^. Wreq.responseHeader
-        "Lambda-Runtime-Invoked-Function-Arn"
-  let deadline :: Maybe Int =
-        readMaybe $ decodeUtf8 $ apiData ^. Wreq.responseHeader
-          "Lambda-Runtime-Deadline-Ms"
-
-  putTextLn (decodeUtf8 $ apiData ^. Wreq.responseHeader "")
+  deadline          <- extractIntHeader apiData "Lambda-Runtime-Deadline-Ms"
+  let xrayTraceId  = extractHeader apiData "Lambda-Runtime-Trace-Id"
+  let awsRequestId = extractHeader apiData "Lambda-Runtime-Aws-Request-Id"
+  let invokedFunctionArn = extractHeader apiData "Lambda-Runtime-Invoked-Function-Arn"
+  propagateXRayTrace xrayTraceId
   pure $ Context
     { functionName       = functionName
     , functionVersion    = version
@@ -107,8 +119,9 @@ initializeContext = do
     , invokedFunctionArn = invokedFunctionArn
     , xrayTraceId        = xrayTraceId
     , awsRequestId       = awsRequestId
-    , deadline           = deadline ?: error "Could not parse deadline"
+    , deadline           = deadline
     }
+
 
 lambda
   :: (FromJSON input, ToJSON output)

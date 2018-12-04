@@ -24,6 +24,7 @@ dependencies:
   - wreq
   - microlens-platform
   - mtl
+  - case-insensitive
 
 library:
   source-dirs: src
