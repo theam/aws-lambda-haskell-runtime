@@ -1,10 +1,10 @@
 module AWS.Lambda.Runtime where
 
-import Relude hiding (get, identity)
 import Control.Exception (IOException, try)
 import Control.Monad.Except (throwError)
 import Data.Aeson
-import System.Exit (ExitCode(..))
+import Relude hiding (get, identity)
+import System.Exit (ExitCode (..))
 
 import qualified Data.CaseInsensitive as CI
 import Lens.Micro.Platform
@@ -43,7 +43,8 @@ instance FromJSON Context
 instance ToJSON Context
 
 
-newtype LambdaResult = LambdaResult Text
+newtype LambdaResult =
+  LambdaResult Text
 
 
 readEnvironmentVariable :: Text -> App Text
@@ -60,8 +61,8 @@ readFunctionMemory = do
   let parseMemory txt = readMaybe (toString txt)
   memoryValue <- readEnvironmentVariable envVar
   case parseMemory memoryValue of
-    Just (value :: Int) -> pure value
-    Nothing             -> throwError (ParseError envVar memoryValue)
+    Just value -> pure value
+    Nothing    -> throwError (ParseError envVar memoryValue)
 
 
 getApiData :: Text -> App (Wreq.Response LByteString)
@@ -86,7 +87,7 @@ getApiData endpoint =
 
 extractHeader :: Wreq.Response LByteString -> Text -> Text
 extractHeader apiData header =
-  decodeUtf8 (apiData ^. (Wreq.responseHeader $ CI.mk $ encodeUtf8 header))
+  decodeUtf8 (apiData ^. Wreq.responseHeader (CI.mk $ encodeUtf8 header))
 
 
 extractIntHeader :: Wreq.Response LByteString -> Text -> App Int
@@ -138,7 +139,7 @@ invoke event context = do
   out <- liftIO (Process.readProcessWithExitCode "haskell_lambda" [ toString event, contextJSON ] "")
   case out of
     (ExitSuccess, stdOut, _) -> pure (LambdaResult $ toText stdOut)
-    (_, _, stdErr) -> throwError (InvocationError $ toText stdErr)
+    (_, _, stdErr)           -> throwError (InvocationError $ toText stdErr)
 
 
 publishResult :: Context -> Text -> LambdaResult -> App ()
@@ -167,5 +168,5 @@ main :: IO ()
 main = do
   res <- runExceptT lambda
   case res of
-    Right _ -> exitSuccess
+    Right _  -> exitSuccess
     Left err -> publishError err
