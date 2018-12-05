@@ -1,6 +1,6 @@
 module Aws.Lambda.Function
   ( LambdaOptions (..)
-  , foo
+  , configureLambda
   , returnAndFail
   , returnAndSucceed
   , decodeObj
@@ -13,6 +13,9 @@ import Data.Aeson
 
 import qualified Options.Generic as Options
 import Language.Haskell.TH
+import qualified Data.Text as Text
+
+import Aws.Lambda.ThHelpers
 
 data LambdaOptions = LambdaOptions
   { eventObject     :: Text
@@ -22,31 +25,55 @@ data LambdaOptions = LambdaOptions
 instance Options.ParseRecord LambdaOptions
 
 
-mkMain :: Q Dec
-mkMain = do
-  let mainName = mkName "main"
-  body <- [e|getRecord "" >>= run|]
-  return $ FunD mainName [Clause [] (NormalB body) []]
+mkMain :: Q [Dec]
+mkMain = [d|
+  $(pName "main") = getRecord "" >>= run
+  |]
 
 mkRun :: Q Dec
 mkRun = do
-  let functionName = mkName "run"
-  let fhName = mkName "functionHandler"
-  let coName = mkName "contextObject"
-  let eoName = mkName "eventObject"
-  let los = mkName "lo"
-  let h1 = mkName "Lib.handler"
-  let loName = mkName "LambdaOptions"
-  let clause' = AsP los $ RecP loName [ (fhName, VarP fhName), (coName, VarP coName), (eoName, VarP eoName)]
-  body <- [e|case $(pure $ VarE fhName) of
-    "src/Lib.handler" -> $(pure $ VarE h1) (decodeObj $(pure $ VarE eoName)) (decodeObj $(pure $ VarE coName)) >>= either returnAndFail returnAndSucceed
-    _ -> returnAndFail ("Handler " <> $(pure $ VarE fhName) <> " does not exist on project")|]
-  return $ FunD functionName [Clause [clause'] (NormalB body) []]
+  clause' <- recordQ "LambdaOptions" ["functionHandler", "contextObject", "eventObject"]
+  body <- dispatcherCaseQ ["src/Lib.handler"]
+  pure $ FunD (mkName "run") [Clause [clause'] (NormalB body) []]
 
-foo = do
+
+dispatcherCaseQ :: [Text] -> Q Exp
+dispatcherCaseQ fileNames = do
+  caseExp <- eName "functionHandler"
+  matches <- traverse handlerCaseQ fileNames
+  unmatched <- unmatchedCaseQ
+  pure $ CaseE caseExp (matches <> [unmatched])
+
+
+handlerCaseQ :: Text -> Q Match
+handlerCaseQ lambdaHandler = do
+  let pattern = LitP (StringL $ toString lambdaHandler)
+  body <- [e|do
+    result <- $(eName qualifiedName) (decodeObj $(eName "eventObject")) (decodeObj $(eName "contextObject"))
+    either returnAndFail returnAndSucceed result
+    |]
+  pure $ Match pattern (NormalB body) []
+ where
+  qualifiedName =
+    lambdaHandler
+    & Text.dropWhile (/= '/')
+    & Text.drop 1
+    & Text.replace "/" "."
+
+
+unmatchedCaseQ :: Q Match
+unmatchedCaseQ = do
+  let pattern = WildP
+  body <- [e|
+    returnAndFail ("Handler " <> $(eName "functionHandler") <> " does not exist on project")
+    |]
+  pure $ Match pattern (NormalB body) []
+
+configureLambda :: Q [Dec]
+configureLambda = do
   main <- mkMain
   run <- mkRun
-  return [main, run]
+  return $ main <> [run]
 
 
 returnAndFail :: ToJSON a => a -> IO ()
@@ -56,8 +83,8 @@ returnAndFail v = do
 
 returnAndSucceed :: ToJSON a => a -> IO ()
 returnAndSucceed v = do
- putTextLn (decodeUtf8 $  encode v)
- exitFailure
+ putTextLn (decodeUtf8 $ encode v)
+ exitSuccess
 
 decodeObj :: FromJSON a => Text -> a
 decodeObj x = (decode $ encodeUtf8 x) ?: error $ "Could not decode event " <> x

@@ -28,6 +28,7 @@ dependencies:
   - process
   - optparse-generic
   - template-haskell
+  - text
 
 library:
   source-dirs: src
