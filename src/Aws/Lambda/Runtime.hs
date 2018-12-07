@@ -173,7 +173,7 @@ invoke event context = do
                 ""
   case out of
     (ExitSuccess, stdOut, _) -> pure (LambdaResult $ toText stdOut)
-    (_, _, stdErr)           -> throwError (InvocationError $ toText stdErr)
+    (_, stdOut, _)           -> throwError (InvocationError $ toText stdOut)
 
 
 publishResult :: Context -> Text -> LambdaResult -> App ()
