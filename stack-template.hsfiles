@@ -38,7 +38,7 @@ all:
 	@stack clean --docker
 	@stack build --docker
 	@cp `stack --docker path --local-install-root`/bin/haskell_lambda build
-	@cd build && zip function.zip haskell_lambda && cd ..
+	@cd build && zip function.zip haskell_lambda && rm haskell_lambda && cd ..
 {-# START_FILE src/Lib.hs #-}
 module Lib where
 
