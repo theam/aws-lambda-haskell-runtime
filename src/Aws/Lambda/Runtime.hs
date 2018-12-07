@@ -175,7 +175,7 @@ invoke event context = do
 publishResult :: Context -> Text -> LambdaResult -> App ()
 publishResult Context {..} lambdaApi (LambdaResult result) = do
   let endpoint = "http://"<> lambdaApi <> "/2018-06-01/runtime/invocation/"<> awsRequestId <> "/response"
-  void $ liftIO $ Wreq.post (toString endpoint) (toJSON result)
+  void $ liftIO $ Wreq.post (toString endpoint) (encodeUtf8 @Text @ByteString result)
 
 
 invokeAndPublish :: Context -> Text -> Text -> App ()
