@@ -186,8 +186,12 @@ invokeAndPublish ctx event lambdaApiEndpoint = do
 
 
 publishError :: Context -> Text -> RuntimeError -> App ()
-publishError Context {..} lambdaApiEndpoint err = do
+publishError Context {..} lambdaApiEndpoint (InvocationError err) = do
   let endpoint = "http://"<> lambdaApiEndpoint <> "/2018-06-01/runtime/invocation/"<> awsRequestId <> "/error"
+  void (liftIO $ Wreq.post (toString endpoint) (encodeUtf8 @Text @ByteString err))
+
+publishError Context {..} lambdaApiEndpoint err = do
+  let endpoint = "http://"<> lambdaApiEndpoint <> "/2018-06-01/runtime/init/error"
   void (liftIO $ Wreq.post (toString endpoint) (toJSON err))
 
 
