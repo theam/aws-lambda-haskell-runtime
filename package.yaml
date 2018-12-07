@@ -1,5 +1,5 @@
 name: aws-lambda-haskell-runtime
-version: 1.0.3
+version: 1.0.4
 github: "theam/aws-lambda-haskell-runtime"
 license: Apache-2.0
 author: Nikita Tchayka
@@ -17,10 +17,8 @@ description: Please see the README on GitHub at <https://github.com/githubuser/a
 dependencies:
   - base >= 4.7 && < 5
   - aeson
-  - loch-th
   - bytestring
   - relude
-  - time
   - wreq
   - microlens-platform
   - mtl
