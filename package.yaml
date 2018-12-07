@@ -29,6 +29,9 @@ dependencies:
   - optparse-generic
   - template-haskell
   - text
+  - conduit
+  - directory
+  - filepath
 
 library:
   source-dirs: src
