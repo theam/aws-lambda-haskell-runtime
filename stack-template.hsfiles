@@ -37,8 +37,8 @@ all:
 	@rm -rf ./build/*
 	@stack clean --docker
 	@stack build --docker
-	@cp `stack --docker path --local-install-root`/bin/* build
-	@cd build && zip function.zip bootstrap haskell_lambda && cd ..
+	@cp `stack --docker path --local-install-root`/bin/haskell_lambda build
+	@cd build && zip function.zip haskell_lambda && cd ..
 {-# START_FILE src/Lib.hs #-}
 module Lib where
 
@@ -107,4 +107,5 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 {-# START_FILE .gitignore #-}
 .stack-work/
 {{name}}.cabal
+build/
 *~
