@@ -1,5 +1,5 @@
 name: aws-lambda-haskell-runtime
-version: 0.1.3
+version: 1.0.0
 github: "theam/aws-lambda-haskell-runtime"
 license: Apache-2.0
 author: Nikita Tchayka
@@ -37,7 +37,7 @@ library:
   source-dirs: src
   exposed-modules:
     - Aws.Lambda.Runtime
-    - Aws.Lambda.Function
+    - Aws.Lambda.Configuration
 
 executables:
   bootstrap:

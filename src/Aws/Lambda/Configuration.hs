@@ -1,4 +1,4 @@
-module Aws.Lambda.Function
+module Aws.Lambda.Configuration
   ( LambdaOptions (..)
   , configureLambda
   , returnAndFail
