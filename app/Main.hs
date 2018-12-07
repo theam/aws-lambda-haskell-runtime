@@ -5,8 +5,8 @@ import Aws.Lambda.Runtime
 
 
 main :: IO ()
-main = do
+main = forever $ do
   res <- runExceptT lambdaRunner
   case res of
-    Right _ -> exitSuccess
-    Left _  -> exitFailure
+    Right _ -> return ()
+    Left err  -> putTextLn $ show err
