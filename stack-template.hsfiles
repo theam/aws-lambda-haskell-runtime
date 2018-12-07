@@ -31,7 +31,14 @@ executables:
 {-# START_FILE Setup.hs #-}
 import Distribution.Simple
 main = defaultMain
-
+{-# START_FILE Makefile #-}
+all:
+	@mkdir -p build
+	@rm -rf ./build/*
+	@stack clean --docker
+	@stack build --docker
+	@cp `stack --docker path --local-install-root`/bin/* build
+	@cd build && zip function.zip bootstrap haskell_lambda && cd ..
 {-# START_FILE src/Lib.hs #-}
 module Lib where
 
@@ -47,9 +54,9 @@ instance FromJSON Person
 instance ToJSON Person
 
 handler :: Person -> Context -> IO (Either String Person)
-handler p@Person {..} context =
-  if personAge > 0 then
-    return (Right $ p { personAge = personAge + 1 })
+handler person context =
+  if personAge person > 0 then
+    return (Right person)
   else
     return (Left "A person's age must be positive")
 
