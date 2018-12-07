@@ -159,8 +159,9 @@ initializeContext apiData = do
 invoke :: Text -> Context -> App LambdaResult
 invoke event context = do
   handlerName <- readEnvironmentVariable "_HANDLER"
+  runningDirectory <- readEnvironmentVariable "LAMBDA_TASK_ROOT"
   let contextJSON = decodeUtf8 $ encode context
-  out <- liftIO $ Process.readProcessWithExitCode "haskell_lambda"
+  out <- liftIO $ Process.readProcessWithExitCode (toString runningDirectory <> "/haskell_lambda")
                 [ "--eventObject", toString event
                 , "--contextObject", contextJSON
                 , "--functionHandler", toString handlerName
