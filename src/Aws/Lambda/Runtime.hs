@@ -48,10 +48,7 @@ instance ToJSON RuntimeError where
     ]
 
   -- We return the user error as it is
-  toJSON (InvocationError err) = object
-    [ "errorType" .= ("InvocationError" :: Text)
-    , "errorMessage" .= err
-    ]
+  toJSON (InvocationError err) = toJSON err
 
 
 
