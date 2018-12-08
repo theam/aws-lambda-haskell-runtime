@@ -4,3 +4,7 @@
 
 
 This package provides a way of running Haskell projects on AWS Lambda.
+
+# Latest layer ARN
+
+`NOT SET YET`

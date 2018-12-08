@@ -1,0 +1,107 @@
+defaults: &defaults
+  working_directory: ~/aws-lambda-haskell-runtime
+  docker:
+    - image: fpco/stack-build:lts-12.13
+
+version: 2
+jobs:
+  build:
+    <<: *defaults
+    environment:
+      TEST_RESULTS: /tmp/test-results
+
+    steps:
+      - checkout
+      - restore-cache:
+          keys:
+            - stack-{{ checksum "stack.yaml" }}
+      - restore-cache:
+          keys:
+            - stack-{{checksum "stack.yaml"}}-{{checksum "package.yaml"}}
+      - run: stack setup
+      - run: stack build
+      - run: zip runtime.zip $(stack path --local-install-root)/bin/bootstrap
+      - save-cache:
+          key: stack-{{ checksum "stack.yaml" }}
+          paths:
+            - "~/.stack"
+      - restore-cache:
+          keys: stack-{{checksum "stack.yaml"}}-{{checksum "package.yaml"}}
+          paths:
+            - ".stack-work"
+      - store_test_results:
+          path: ~/.stack-work/logs/*
+
+
+  test:
+    <<: *defaults
+    environment:
+      TEST_RESULTS: /tmp/test-results
+
+    steps:
+      - checkout
+      - restore-cache:
+          keys:
+            - stack-{{ checksum "stack.yaml" }}
+      - restore-cache:
+          keys:
+            - stack-{{checksum "stack.yaml"}}-{{checksum "package.yaml"}}
+      - run: stack setup
+      - run: stack test
+      - save-cache:
+          key: stack-{{ checksum "stack.yaml" }}
+          paths:
+            - "~/.stack"
+      - restore-cache:
+          keys: stack-{{checksum "stack.yaml"}}-{{checksum "package.yaml"}}
+          paths:
+            - ".stack-work"
+      - store_test_results:
+          path: ~/.stack-work/logs/*
+
+  deploy:
+    docker:
+      - image: circleci/python:2.7-jessie
+    working_directory: ~/aws-lambda-haskell-runtime
+    steps:
+      - run:
+          name: Install awscli
+          command: sudo pip install awscli
+      - run:
+          name: Deploy to AWS Layers
+          command: aws lambda publish-layer-version --layer-name haskell-runtime --zip-file fileb://runtime.zip
+      - run:
+          name: Update README
+          command: |
+            git clone --depth 1 https://${DOCS_GITHUB_TOKEN}@github.com/theam/aws-lambda-haskell-runtime.git runtime
+            cd runtime
+            sed -i '$ d' README.md
+            echo "\`$(aws lambda list-layer-versions --layer-name haskell-runtime | grep LayerVersionArn | head -n 1 | cut -d: -f2- | cut -d\" -f2)\`" >> README.md
+            git config credential.helper 'cache --timeout=120'
+            git config user.email "nikitatchayka@gmail.com"
+            git config user.name "Layer deployment bot"
+            git add README.md
+            git commit --allow-empty -m "Update ARN"
+            # Push quietly to prevent showing the token in log
+            git push -q https://${DOCS_GITHUB_TOKEN}@github.com/theam/aws-lambda-haskell-runtime.git master
+
+
+
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - build
+      - test
+      - deploy
+        requires:
+          - build
+          - test
+        filters:
+          branches:
+            only: master
+
+general:
+  branches:
+    only:
+      - master
