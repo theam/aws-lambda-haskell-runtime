@@ -28,6 +28,12 @@ executables:
     dependencies:
     - {{name}}
 
+default-extensions:
+  - TemplateHaskell
+  - RecordWildCards
+  - OverloadedLists
+  - OverloadedStrings
+  - DeriveGeneric
 {-# START_FILE Setup.hs #-}
 import Distribution.Simple
 main = defaultMain
