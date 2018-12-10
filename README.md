@@ -6,6 +6,6 @@
 
 This package provides a way of running Haskell projects on AWS Lambda.
 
-# Latest layer ARN
+# Usage
 
-`NOT SET YET`
+Take a look at the [Getting Started with the Haskell AWS Lambda Runtime](https://medium.com/the-theam-journey/getting-started-with-the-haskell-aws-lambda-runtime-951b2322c7a3) guide.
