@@ -32,7 +32,7 @@ Then run
 make
 ```
 
-Now you should have a `.zip` file that you can uploaded to your lambda.
+Now you should have a `build/function.zip` file that you can uploaded to your lambda.
 
 ### Full user guide
 
