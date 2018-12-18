@@ -30,6 +30,7 @@ dependencies:
   - conduit
   - directory
   - filepath
+  - uuid
 
 library:
   source-dirs: src

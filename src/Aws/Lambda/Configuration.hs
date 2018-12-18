@@ -26,6 +26,7 @@ data LambdaOptions = LambdaOptions
   { eventObject     :: Text
   , contextObject   :: Text
   , functionHandler :: Text
+  , executionUuid   :: Text
   } deriving (Generic)
 instance Options.ParseRecord LambdaOptions
 
@@ -38,7 +39,7 @@ mkMain = [d|
 mkRun :: Q Dec
 mkRun = do
   handlers <- runIO getHandlers
-  clause' <- recordQ "LambdaOptions" ["functionHandler", "contextObject", "eventObject"]
+  clause' <- recordQ "LambdaOptions" ["functionHandler", "contextObject", "eventObject", "executionUuid"]
   body <- dispatcherCaseQ handlers
   pure $ FunD (mkName "run") [Clause [clause'] (NormalB body) []]
 
@@ -56,7 +57,7 @@ handlerCaseQ lambdaHandler = do
   let pattern = LitP (StringL $ toString lambdaHandler)
   body <- [e|do
     result <- $(eName qualifiedName) (decodeObj $(eName "eventObject")) (decodeObj $(eName "contextObject"))
-    either returnAndFail returnAndSucceed result
+    either (returnAndFail $(eName "executionUuid")) (returnAndSucceed $(eName "executionUuid")) result
     |]
   pure $ Match pattern (NormalB body) []
  where
@@ -82,18 +83,16 @@ configureLambda = do
   return $ main <> [run]
 
 
-returnAndFail :: ToJSON a => a -> IO ()
-returnAndFail v = do
-  putTextLn "<<%ERROR>"
+returnAndFail :: ToJSON a => Text -> a -> IO ()
+returnAndFail uuid v = do
+  putTextLn $ "End of execution with uuid: " <> uuid
   putTextLn (decodeUtf8 $ encode v)
-  putTextLn "<ERROR%>>"
   exitFailure
 
-returnAndSucceed :: ToJSON a => a -> IO ()
-returnAndSucceed v = do
-  putTextLn "<<%RESULT>"
+returnAndSucceed :: ToJSON a => Text -> a -> IO ()
+returnAndSucceed uuid v = do
+  putTextLn $ "End of execution with uuid: " <> uuid
   putTextLn (decodeUtf8 $ encode v)
-  putTextLn "<RESULT%>>"
   exitSuccess
 
 decodeObj :: FromJSON a => Text -> a

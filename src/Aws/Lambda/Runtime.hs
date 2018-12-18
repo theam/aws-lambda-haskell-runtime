@@ -11,6 +11,9 @@ import Lens.Micro.Platform hiding ((.=))
 import qualified Network.Wreq as Wreq
 import qualified System.Environment as Environment
 import qualified System.Process as Process
+import qualified Data.Text as Text
+import qualified Data.UUID as UUID
+import qualified Data.UUID.V4 as UUID
 
 
 type App a =
@@ -157,38 +160,40 @@ initializeContext apiData = do
     }
 
 
+getFunctionResult :: UUID.UUID -> Text -> Maybe Text
+getFunctionResult u stdOut =
+  stdOut
+  & toText
+  & lines
+  & dropWhile (not . containsUuid)
+  & dropWhile containsUuid
+  & nonEmpty
+  & fmap head
+ where
+  uuid = toText $ UUID.toString u
+  containsUuid txt = uuid `Text.isSuffixOf` txt
+
+
 invoke :: Text -> Context -> App LambdaResult
 invoke event context = do
   handlerName <- readEnvironmentVariable "_HANDLER"
   runningDirectory <- readEnvironmentVariable "LAMBDA_TASK_ROOT"
   let contextJSON = decodeUtf8 $ encode context
+  uuid <- liftIO $ UUID.nextRandom
   out <- liftIO $ Process.readProcessWithExitCode (toString runningDirectory <> "/haskell_lambda")
                 [ "--eventObject", toString event
                 , "--contextObject", contextJSON
                 , "--functionHandler", toString handlerName
+                , "--executionUuid", UUID.toString uuid
                 ]
                 ""
   case out of
     (ExitSuccess, stdOut, _) -> do
-      let parsed = stdOut
-                 & toText
-                 & lines
-                 & dropWhile (/= "<<%RESULT>")
-                 & takeWhile (/= "<RESULT%>>")
-                 & nonEmpty
-                 & fmap head
-      case parsed of
+      case getFunctionResult uuid (toText stdOut) of
         Nothing -> throwError (ParseError "Parsing result" $ toText stdOut)
         Just value -> pure (LambdaResult value)
     (_, stdOut, _)           -> do
-      let parsed = stdOut
-                 & toText
-                 & lines
-                 & dropWhile (/= "<<%ERROR>")
-                 & takeWhile (/= "<ERROR%>>")
-                 & nonEmpty
-                 & fmap head
-      case parsed of
+      case getFunctionResult uuid (toText stdOut) of
         Nothing -> throwError (ParseError "Parsing result" $ toText stdOut)
         Just value -> throwError (InvocationError value)
 
