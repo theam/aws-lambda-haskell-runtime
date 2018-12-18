@@ -169,8 +169,28 @@ invoke event context = do
                 ]
                 ""
   case out of
-    (ExitSuccess, stdOut, _) -> pure (LambdaResult $ toText stdOut)
-    (_, stdOut, _)           -> throwError (InvocationError $ toText stdOut)
+    (ExitSuccess, stdOut, _) -> do
+      let parsed = stdOut
+                 & toText
+                 & lines
+                 & dropWhile (/= "<<%RESULT>")
+                 & takeWhile (/= "<RESULT%>>")
+                 & nonEmpty
+                 & fmap head
+      case parsed of
+        Nothing -> throwError (ParseError "Parsing result" $ toText stdOut)
+        Just value -> pure (LambdaResult value)
+    (_, stdOut, _)           -> do
+      let parsed = stdOut
+                 & toText
+                 & lines
+                 & dropWhile (/= "<<%ERROR>")
+                 & takeWhile (/= "<ERROR%>>")
+                 & nonEmpty
+                 & fmap head
+      case parsed of
+        Nothing -> throwError (ParseError "Parsing result" $ toText stdOut)
+        Just value -> throwError (InvocationError value)
 
 
 publishResult :: Context -> Text -> LambdaResult -> App ()

@@ -84,13 +84,17 @@ configureLambda = do
 
 returnAndFail :: ToJSON a => a -> IO ()
 returnAndFail v = do
- putTextLn (decodeUtf8 $ encode v)
- exitFailure
+  putTextLn "<<%ERROR>"
+  putTextLn (decodeUtf8 $ encode v)
+  putTextLn "<ERROR%>>"
+  exitFailure
 
 returnAndSucceed :: ToJSON a => a -> IO ()
 returnAndSucceed v = do
- putTextLn (decodeUtf8 $ encode v)
- exitSuccess
+  putTextLn "<<%RESULT>"
+  putTextLn (decodeUtf8 $ encode v)
+  putTextLn "<RESULT%>>"
+  exitSuccess
 
 decodeObj :: FromJSON a => Text -> a
 decodeObj x = (decode $ encodeUtf8 x) ?: error $ "Could not decode event " <> x
