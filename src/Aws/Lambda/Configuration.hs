@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-unused-pattern-binds #-}
 module Aws.Lambda.Configuration
   ( LambdaOptions (..)
   , configureLambda
@@ -32,6 +33,7 @@ data LambdaOptions = LambdaOptions
 instance Options.ParseRecord LambdaOptions
 
 
+-- This function is the reason why we disable the warning on top of the module
 mkMain :: Q [Dec]
 mkMain = [d|
   $(pName "main") = getRecord "" >>= run
@@ -104,18 +106,21 @@ returnAndSucceed uuid v = do
   exitSuccess
 
 decodeObj :: FromJSON a => Text -> a
-decodeObj x = (decode $ encodeUtf8 x) ?: error $ "Could not decode event " <> x
+decodeObj x =
+  case (eitherDecode $ encodeUtf8 x) of
+    Left e -> error $ toText e
+    Right v -> v
 
 data DirContent = DirList [FilePath] [FilePath]
                 | DirError IOError
 data DirData = DirData FilePath DirContent
 
 -- Produces directory data
-walk :: FilePath -> Conduit.Source IO DirData
+walk :: FilePath -> Conduit.ConduitT () DirData IO ()
 walk path = do
   result <- lift $ tryIOError listdir
   case result of
-    Right dl@(DirList subdirs files) -> do
+    Right dl@(DirList subdirs _) -> do
       Conduit.yield (DirData path dl)
       forM_ subdirs (walk . (path </>))
     Right e -> Conduit.yield (DirData path e)
@@ -133,14 +138,14 @@ walk path = do
 
 
 -- Consume directories
-myVisitor :: Conduit.Sink DirData IO [FilePath]
+myVisitor :: Conduit.ConduitT DirData Void IO [FilePath]
 myVisitor = loop []
  where
   loop n = do
     r <- Conduit.await
     case r of
       Nothing -> return n
-      Just r  -> loop (process r <> n)
+      Just result  -> loop (process result <> n)
   process (DirData _ (DirError _)) = []
   process (DirData dir (DirList _ files)) = map (\f -> dir <> "/" <> f) files
 
