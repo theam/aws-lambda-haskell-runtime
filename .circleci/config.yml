@@ -20,7 +20,11 @@ jobs:
             - stack-{{checksum "stack.yaml"}}-{{checksum "package.yaml"}}
       - run: stack setup
       - run: stack build
-      - run: zip runtime.zip $(stack path --local-install-root)/bin/bootstrap
+      - run: zip /tmp/runtime.zip $(stack path --local-install-root)/bin/bootstrap
+      - save-cache:
+          key: zip-file
+          paths:
+            - "/tmp/runtime.zip"
       - save-cache:
           key: stack-{{ checksum "stack.yaml" }}
           paths:
@@ -64,28 +68,24 @@ jobs:
       - image: circleci/python:2.7-jessie
     working_directory: ~/aws-lambda-haskell-runtime
     steps:
+      - checkout
+      - restore-cache:
+          keys: zip-file
+          paths:
+            - "/tmp/"
       - run:
           name: Install awscli
           command: sudo pip install awscli
       - run:
           name: Deploy to AWS Layers
-          command: aws lambda publish-layer-version --layer-name haskell-runtime --zip-file fileb://runtime.zip
-      - run:
-          name: Update README
           command: |
-            git clone --depth 1 https://${DOCS_GITHUB_TOKEN}@github.com/theam/aws-lambda-haskell-runtime.git runtime
-            cd runtime
-            sed -i '$ d' README.md
-            echo "\`$(aws lambda list-layer-versions --layer-name haskell-runtime | grep LayerVersionArn | head -n 1 | cut -d: -f2- | cut -d\" -f2)\`" >> README.md
-            git config credential.helper 'cache --timeout=120'
-            git config user.email "nikitatchayka@gmail.com"
-            git config user.name "Layer deployment bot"
-            git add README.md
-            git commit --allow-empty -m "Update ARN"
-            # Push quietly to prevent showing the token in log
-            git push -q https://${DOCS_GITHUB_TOKEN}@github.com/theam/aws-lambda-haskell-runtime.git master
-
-
+            LAYER_NAME="haskell-runtime"
+            REGIONS_LIST="us-east-1 us-east-2 us-west-1 us-west-2 ap-south-1 ap-northeast-2 ap-southeast-1 ap-southeast-2 ap-northeast-1 ca-central-1 eu-central-1 eu-west-1 eu-west-2 eu-west-3 eu-north-1 sa-east-1"
+            for region in $REGIONS_LIST
+            do
+              aws lambda publish-layer-version --layer-name $LAYER_NAME --zip-file fileb:///tmp/runtime.zip --region $region
+              aws lambda add-layer-version-permission --layer-name $LAYER_NAME --version-number $(aws lambda list-layer-versions --layer-name $LAYER_NAME --region $region | grep Version | tail -n+3 | head -n 1 | cut -d: -f2- | rev | cut -d, -f2 | rev) --principal '*' --action lambda:GetLayerVersion --statement-id allow-getLayerVersion-all --region $region
+            done
 
 workflows:
   version: 2
