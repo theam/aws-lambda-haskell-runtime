@@ -31,9 +31,6 @@ dependencies:
   - directory
   - filepath
   - uuid
-  - amazonka
-  - amazonka-core
-  - amazonka-cloudwatch-logs
   - time
 
 library:
@@ -73,4 +70,5 @@ default-extensions:
 
 ghc-options:
   - -Wall
+  - -Werror
   - -optP-Wno-nonportable-include-path
