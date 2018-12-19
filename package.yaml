@@ -31,6 +31,10 @@ dependencies:
   - directory
   - filepath
   - uuid
+  - amazonka
+  - amazonka-core
+  - amazonka-cloudwatch-logs
+  - time
 
 library:
   source-dirs: src

@@ -18,6 +18,7 @@ import qualified Conduit as Conduit
 import qualified System.Directory as Directory
 import System.FilePath ((</>))
 import System.IO.Error
+import System.IO (hFlush)
 
 import Aws.Lambda.ThHelpers
 
@@ -72,7 +73,7 @@ unmatchedCaseQ :: Q Match
 unmatchedCaseQ = do
   let pattern = WildP
   body <- [e|
-    returnAndFail ("Handler " <> $(eName "functionHandler") <> " does not exist on project")
+    returnAndFail $(eName "executionUuid") ("Handler " <> $(eName "functionHandler") <> " does not exist on project")
     |]
   pure $ Match pattern (NormalB body) []
 
@@ -85,14 +86,21 @@ configureLambda = do
 
 returnAndFail :: ToJSON a => Text -> a -> IO ()
 returnAndFail uuid v = do
-  putTextLn $ "End of execution with id: " <> uuid
+  hFlush stdout
+  putTextLn uuid
+  hFlush stdout
   putTextLn (decodeUtf8 $ encode v)
+  hFlush stdout
+  hFlush stderr
   exitFailure
 
 returnAndSucceed :: ToJSON a => Text -> a -> IO ()
 returnAndSucceed uuid v = do
-  putTextLn $ "End of execution with uuid: " <> uuid
+  hFlush stdout
+  putTextLn uuid
+  hFlush stdout
   putTextLn (decodeUtf8 $ encode v)
+  hFlush stdout
   exitSuccess
 
 decodeObj :: FromJSON a => Text -> a
