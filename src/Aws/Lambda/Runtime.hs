@@ -11,15 +11,8 @@ import Lens.Micro.Platform hiding ((.=))
 import qualified Network.Wreq as Wreq
 import qualified System.Environment as Environment
 import qualified System.Process as Process
-import qualified Data.Text as Text
 import qualified Data.UUID as UUID
 import qualified Data.UUID.V4 as UUID
-import qualified Data.Time.Clock.POSIX as Time
-import Network.AWS.CloudWatchLogs.PutLogEvents
-import Network.AWS.CloudWatchLogs.DescribeLogStreams
-import Network.AWS.CloudWatchLogs.Types
-import Control.Monad.Trans.AWS
-import Network.AWS.Auth
 import System.IO (hFlush)
 
 
@@ -163,8 +156,8 @@ initializeContext apiData = do
     }
 
 
-getFunctionResult :: (Text -> App ()) -> UUID.UUID -> Text -> App (Maybe Text)
-getFunctionResult cwPrint u stdOut = do
+getFunctionResult :: UUID.UUID -> Text -> App (Maybe Text)
+getFunctionResult u stdOut = do
   let out = stdOut
           & toText
           & lines
@@ -185,48 +178,12 @@ getFunctionResult cwPrint u stdOut = do
   uuid = toText $ UUID.toString u
 
 
-toAWSRegion :: Text -> Region
-toAWSRegion "us-east-1" = NorthVirginia
-toAWSRegion "us-east-2" = Ohio
-toAWSRegion "us-west-1" = NorthCalifornia
-toAWSRegion "us-west-2" = Oregon
-toAWSRegion "ca-central-1" = Montreal
-toAWSRegion "ap-northeast-1" = Tokyo
-toAWSRegion "ap-northeast-2" = Seoul
-toAWSRegion "ap-south-1" = Mumbai
-toAWSRegion "ap-southeast-1" = Singapore
-toAWSRegion "ap-southeast-2" = Sydney
-toAWSRegion "sa-east-1" = SaoPaulo
-toAWSRegion "eu-west-1" = Ireland
-toAWSRegion "eu-west-2" = London
-toAWSRegion "eu-central-1" = Frankfurt
-toAWSRegion "us-gov-west-1" = GovCloud
-toAWSRegion "fips-us-gov-west-1" = GovCloudFIPS
-toAWSRegion "cn-north-1" = Beijing
-toAWSRegion _ = error "The impossible happened: AWS provided a wrong region"
-
-
 invoke :: Text -> Context -> App LambdaResult
 invoke event context = do
   handlerName <- readEnvironmentVariable "_HANDLER"
   runningDirectory <- readEnvironmentVariable "LAMBDA_TASK_ROOT"
-  region <- toAWSRegion <$> readEnvironmentVariable "AWS_REGION"
-  amazonEnvironment <- liftIO $ newEnv Discover
-  let cwPrint d = liftIO $ runResourceT . runAWST amazonEnvironment . within region $ do
-          streamsDescription <- send $ describeLogStreams (logGroupName context)
-          let streams = streamsDescription ^. dlsrsLogStreams
-          let currentStream = nonEmpty $ filter (\stream -> (stream ^. lsLogStreamName) == (Just $ logStreamName context)) streams
-          case head <$> currentStream of
-            Nothing -> error "CloudWatch stream not created"
-            Just stream -> do
-              let nextToken = stream ^. lsUploadSequenceToken
-              timestamp <- liftIO $ Time.getPOSIXTime
-              let event = inputLogEvent (round timestamp) d
-              let operation = putLogEvents (logGroupName context) (logStreamName context) (event :| [])
-                            & pleSequenceToken .~ nextToken
-              void $ send operation
   let contextJSON = decodeUtf8 $ encode context
-  uuid <- liftIO $ UUID.nextRandom
+  uuid <- liftIO UUID.nextRandom
   out <- liftIO $ Process.readProcessWithExitCode (toString runningDirectory <> "/haskell_lambda")
                 [ "--eventObject", toString event
                 , "--contextObject", contextJSON
@@ -236,16 +193,15 @@ invoke event context = do
                 ""
   case out of
     (ExitSuccess, stdOut, _) -> do
-      cwPrint "Runtime, OK"
-      res <- getFunctionResult cwPrint uuid (toText stdOut)
+      res <- getFunctionResult uuid (toText stdOut)
       case res of
         Nothing -> throwError (ParseError "parsing result" $ toText stdOut)
         Just value -> pure (LambdaResult value)
     (_, stdOut, stdErr)           ->
-      if (stdErr /= "")
+      if stdErr /= ""
         then throwError (InvocationError $ toText stdErr)
         else do
-          res <- getFunctionResult cwPrint uuid (toText stdOut)
+          res <- getFunctionResult uuid (toText stdOut)
           case res of
             Nothing -> throwError (ParseError "parsing error" $ toText stdOut)
             Just value -> throwError (InvocationError value)
