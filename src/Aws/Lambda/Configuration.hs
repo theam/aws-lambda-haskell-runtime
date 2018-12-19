@@ -85,7 +85,7 @@ configureLambda = do
 
 returnAndFail :: ToJSON a => Text -> a -> IO ()
 returnAndFail uuid v = do
-  putTextLn $ "End of execution with uuid: " <> uuid
+  putTextLn $ "End of execution with id: " <> uuid
   putTextLn (decodeUtf8 $ encode v)
   exitFailure
 
