@@ -15,6 +15,7 @@ import qualified Data.Text.Encoding    as Encoding
 import Control.Monad
 import Data.Function ((&))
 import Data.Maybe (listToMaybe)
+import Data.Monoid ((<>))
 
 import qualified Data.CaseInsensitive as CI
 import Lens.Micro.Platform hiding ((.=))
