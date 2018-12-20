@@ -10,19 +10,30 @@ module Aws.Lambda.Configuration
 where
 
 import Data.Aeson
-import Relude
 
 import qualified Data.Text as Text
+import Data.Text (Text)
+import GHC.Generics
+import Data.Function ((&))
 import Language.Haskell.TH
 import qualified Options.Generic as Options
 import qualified Conduit as Conduit
 import qualified System.Directory as Directory
 import System.FilePath ((</>))
 import System.IO.Error
-import System.IO (hFlush)
+import System.IO (hFlush, stdout, stderr)
+import System.Exit (exitSuccess, exitFailure)
+import Control.Monad.Trans
+import Control.Monad
+import qualified Data.Text.Encoding    as Encoding
+import qualified Data.ByteString.Lazy as LazyByteString
+
+
 
 import Aws.Lambda.ThHelpers
 
+putTextLn :: Text -> IO ()
+putTextLn = putStrLn . Text.unpack
 
 data LambdaOptions = LambdaOptions
   { eventObject     :: Text
@@ -57,7 +68,7 @@ dispatcherCaseQ fileNames = do
 
 handlerCaseQ :: Text -> Q Match
 handlerCaseQ lambdaHandler = do
-  let pattern = LitP (StringL $ toString lambdaHandler)
+  let pattern = LitP (StringL $ Text.unpack lambdaHandler)
   body <- [e|do
     result <- $(eName qualifiedName) (decodeObj $(eName "eventObject")) (decodeObj $(eName "contextObject"))
     either (returnAndFail $(eName "executionUuid")) (returnAndSucceed $(eName "executionUuid")) result
@@ -91,7 +102,7 @@ returnAndFail uuid v = do
   hFlush stdout
   putTextLn uuid
   hFlush stdout
-  putTextLn (decodeUtf8 $ encode v)
+  putTextLn (Encoding.decodeUtf8 $ LazyByteString.toStrict $ encode v)
   hFlush stdout
   hFlush stderr
   exitFailure
@@ -101,15 +112,16 @@ returnAndSucceed uuid v = do
   hFlush stdout
   putTextLn uuid
   hFlush stdout
-  putTextLn (decodeUtf8 $ encode v)
+  putTextLn (Encoding.decodeUtf8 $ LazyByteString.toStrict $ encode v)
   hFlush stdout
   exitSuccess
 
 decodeObj :: FromJSON a => Text -> a
 decodeObj x =
-  case (eitherDecode $ encodeUtf8 x) of
-    Left e -> error $ toText e
+  case (eitherDecode $ LazyByteString.fromStrict $ Encoding.encodeUtf8 x) of
+    Left e -> error e
     Right v -> v
+
 
 data DirContent = DirList [FilePath] [FilePath]
                 | DirError IOError
@@ -134,11 +146,11 @@ walk path = do
    where
     isFile entry = Directory.doesFileExist (path </> entry)
     isDir entry = Directory.doesDirectoryExist (path </> entry)
-    filterHidden paths = return $ filter (\p -> head (fromMaybe (error "") $ nonEmpty p) /= '.') paths
+    filterHidden paths = return $ filter (\p -> head p /= '.') paths
 
 
 -- Consume directories
-myVisitor :: Conduit.ConduitT DirData Void IO [FilePath]
+myVisitor :: Conduit.ConduitT DirData Conduit.Void IO [FilePath]
 myVisitor = loop []
  where
   loop n = do
@@ -154,7 +166,7 @@ getHandlers :: IO [Text]
 getHandlers = do
   files <- Conduit.runConduit $ walk "." Conduit..| myVisitor
   handlerFiles <- files
-                   & fmap toText
+                   & fmap Text.pack
                    & filter (Text.isSuffixOf ".hs")
                    & filterM containsHandler
                    & fmap (fmap $ Text.dropEnd 3)
@@ -165,6 +177,5 @@ getHandlers = do
 
 containsHandler :: Text -> IO Bool
 containsHandler file = do
-  fileContents <- readFile $ toString file
-  return $ "handler :: " `Text.isInfixOf` fileContents
-        && "IO (Either " `Text.isInfixOf` fileContents
+  fileContents <- readFile $ Text.unpack file
+  return $ "handler :: " `Text.isInfixOf` Text.pack fileContents
