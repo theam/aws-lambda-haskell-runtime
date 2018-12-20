@@ -94,11 +94,11 @@ workflows:
       - build
       - test
       - deploy:
-        requires:
-          - build
-        filters:
-          branches:
-            only: master
+          requires:
+            - build
+          filters:
+            branches:
+              only: master
 
 general:
   branches:
