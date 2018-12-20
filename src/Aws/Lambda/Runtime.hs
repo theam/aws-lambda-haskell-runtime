@@ -74,6 +74,30 @@ newtype LambdaResult =
   LambdaResult Text
 
 
+awsLambdaVersion :: String
+awsLambdaVersion = "2018-06-01"
+
+
+nextInvocationEndpoint :: Text -> String
+nextInvocationEndpoint endpoint =
+  "http://" <> toString endpoint <> "/"<> awsLambdaVersion <>"/runtime/invocation/next"
+
+
+responseEndpoint :: Text -> Text -> String
+responseEndpoint lambdaApi requestId =
+  "http://"<> toString lambdaApi <> "/" <> awsLambdaVersion <> "/runtime/invocation/"<> toString requestId <> "/response"
+
+
+invocationErrorEndpoint :: Text -> Text -> String
+invocationErrorEndpoint lambdaApi requestId =
+  "http://"<> toString lambdaApi <> "/" <> awsLambdaVersion <> "/runtime/invocation/"<> toString requestId <> "/error"
+
+
+runtimeInitErrorEndpoint :: Text -> String
+runtimeInitErrorEndpoint lambdaApi =
+  "http://"<> toString lambdaApi <> "/" <> awsLambdaVersion <> "/runtime/init/error"
+
+
 readEnvironmentVariable :: Text -> App Text
 readEnvironmentVariable envVar = do
   v <- lift (Environment.lookupEnv $ toString envVar)
@@ -204,9 +228,8 @@ invoke event context = do
 
 
 publishResult :: Context -> Text -> LambdaResult -> App ()
-publishResult Context {..} lambdaApi (LambdaResult result) = do
-  let endpoint = "http://"<> lambdaApi <> "/2018-06-01/runtime/invocation/"<> awsRequestId <> "/response"
-  void $ liftIO $ Wreq.post (toString endpoint) (encodeUtf8 @Text @ByteString result)
+publishResult Context {..} lambdaApi (LambdaResult result) =
+  void $ liftIO $ Wreq.post (responseEndpoint lambdaApi awsRequestId) (encodeUtf8 @Text @ByteString result)
 
 
 invokeAndPublish :: Context -> Text -> Text -> App ()
@@ -216,17 +239,14 @@ invokeAndPublish ctx event lambdaApiEndpoint = do
 
 
 publishError :: Context -> Text -> RuntimeError -> App ()
-publishError Context {..} lambdaApiEndpoint (InvocationError err) = do
-  let endpoint = "http://"<> lambdaApiEndpoint <> "/2018-06-01/runtime/invocation/"<> awsRequestId <> "/error"
-  void (liftIO $ Wreq.post (toString endpoint) (encodeUtf8 @Text @ByteString err))
+publishError Context {..} lambdaApiEndpoint (InvocationError err) =
+  void (liftIO $ Wreq.post (invocationErrorEndpoint lambdaApiEndpoint awsRequestId) (encodeUtf8 @Text @ByteString err))
 
-publishError Context {..} lambdaApiEndpoint (ParseError t t2) = do
-  let endpoint = "http://"<> lambdaApiEndpoint <> "/2018-06-01/runtime/invocation/"<> awsRequestId <> "/error"
-  void (liftIO $ Wreq.post (toString endpoint) (toJSON $ ParseError t t2))
+publishError Context {..} lambdaApiEndpoint (ParseError t t2) =
+  void (liftIO $ Wreq.post (invocationErrorEndpoint lambdaApiEndpoint awsRequestId) (toJSON $ ParseError t t2))
 
-publishError Context {..} lambdaApiEndpoint err = do
-  let endpoint = "http://"<> lambdaApiEndpoint <> "/2018-06-01/runtime/init/error"
-  void (liftIO $ Wreq.post (toString endpoint) (toJSON err))
+publishError Context {..} lambdaApiEndpoint err =
+  void (liftIO $ Wreq.post (runtimeInitErrorEndpoint lambdaApiEndpoint) (toJSON err))
 
 
 lambdaRunner :: App ()
