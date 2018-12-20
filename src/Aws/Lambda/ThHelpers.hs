@@ -1,4 +1,8 @@
-module Aws.Lambda.ThHelpers where
+module Aws.Lambda.ThHelpers
+  ( pName
+  , eName
+  , recordQ
+  ) where
 
 import Relude
 import Language.Haskell.TH
@@ -13,10 +17,6 @@ pName = pure . VarP . mkName . toString
 eName :: Text -> Q Exp
 eName = pure . VarE . mkName . toString
 
--- | Helper for extracting fields of records
--- think of @personAge@ in @myFunction Person { personAge = personAge } = ...@
-fName :: Text -> Q FieldPat
-fName name = pure (mkName $ toString name, VarP $ mkName $ toString name)
 
 -- | Helper for extracting fields of a specified record
 -- it expects the constructor name as the first parameter,
@@ -27,3 +27,8 @@ recordQ :: Text -> [Text] -> Q Pat
 recordQ name fields = do
   extractedFields <- traverse fName fields
   pure $ RecP (mkName $ toString name) extractedFields
+ where
+  -- | Helper for extracting fields of records
+  -- think of @personAge@ in @myFunction Person { personAge = personAge } = ...@
+  fName :: Text -> Q FieldPat
+  fName n = pure (mkName $ toString n, VarP $ mkName $ toString n)

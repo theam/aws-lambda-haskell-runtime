@@ -16,24 +16,24 @@ description: Please see the README on GitHub at <https://github.com/theam/aws-la
 
 dependencies:
   - base >= 4.7 && < 5
-  - aeson
-  - bytestring
   - relude
-  - wreq
-  - microlens-platform
-  - mtl
-  - case-insensitive
-  - process
-  - optparse-generic
-  - template-haskell
-  - text
-  - conduit
-  - directory
-  - filepath
-  - uuid
-  - time
 
 library:
+  dependencies:
+    - aeson
+    - bytestring
+    - case-insensitive
+    - conduit
+    - directory
+    - filepath
+    - microlens-platform
+    - mtl
+    - optparse-generic
+    - process
+    - template-haskell
+    - text
+    - uuid
+    - wreq
   source-dirs: src
   exposed-modules:
     - Aws.Lambda.Runtime
@@ -55,9 +55,7 @@ tests:
       - -rtsopts
       - -with-rtsopts=-N
     dependencies:
-      - aws-lambda-haskell-runtime
       - hspec
-      - QuickCheck
 
 default-extensions:
   - TemplateHaskell
