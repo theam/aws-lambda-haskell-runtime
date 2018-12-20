@@ -14,19 +14,19 @@ cd my-haskell-lambda
 stack docker pull
 ```
 
-Then add 
+Then add
 
 ```
 packages:
 - .
 
 extra-deps:
-- aws-lambda-haskell-runtime-1.0.4
+- aws-lambda-haskell-runtime-1.0.7
 ```
 
 to your `stack.yaml`
 
-Then run 
+Then run
 
 ```
 make
@@ -47,7 +47,7 @@ The version of the layer may be different depending of the region, the current v
 
 | us-east-2 | Other regions |
 |-----------|---------------|
-|    10     |       2       |
+|    13     |       5       |
 
 ## Full user guide
 
