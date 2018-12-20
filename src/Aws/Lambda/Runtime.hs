@@ -94,18 +94,14 @@ readFunctionMemory = do
 
 getApiData :: Text -> App (Wreq.Response LByteString)
 getApiData endpoint =
-  tryIO (Wreq.get nextInvocationEndpoint)
+  keepRetrying (Wreq.get $ nextInvocationEndpoint endpoint)
  where
-  nextInvocationEndpoint :: String
-  nextInvocationEndpoint =
-    "http://" <> toString endpoint <> "/2018-06-01/runtime/invocation/next"
-
-  tryIO :: IO (Wreq.Response LByteString) -> App (Wreq.Response LByteString)
-  tryIO f = do
+  keepRetrying :: IO (Wreq.Response LByteString) -> App (Wreq.Response LByteString)
+  keepRetrying f = do
     result <- (liftIO $ try f) :: App (Either IOException (Wreq.Response LByteString))
     case result of
       Right x -> return x
-      _ -> tryIO f
+      _ -> keepRetrying f
 
 
 extractHeader :: Wreq.Response LByteString -> Text -> Text
