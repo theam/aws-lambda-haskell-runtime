@@ -11,6 +11,9 @@ import Lens.Micro.Platform hiding ((.=))
 import qualified Network.Wreq as Wreq
 import qualified System.Environment as Environment
 import qualified System.Process as Process
+import qualified Data.UUID as UUID
+import qualified Data.UUID.V4 as UUID
+import System.IO (hFlush)
 
 
 type App a =
@@ -71,6 +74,30 @@ newtype LambdaResult =
   LambdaResult Text
 
 
+awsLambdaVersion :: String
+awsLambdaVersion = "2018-06-01"
+
+
+nextInvocationEndpoint :: Text -> String
+nextInvocationEndpoint endpoint =
+  "http://" <> toString endpoint <> "/"<> awsLambdaVersion <>"/runtime/invocation/next"
+
+
+responseEndpoint :: Text -> Text -> String
+responseEndpoint lambdaApi requestId =
+  "http://"<> toString lambdaApi <> "/" <> awsLambdaVersion <> "/runtime/invocation/"<> toString requestId <> "/response"
+
+
+invocationErrorEndpoint :: Text -> Text -> String
+invocationErrorEndpoint lambdaApi requestId =
+  "http://"<> toString lambdaApi <> "/" <> awsLambdaVersion <> "/runtime/invocation/"<> toString requestId <> "/error"
+
+
+runtimeInitErrorEndpoint :: Text -> String
+runtimeInitErrorEndpoint lambdaApi =
+  "http://"<> toString lambdaApi <> "/" <> awsLambdaVersion <> "/runtime/init/error"
+
+
 readEnvironmentVariable :: Text -> App Text
 readEnvironmentVariable envVar = do
   v <- lift (Environment.lookupEnv $ toString envVar)
@@ -91,22 +118,14 @@ readFunctionMemory = do
 
 getApiData :: Text -> App (Wreq.Response LByteString)
 getApiData endpoint =
-  tryIO (Wreq.get nextInvocationEndpoint)
+  keepRetrying (Wreq.get $ nextInvocationEndpoint endpoint)
  where
-  nextInvocationEndpoint :: String
-  nextInvocationEndpoint =
-    "http://" <> toString endpoint <> "/2018-06-01/runtime/invocation/next"
-
-  tryIO :: IO a -> App a
-  tryIO f =
-    try f
-    & catchApiException
-
-  catchApiException :: IO (Either IOException a) -> App a
-  catchApiException action =
-    action
-    & fmap (first $ const ApiConnectionError)
-    & ExceptT
+  keepRetrying :: IO (Wreq.Response LByteString) -> App (Wreq.Response LByteString)
+  keepRetrying f = do
+    result <- (liftIO $ try f) :: App (Either IOException (Wreq.Response LByteString))
+    case result of
+      Right x -> return x
+      _ -> keepRetrying f
 
 
 extractHeader :: Wreq.Response LByteString -> Text -> Text
@@ -157,26 +176,60 @@ initializeContext apiData = do
     }
 
 
+getFunctionResult :: UUID.UUID -> Text -> App (Maybe Text)
+getFunctionResult u stdOut = do
+  let out = stdOut
+          & toText
+          & lines
+
+  out
+   & takeWhile (/= uuid)
+   & traverse_ ( \t -> do
+    liftIO $ putTextLn t
+    liftIO $ hFlush stdout)
+
+  out
+   & dropWhile (/= uuid)
+   & dropWhile (== uuid)
+   & nonEmpty
+   & fmap head
+   & return
+ where
+  uuid = toText $ UUID.toString u
+
+
 invoke :: Text -> Context -> App LambdaResult
 invoke event context = do
   handlerName <- readEnvironmentVariable "_HANDLER"
   runningDirectory <- readEnvironmentVariable "LAMBDA_TASK_ROOT"
   let contextJSON = decodeUtf8 $ encode context
+  uuid <- liftIO UUID.nextRandom
   out <- liftIO $ Process.readProcessWithExitCode (toString runningDirectory <> "/haskell_lambda")
                 [ "--eventObject", toString event
                 , "--contextObject", contextJSON
                 , "--functionHandler", toString handlerName
+                , "--executionUuid", UUID.toString uuid
                 ]
                 ""
   case out of
-    (ExitSuccess, stdOut, _) -> pure (LambdaResult $ toText stdOut)
-    (_, stdOut, _)           -> throwError (InvocationError $ toText stdOut)
+    (ExitSuccess, stdOut, _) -> do
+      res <- getFunctionResult uuid (toText stdOut)
+      case res of
+        Nothing -> throwError (ParseError "parsing result" $ toText stdOut)
+        Just value -> pure (LambdaResult value)
+    (_, stdOut, stdErr)           ->
+      if stdErr /= ""
+        then throwError (InvocationError $ toText stdErr)
+        else do
+          res <- getFunctionResult uuid (toText stdOut)
+          case res of
+            Nothing -> throwError (ParseError "parsing error" $ toText stdOut)
+            Just value -> throwError (InvocationError value)
 
 
 publishResult :: Context -> Text -> LambdaResult -> App ()
-publishResult Context {..} lambdaApi (LambdaResult result) = do
-  let endpoint = "http://"<> lambdaApi <> "/2018-06-01/runtime/invocation/"<> awsRequestId <> "/response"
-  void $ liftIO $ Wreq.post (toString endpoint) (encodeUtf8 @Text @ByteString result)
+publishResult Context {..} lambdaApi (LambdaResult result) =
+  void $ liftIO $ Wreq.post (responseEndpoint lambdaApi awsRequestId) (encodeUtf8 @Text @ByteString result)
 
 
 invokeAndPublish :: Context -> Text -> Text -> App ()
@@ -186,13 +239,14 @@ invokeAndPublish ctx event lambdaApiEndpoint = do
 
 
 publishError :: Context -> Text -> RuntimeError -> App ()
-publishError Context {..} lambdaApiEndpoint (InvocationError err) = do
-  let endpoint = "http://"<> lambdaApiEndpoint <> "/2018-06-01/runtime/invocation/"<> awsRequestId <> "/error"
-  void (liftIO $ Wreq.post (toString endpoint) (encodeUtf8 @Text @ByteString err))
+publishError Context {..} lambdaApiEndpoint (InvocationError err) =
+  void (liftIO $ Wreq.post (invocationErrorEndpoint lambdaApiEndpoint awsRequestId) (encodeUtf8 @Text @ByteString err))
 
-publishError Context {..} lambdaApiEndpoint err = do
-  let endpoint = "http://"<> lambdaApiEndpoint <> "/2018-06-01/runtime/init/error"
-  void (liftIO $ Wreq.post (toString endpoint) (toJSON err))
+publishError Context {..} lambdaApiEndpoint (ParseError t t2) =
+  void (liftIO $ Wreq.post (invocationErrorEndpoint lambdaApiEndpoint awsRequestId) (toJSON $ ParseError t t2))
+
+publishError Context {..} lambdaApiEndpoint err =
+  void (liftIO $ Wreq.post (runtimeInitErrorEndpoint lambdaApiEndpoint) (toJSON err))
 
 
 lambdaRunner :: App ()

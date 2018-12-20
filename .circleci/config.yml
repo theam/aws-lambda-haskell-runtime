@@ -93,6 +93,12 @@ workflows:
     jobs:
       - build
       - test
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only: master
 
 general:
   branches:
