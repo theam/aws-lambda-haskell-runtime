@@ -1,6 +1,7 @@
 module Main where
 
-import Relude
+import Control.Monad
+import Control.Monad.Except
 import Aws.Lambda.Runtime
 
 
@@ -9,4 +10,4 @@ main = forever $ do
   res <- runExceptT lambdaRunner
   case res of
     Right _ -> return ()
-    Left err  -> putTextLn $ show err
+    Left err  -> putStrLn $ show err

@@ -4,18 +4,19 @@ module Aws.Lambda.ThHelpers
   , recordQ
   ) where
 
-import Relude
 import Language.Haskell.TH
+import qualified Data.Text as Text
+import Data.Text (Text)
 
 -- | Helper for defining names in declarations
 -- think of @myValue@ in @myValue = 2@
 pName :: Text -> Q Pat
-pName = pure . VarP . mkName . toString
+pName = pure . VarP . mkName . Text.unpack
 
 -- | Helper for defining names in expressions
 -- think of @myFunction@ in @quux = myFunction 3@
 eName :: Text -> Q Exp
-eName = pure . VarE . mkName . toString
+eName = pure . VarE . mkName . Text.unpack
 
 
 -- | Helper for extracting fields of a specified record
@@ -26,9 +27,9 @@ eName = pure . VarE . mkName . toString
 recordQ :: Text -> [Text] -> Q Pat
 recordQ name fields = do
   extractedFields <- traverse fName fields
-  pure $ RecP (mkName $ toString name) extractedFields
+  pure $ RecP (mkName $ Text.unpack name) extractedFields
  where
   -- | Helper for extracting fields of records
   -- think of @personAge@ in @myFunction Person { personAge = personAge } = ...@
   fName :: Text -> Q FieldPat
-  fName n = pure (mkName $ toString n, VarP $ mkName $ toString n)
+  fName n = pure (mkName $ Text.unpack n, VarP $ mkName $ Text.unpack n)

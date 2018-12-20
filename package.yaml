@@ -1,5 +1,5 @@
 name: aws-lambda-haskell-runtime
-version: 1.0.5
+version: 1.0.6
 github: "theam/aws-lambda-haskell-runtime"
 license: Apache-2.0
 author: Nikita Tchayka
@@ -16,7 +16,7 @@ description: Please see the README on GitHub at <https://github.com/theam/aws-la
 
 dependencies:
   - base >= 4.7 && < 5
-  - relude
+  - mtl
 
 library:
   dependencies:
@@ -27,7 +27,6 @@ library:
     - directory
     - filepath
     - microlens-platform
-    - mtl
     - optparse-generic
     - process
     - template-haskell
@@ -62,7 +61,6 @@ default-extensions:
   - OverloadedStrings
   - RecordWildCards
   - ScopedTypeVariables
-  - NoImplicitPrelude
   - DeriveGeneric
   - TypeApplications
 
