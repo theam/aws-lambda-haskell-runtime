@@ -1,5 +1,5 @@
 name: aws-lambda-haskell-runtime
-version: 1.0.7
+version: 1.0.8
 github: "theam/aws-lambda-haskell-runtime"
 license: Apache-2.0
 author: Nikita Tchayka
@@ -66,5 +66,4 @@ default-extensions:
 
 ghc-options:
   - -Wall
-  - -Werror
   - -optP-Wno-nonportable-include-path

@@ -17,7 +17,7 @@ import GHC.Generics
 import Data.Function ((&))
 import Language.Haskell.TH
 import qualified Options.Generic as Options
-import qualified Conduit as Conduit
+import qualified Data.Conduit as Conduit
 import qualified System.Directory as Directory
 import System.FilePath ((</>))
 import System.IO.Error
@@ -27,6 +27,8 @@ import Control.Monad.Trans
 import Control.Monad
 import qualified Data.Text.Encoding    as Encoding
 import qualified Data.ByteString.Lazy as LazyByteString
+import Data.Void
+import Data.Monoid
 
 
 
@@ -128,7 +130,7 @@ data DirContent = DirList [FilePath] [FilePath]
 data DirData = DirData FilePath DirContent
 
 -- Produces directory data
-walk :: FilePath -> Conduit.ConduitT () DirData IO ()
+walk :: FilePath -> Conduit.ConduitM () DirData IO ()
 walk path = do
   result <- lift $ tryIOError listdir
   case result of
@@ -150,7 +152,7 @@ walk path = do
 
 
 -- Consume directories
-myVisitor :: Conduit.ConduitT DirData Conduit.Void IO [FilePath]
+myVisitor :: Conduit.ConduitM DirData Void IO [FilePath]
 myVisitor = loop []
  where
   loop n = do
