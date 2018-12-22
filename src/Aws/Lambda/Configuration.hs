@@ -127,9 +127,7 @@ decodeObj x =
 
 data DirContent = DirList [FilePath] [FilePath]
                 | DirError IOError
-                deriving Show
 data DirData = DirData FilePath DirContent
-    deriving Show
 
 
 -- Produces directory data
