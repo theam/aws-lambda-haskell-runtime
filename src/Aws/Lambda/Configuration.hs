@@ -127,7 +127,10 @@ decodeObj x =
 
 data DirContent = DirList [FilePath] [FilePath]
                 | DirError IOError
+                deriving Show
 data DirData = DirData FilePath DirContent
+    deriving Show
+
 
 -- Produces directory data
 walk :: FilePath -> Conduit.ConduitM () DirData IO ()
@@ -141,14 +144,14 @@ walk path = do
     Left e -> Conduit.yield (DirData path (DirError e))
  where
   listdir = do
-    entries <- Directory.getDirectoryContents path >>= filterHidden
+    entries <- filterHidden <$> Directory.getDirectoryContents path
     subdirs <- filterM isDir entries
     files   <- filterM isFile entries
     return $ DirList subdirs files
    where
     isFile entry = Directory.doesFileExist (path </> entry)
     isDir entry = Directory.doesDirectoryExist (path </> entry)
-    filterHidden paths = return $ filter (\p -> head p /= '.') paths
+    filterHidden paths = filter (\p -> head p /= '.' && p /= "node_modules") paths
 
 
 -- Consume directories
