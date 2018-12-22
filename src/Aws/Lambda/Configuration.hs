@@ -129,6 +129,7 @@ data DirContent = DirList [FilePath] [FilePath]
                 | DirError IOError
 data DirData = DirData FilePath DirContent
 
+
 -- Produces directory data
 walk :: FilePath -> Conduit.ConduitM () DirData IO ()
 walk path = do
@@ -141,14 +142,14 @@ walk path = do
     Left e -> Conduit.yield (DirData path (DirError e))
  where
   listdir = do
-    entries <- Directory.getDirectoryContents path >>= filterHidden
+    entries <- filterHidden <$> Directory.getDirectoryContents path
     subdirs <- filterM isDir entries
     files   <- filterM isFile entries
     return $ DirList subdirs files
    where
     isFile entry = Directory.doesFileExist (path </> entry)
     isDir entry = Directory.doesDirectoryExist (path </> entry)
-    filterHidden paths = return $ filter (\p -> head p /= '.') paths
+    filterHidden paths = filter (\p -> head p /= '.' && p /= "node_modules") paths
 
 
 -- Consume directories
