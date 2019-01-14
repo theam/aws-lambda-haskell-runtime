@@ -20,7 +20,7 @@ jobs:
             - stack-{{checksum "stack.yaml"}}-{{checksum "package.yaml"}}
       - run: stack setup
       - run: stack build
-      - run: zip /tmp/runtime.zip $(stack path --local-install-root)/bin/bootstrap
+      - run: cd $(stack path --local-install-root)/bin/ && zip /tmp/runtime.zip bootstrap
       - save-cache:
           key: zip-file
           paths:
@@ -79,7 +79,7 @@ jobs:
       - run:
           name: Deploy to AWS Layers
           command: |
-            LAYER_NAME="haskell-runtime"
+            LAYER_NAME="aws-haskell-runtime"
             REGIONS_LIST="us-east-1 us-east-2 us-west-1 us-west-2 ap-south-1 ap-northeast-2 ap-southeast-1 ap-southeast-2 ap-northeast-1 ca-central-1 eu-central-1 eu-west-1 eu-west-2 eu-west-3 eu-north-1 sa-east-1"
             for region in $REGIONS_LIST
             do
