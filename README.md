@@ -21,7 +21,7 @@ packages:
 - .
 
 extra-deps:
-- aws-lambda-haskell-runtime-1.0.7
+- aws-lambda-haskell-runtime-1.0.9
 ```
 
 to your `stack.yaml`
