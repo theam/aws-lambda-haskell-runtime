@@ -40,14 +40,8 @@ When creating your lambda function you need to provide a layer with the Haskell 
 
 The ARN of the runtime layer is:
 ```
-arn:aws:lambda:<YOUR REGION>:785355572843:layer:haskell-runtime:<VERSION>
+arn:aws:lambda:<YOUR REGION>:785355572843:layer:aws-haskell-runtime:2
 ````
-
-The version of the layer may be different depending of the region, the current values are:
-
-| us-east-2 | Other regions |
-|-----------|---------------|
-|    13     |       5       |
 
 ## Full user guide
 
