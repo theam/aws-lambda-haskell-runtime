@@ -11,7 +11,7 @@ description:         Please see the README on GitHub at <https://github.com/{{gi
 
 dependencies:
 - base >= 4.7 && < 5
-- aws-lambda-haskell-runtime >= 1.0.7
+- aws-lambda-haskell-runtime >= 1.0.9
 - aeson
 
 library:
