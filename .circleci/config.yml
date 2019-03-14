@@ -1,106 +1,39 @@
-defaults: &defaults
-  working_directory: ~/aws-lambda-haskell-runtime
-  docker:
-    - image: fpco/stack-build:lts-12.13
+version: 2.1
 
-version: 2
-jobs:
-  build:
-    <<: *defaults
-    environment:
-      TEST_RESULTS: /tmp/test-results
-
-    steps:
-      - checkout
-      - restore-cache:
-          keys:
-            - stack-{{ checksum "stack.yaml" }}
-      - restore-cache:
-          keys:
-            - stack-{{checksum "stack.yaml"}}-{{checksum "package.yaml"}}
-      - run: stack setup
-      - run: stack build
-      - run: cd $(stack path --local-install-root)/bin/ && zip -j /tmp/runtime.zip bootstrap
-      - save-cache:
-          key: zip-file
-          paths:
-            - "/tmp/runtime.zip"
-      - save-cache:
-          key: stack-{{ checksum "stack.yaml" }}
-          paths:
-            - "~/.stack"
-      - restore-cache:
-          keys: stack-{{checksum "stack.yaml"}}-{{checksum "package.yaml"}}
-          paths:
-            - ".stack-work"
-      - store_test_results:
-          path: ~/.stack-work/logs/*
-
-
-  test:
-    <<: *defaults
-    environment:
-      TEST_RESULTS: /tmp/test-results
-
-    steps:
-      - checkout
-      - restore-cache:
-          keys:
-            - stack-{{ checksum "stack.yaml" }}
-      - restore-cache:
-          keys:
-            - stack-{{checksum "stack.yaml"}}-{{checksum "package.yaml"}}
-      - run: stack setup
-      - run: stack test
-      - save-cache:
-          key: stack-{{ checksum "stack.yaml" }}
-          paths:
-            - "~/.stack"
-      - restore-cache:
-          keys: stack-{{checksum "stack.yaml"}}-{{checksum "package.yaml"}}
-          paths:
-            - ".stack-work"
-      - store_test_results:
-          path: ~/.stack-work/logs/*
-
-  deploy:
-    docker:
-      - image: circleci/python:2.7-jessie
-    working_directory: ~/aws-lambda-haskell-runtime
-    steps:
-      - checkout
-      - restore-cache:
-          key: zip-file
-          paths:
-            - "/tmp/"
-      - run:
-          name: Install awscli
-          command: sudo pip install awscli
-      - run:
-          name: Deploy to AWS Layers
-          command: |
-            LAYER_NAME="aws-haskell-runtime"
-            REGIONS_LIST="us-east-1 us-east-2 us-west-1 us-west-2 ap-south-1 ap-northeast-2 ap-southeast-1 ap-southeast-2 ap-northeast-1 ca-central-1 eu-central-1 eu-west-1 eu-west-2 eu-west-3 eu-north-1 sa-east-1"
-            for region in $REGIONS_LIST
-            do
-              aws lambda publish-layer-version --layer-name $LAYER_NAME --zip-file fileb:///tmp/runtime.zip --region $region
-              aws lambda add-layer-version-permission --layer-name $LAYER_NAME --version-number $(aws lambda list-layer-versions --layer-name $LAYER_NAME --region $region | grep Version | tail -n+3 | head -n 1 | cut -d: -f2- | rev | cut -d, -f2 | rev) --principal '*' --action lambda:GetLayerVersion --statement-id allow-getLayerVersion-all --region $region
-            done
+orbs:
+  haskell: haskell-works/haskell-build@1.6.2
+  github: haskell-works/github-release@1.2.1
+  hackage: haskell-works/hackage@1.0.0
 
 workflows:
-  version: 2
-  build-and-deploy:
+  multiple-ghc-build:
     jobs:
-      - build
-      - test
-      - deploy:
+      - haskell/build:
+          name: GHC 8.2.2
+          executor: haskell/ghc-8_2_2
+
+      - haskell/build:
+          name: GHC 8.4.4
+          executor: haskell/ghc-8_4_4
+
+      - haskell/build:
+          name: GHC 8.6.3
+          executor: haskell/ghc-8_6_3
+
+      - github/release-cabal:
+          name: GitHub Release
           requires:
-            - build
+            - GHC 8.2.2
+            - GHC 8.4.4
+            - GHC 8.6.3
+          checkout: true
           filters:
             branches:
               only: master
 
-general:
-  branches:
-    only:
-      - master
+      - hackage/upload:
+          publish: true
+          requires:
+            - GitHub Release
+          username: ${HACKAGE_USER}
+          password: ${HACKAGE_PASS}
