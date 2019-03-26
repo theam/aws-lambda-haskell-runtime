@@ -1,5 +1,5 @@
 name: aws-lambda-haskell-runtime
-version: 1.0.9
+version: 1.0.10
 github: "theam/aws-lambda-haskell-runtime"
 license: Apache-2.0
 author: Nikita Tchayka
@@ -26,6 +26,7 @@ library:
     - conduit
     - directory
     - filepath
+    - http-client
     - microlens-platform
     - optparse-generic
     - process
