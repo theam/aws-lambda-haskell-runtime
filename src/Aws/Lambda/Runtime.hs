@@ -20,6 +20,7 @@ import Data.Monoid ((<>))
 import qualified Data.CaseInsensitive as CI
 import Lens.Micro.Platform hiding ((.=))
 import qualified Network.Wreq as Wreq
+import qualified Network.HTTP.Client as Http
 import qualified System.Environment as Environment
 import qualified System.Process as Process
 import qualified Data.UUID as UUID
@@ -132,8 +133,10 @@ readFunctionMemory = do
 
 getApiData :: Text -> App (Wreq.Response LByteString)
 getApiData endpoint =
-  keepRetrying (Wreq.get $ nextInvocationEndpoint endpoint)
+  keepRetrying (Wreq.getWith opts $ nextInvocationEndpoint endpoint)
  where
+  opts = Wreq.defaults
+         & Wreq.manager .~ Left (Http.defaultManagerSettings { Http.managerResponseTimeout = Http.responseTimeoutNone })
   keepRetrying :: IO (Wreq.Response LByteString) -> App (Wreq.Response LByteString)
   keepRetrying f = do
     result <- (liftIO $ try f) :: App (Either IOException (Wreq.Response LByteString))
