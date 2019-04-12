@@ -1,7 +1,7 @@
 defaults: &defaults
   working_directory: ~/aws-lambda-haskell-runtime
   docker:
-    - image: fpco/stack-build:lts-12.13
+    - image: fpco/stack-build:lts-13.0
 
 version: 2
 jobs:
