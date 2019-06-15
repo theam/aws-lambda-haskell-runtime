@@ -33,7 +33,7 @@ library:
     - template-haskell
     - text
     - uuid
-    - wreq
+    - safe-exceptions-checked
   source-dirs: src
   exposed-modules:
     - Aws.Lambda.Runtime
@@ -64,6 +64,8 @@ default-extensions:
   - ScopedTypeVariables
   - DeriveGeneric
   - TypeApplications
+  - FlexibleContexts
+  - DeriveAnyClass
 
 ghc-options:
   - -Wall
