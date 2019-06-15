@@ -4,9 +4,9 @@ module Aws.Lambda.ThHelpers
   , recordQ
   ) where
 
-import Language.Haskell.TH
-import qualified Data.Text as Text
 import Data.Text (Text)
+import qualified Data.Text as Text
+import Language.Haskell.TH
 
 -- | Helper for defining names in declarations
 -- think of @myValue@ in @myValue = 2@

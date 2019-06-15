@@ -11,23 +11,23 @@ where
 
 import Data.Aeson
 
-import qualified Data.Text as Text
-import Data.Text (Text)
-import GHC.Generics
+import Control.Monad
+import Control.Monad.Trans
+import qualified Data.ByteString.Lazy as LazyByteString
+import qualified Data.Conduit as Conduit
 import Data.Function ((&))
+import Data.Text (Text)
+import qualified Data.Text as Text
+import qualified Data.Text.Encoding as Encoding
+import Data.Void
+import GHC.Generics
 import Language.Haskell.TH
 import qualified Options.Generic as Options
-import qualified Data.Conduit as Conduit
 import qualified System.Directory as Directory
+import System.Exit (exitFailure, exitSuccess)
 import System.FilePath ((</>))
+import System.IO (hFlush, stderr, stdout)
 import System.IO.Error
-import System.IO (hFlush, stdout, stderr)
-import System.Exit (exitSuccess, exitFailure)
-import Control.Monad.Trans
-import Control.Monad
-import qualified Data.Text.Encoding    as Encoding
-import qualified Data.ByteString.Lazy as LazyByteString
-import Data.Void
 
 
 
@@ -120,7 +120,7 @@ returnAndSucceed uuid v = do
 decodeObj :: FromJSON a => Text -> a
 decodeObj x =
   case (eitherDecode $ LazyByteString.fromStrict $ Encoding.encodeUtf8 x) of
-    Left e -> error e
+    Left e  -> error e
     Right v -> v
 
 
@@ -158,9 +158,9 @@ myVisitor = loop []
   loop n = do
     r <- Conduit.await
     case r of
-      Nothing -> return n
-      Just result  -> loop (process result <> n)
-  process (DirData _ (DirError _)) = []
+      Nothing     -> return n
+      Just result -> loop (process result <> n)
+  process (DirData _ (DirError _))        = []
   process (DirData dir (DirList _ files)) = map (\f -> dir <> "/" <> f) files
 
 

@@ -5,14 +5,14 @@ module Aws.Lambda.Runtime.Publish
   , runtimeInitError
   ) where
 
-import Data.Aeson
 import Control.Monad (void)
+import Data.Aeson
 import qualified Network.HTTP.Client as Http
 
-import Aws.Lambda.Runtime.Context (Context(..))
 import qualified Aws.Lambda.Runtime.API.Endpoints as Endpoints
+import Aws.Lambda.Runtime.Context (Context (..))
 import qualified Aws.Lambda.Runtime.Error as Error
-import Aws.Lambda.Runtime.Result (LambdaResult(..))
+import Aws.Lambda.Runtime.Result (LambdaResult (..))
 
 result :: LambdaResult -> String -> Context -> Http.Manager -> IO ()
 result res lambdaApi context =

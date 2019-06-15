@@ -6,8 +6,8 @@ module Aws.Lambda.Runtime.Error
   , Invocation(..)
   ) where
 
-import Data.Aeson (ToJSON(..), object, (.=))
 import Control.Exception.Safe.Checked
+import Data.Aeson (ToJSON (..), object, (.=))
 
 newtype EnvironmentVariableNotSet =
   EnvironmentVariableNotSet String
@@ -41,7 +41,7 @@ instance ToJSON ApiHeaderNotSet where
 
 data Parsing = Parsing
   { errorMessage :: String
-  , actualValue :: String
+  , actualValue  :: String
   } deriving (Show, Exception)
 
 instance ToJSON Parsing where

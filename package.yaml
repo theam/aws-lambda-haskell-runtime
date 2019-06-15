@@ -17,6 +17,7 @@ description: Please see the README on GitHub at <https://github.com/theam/aws-la
 dependencies:
   - base >= 4.7 && < 5
   - mtl
+  - http-client
 
 library:
   dependencies:
@@ -26,7 +27,6 @@ library:
     - conduit
     - directory
     - filepath
-    - http-client
     - http-types
     - microlens-platform
     - optparse-generic

@@ -3,9 +3,9 @@ module Aws.Lambda.Runtime.Context
   , initialize
   ) where
 
-import Data.Aeson (FromJSON(..), ToJSON(..))
-import GHC.Generics (Generic)
 import Control.Exception.Safe.Checked
+import Data.Aeson (FromJSON (..), ToJSON (..))
+import GHC.Generics (Generic)
 
 import qualified Aws.Lambda.Runtime.ApiInfo as ApiInfo
 import qualified Aws.Lambda.Runtime.Environment as Environment

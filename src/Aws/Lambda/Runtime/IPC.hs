@@ -4,11 +4,11 @@ module Aws.Lambda.Runtime.IPC
 
 
 import Data.Function ((&))
-import qualified System.Process as Process
-import qualified System.Exit as Exit
-import qualified Data.String as String
-import qualified System.IO as IO
 import qualified Data.Maybe as Maybe
+import qualified Data.String as String
+import qualified System.Exit as Exit
+import qualified System.IO as IO
+import qualified System.Process as Process
 
 import Control.Exception.Safe.Checked
 import Data.Aeson
@@ -16,10 +16,10 @@ import qualified Data.ByteString.Lazy.Char8 as ByteString
 import qualified Data.UUID as UUID
 import qualified Data.UUID.V4 as UUID
 
-import Aws.Lambda.Runtime.Context (Context(..))
-import Aws.Lambda.Runtime.Result (LambdaResult(..))
+import Aws.Lambda.Runtime.Context (Context (..))
 import qualified Aws.Lambda.Runtime.Environment as Environment
 import qualified Aws.Lambda.Runtime.Error as Error
+import Aws.Lambda.Runtime.Result (LambdaResult (..))
 
 invoke
   :: Throws Error.Invocation
@@ -44,7 +44,7 @@ invoke event context = do
     (Exit.ExitSuccess, stdOut, _) -> do
       res <- getFunctionResult uuid stdOut
       case res of
-        Nothing -> throw (Error.Parsing "parsing result" stdOut)
+        Nothing    -> throw (Error.Parsing "parsing result" stdOut)
         Just value -> pure (LambdaResult value)
     (_, stdOut, stdErr)           ->
       if stdErr /= ""
@@ -52,7 +52,7 @@ invoke event context = do
         else do
           res <- getFunctionResult uuid stdOut
           case res of
-            Nothing -> throw (Error.Parsing "parsing error" stdOut)
+            Nothing    -> throw (Error.Parsing "parsing error" stdOut)
             Just value -> throw (Error.Invocation value)
 
 getFunctionResult :: UUID.UUID -> String -> IO (Maybe String)

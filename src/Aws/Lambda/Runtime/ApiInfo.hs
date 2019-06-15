@@ -3,26 +3,26 @@ module Aws.Lambda.Runtime.ApiInfo
   , fetchEvent
   ) where
 
-import qualified Text.Read as Read
 import qualified Control.Monad as Monad
+import qualified Text.Read as Read
 
+import Control.Exception (IOException)
+import Control.Exception.Safe.Checked
+import Data.ByteString.Char8 (ByteString)
+import qualified Data.ByteString.Char8 as ByteString
+import qualified Data.ByteString.Lazy.Char8 as Lazy
 import qualified Network.HTTP.Client as Http
 import qualified Network.HTTP.Types.Header as Http
-import qualified Data.ByteString.Lazy.Char8 as Lazy
-import qualified Data.ByteString.Char8 as ByteString
-import Data.ByteString.Char8 (ByteString)
-import Control.Exception.Safe.Checked
-import Control.Exception (IOException)
 
 import qualified Aws.Lambda.Runtime.API.Endpoints as Endpoints
 import qualified Aws.Lambda.Runtime.Error as Error
 
 data Event = Event
-  { deadlineMs :: !Int
-  , traceId :: !String
-  , awsRequestId :: !String
+  { deadlineMs         :: !Int
+  , traceId            :: !String
+  , awsRequestId       :: !String
   , invokedFunctionArn :: !String
-  , event :: !Lazy.ByteString
+  , event              :: !Lazy.ByteString
   }
 
 fetchEvent :: Throws Error.Parsing => Http.Manager -> String -> IO Event
@@ -72,4 +72,4 @@ keepRetrying action = do
   result <- try action :: IO (Either IOException (Http.Response Lazy.ByteString))
   case result of
     Right success -> pure success
-    _ -> keepRetrying action
+    _             -> keepRetrying action
