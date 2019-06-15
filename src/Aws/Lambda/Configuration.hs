@@ -28,7 +28,6 @@ import Control.Monad
 import qualified Data.Text.Encoding    as Encoding
 import qualified Data.ByteString.Lazy as LazyByteString
 import Data.Void
-import Data.Monoid
 
 
 

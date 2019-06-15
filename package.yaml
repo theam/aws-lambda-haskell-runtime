@@ -27,6 +27,7 @@ library:
     - directory
     - filepath
     - http-client
+    - http-types
     - microlens-platform
     - optparse-generic
     - process
@@ -69,4 +70,14 @@ default-extensions:
 
 ghc-options:
   - -Wall
+  - -fno-warn-orphans
   - -optP-Wno-nonportable-include-path
+  - -Wincomplete-uni-patterns
+  - -Wincomplete-record-updates
+  - -Wcompat
+  - -Widentities
+  - -Wredundant-constraints
+  - -Wmissing-export-lists
+  - -Wpartial-fields
+  - -fhide-source-paths
+  - -freverse-errors

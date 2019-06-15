@@ -3,7 +3,7 @@ module Aws.Lambda.Runtime.Error
   , ApiConnection(..)
   , ApiHeaderNotSet(..)
   , Parsing(..)
-  , InvocationError(..)
+  , Invocation(..)
   ) where
 
 import Data.Aeson (ToJSON(..), object, (.=))
@@ -50,10 +50,10 @@ instance ToJSON Parsing where
     , "errorMessage" .= ("Parse error for " <> objectBeingParsed <> ", could not parse value '" <> value <> "'")
     ]
 
-newtype InvocationError =
-  InvocationError String
+newtype Invocation =
+  Invocation String
   deriving (Show, Exception)
 
-instance ToJSON InvocationError where
+instance ToJSON Invocation where
   -- We return the user error as it is
-  toJSON (InvocationError err) = toJSON err
+  toJSON (Invocation err) = toJSON err

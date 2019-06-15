@@ -3,6 +3,7 @@ module Aws.Lambda.Runtime.API.Endpoints
   , invocationError
   , runtimeInitError
   , nextInvocation
+  , Endpoint(..)
   ) where
 
 import qualified Aws.Lambda.Runtime.API.Version as Version

@@ -7,6 +7,7 @@ module Aws.Lambda.Runtime.Environment
   , functionVersion
   , logStreamName
   , logGroupName
+  , setXRayTrace
   ) where
 
 import qualified Aws.Lambda.Runtime.Error as Error
