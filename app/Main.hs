@@ -2,9 +2,9 @@ module Main
   ( main
   ) where
 
+import Aws.Lambda.Runtime
 import Control.Monad
 import qualified Network.HTTP.Client as Http
-import Aws.Lambda.Runtime
 
 
 httpManagerSettings :: Http.ManagerSettings
