@@ -37,8 +37,8 @@ library:
     - safe-exceptions-checked
   source-dirs: src
   exposed-modules:
+    - Aws.Lambda
     - Aws.Lambda.Runtime
-    - Aws.Lambda.Configuration
 
 executables:
   bootstrap:
