@@ -31,7 +31,7 @@ handlerNames modules =
  where
   changeExtensionToHandler file =
     setFileExtension ".handler" file
-    & Maybe.fromJust
+    & Maybe.fromJust  -- The path will be always parsable, as we just replace the extension
 
 containsHandler :: Path Rel File -> IO Bool
 containsHandler file = do

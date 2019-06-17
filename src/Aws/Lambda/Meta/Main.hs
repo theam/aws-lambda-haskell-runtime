@@ -4,7 +4,6 @@ module Aws.Lambda.Meta.Main
   , Options.getRecord
   ) where
 
-import Data.Text (Text)
 import GHC.Generics (Generic)
 
 import qualified Options.Generic as Options
@@ -13,10 +12,10 @@ import qualified Language.Haskell.TH as Meta
 import Aws.Lambda.Meta.Common
 
 data LambdaOptions = LambdaOptions
-  { eventObject     :: !Text
-  , contextObject   :: !Text
-  , functionHandler :: !Text
-  , executionUuid   :: !Text
+  { eventObject     :: !String
+  , contextObject   :: !String
+  , functionHandler :: !String
+  , executionUuid   :: !String
   } deriving (Generic, Options.ParseRecord)
 
 generate :: Meta.DecsQ

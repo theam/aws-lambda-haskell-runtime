@@ -1,5 +1,7 @@
 module Aws.Lambda.Runtime.IPC
   ( invoke
+  , returnAndFail
+  , returnAndSucceed
   ) where
 
 
@@ -20,6 +22,25 @@ import Aws.Lambda.Runtime.Context (Context (..))
 import qualified Aws.Lambda.Runtime.Environment as Environment
 import qualified Aws.Lambda.Runtime.Error as Error
 import Aws.Lambda.Runtime.Result (LambdaResult (..))
+
+returnAndFail :: ToJSON a => String -> a -> IO ()
+returnAndFail uuid v = do
+  IO.hFlush IO.stdout
+  putStrLn uuid
+  IO.hFlush IO.stdout
+  putStrLn (ByteString.unpack $ encode v)
+  IO.hFlush IO.stdout
+  IO.hFlush IO.stderr
+  Exit.exitFailure
+
+returnAndSucceed :: ToJSON a => String -> a -> IO ()
+returnAndSucceed uuid v = do
+  IO.hFlush IO.stdout
+  putStrLn uuid
+  IO.hFlush IO.stdout
+  putStrLn (ByteString.unpack $ encode v)
+  IO.hFlush IO.stdout
+  Exit.exitSuccess
 
 invoke
   :: Throws Error.Invocation

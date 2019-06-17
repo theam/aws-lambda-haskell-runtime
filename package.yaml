@@ -79,3 +79,4 @@ ghc-options:
   - -Wpartial-fields
   - -fhide-source-paths
   - -freverse-errors
+  - -O2
