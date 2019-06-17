@@ -17,8 +17,11 @@ import qualified Aws.Lambda.Meta.Main as Main
 import qualified Aws.Lambda.Meta.Run as Run
 import qualified Aws.Lambda.Runtime.IPC as IPC
 
+{-| Generates a @main@ function to be used with the
+AWS Lambda layer.
+-}
 configureLambda :: Meta.DecsQ
 configureLambda = do
   main <- Main.generate
   run <- Run.generate
-  return $ main <> [run]
+  return (main <> [run])

@@ -1,3 +1,6 @@
+{-| Provides all the values out of
+the environment variables of the system
+-}
 module Aws.Lambda.Runtime.Environment
   ( functionMemory
   , apiEndpoint

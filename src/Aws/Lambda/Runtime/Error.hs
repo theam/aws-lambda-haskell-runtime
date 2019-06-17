@@ -1,3 +1,5 @@
+{-| All the errors that the runtime can throw
+-}
 module Aws.Lambda.Runtime.Error
   ( EnvironmentVariableNotSet(..)
   , Parsing(..)

@@ -1,3 +1,4 @@
+{-| Helper functions to make code generation easier -}
 module Aws.Lambda.Meta.Common
   ( declarationName
   , expressionName

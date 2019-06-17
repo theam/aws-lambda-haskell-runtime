@@ -1,3 +1,4 @@
+{-| main function generation for interoperation with the layer -}
 module Aws.Lambda.Meta.Main
   ( LambdaOptions(..)
   , generate
@@ -11,6 +12,7 @@ import qualified Options.Generic as Options
 
 import Aws.Lambda.Meta.Common
 
+-- | Options that the generated main expects
 data LambdaOptions = LambdaOptions
   { eventObject     :: !String
   , contextObject   :: !String
@@ -18,6 +20,7 @@ data LambdaOptions = LambdaOptions
   , executionUuid   :: !String
   } deriving (Generic, Options.ParseRecord)
 
+-- | Generate the main function that the layer will call
 generate :: Meta.DecsQ
 generate = [d|
   $(declarationName "main") = getRecord "" >>= run

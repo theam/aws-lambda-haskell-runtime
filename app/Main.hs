@@ -1,3 +1,4 @@
+-- | Main entry point for the layer
 module Main
   ( main
   ) where

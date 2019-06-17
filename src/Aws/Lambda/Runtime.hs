@@ -12,6 +12,8 @@ import qualified Aws.Lambda.Runtime.Error as Error
 import qualified Aws.Lambda.Runtime.IPC as IPC
 import qualified Aws.Lambda.Runtime.Publish as Publish
 
+-- | Runs the user @haskell_lambda@ executable and posts back the
+-- results
 runLambda
   :: Http.Manager
   -> IO ()

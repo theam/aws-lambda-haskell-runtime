@@ -11,6 +11,7 @@ import qualified Aws.Lambda.Runtime.ApiInfo as ApiInfo
 import qualified Aws.Lambda.Runtime.Environment as Environment
 import qualified Aws.Lambda.Runtime.Error as Error
 
+-- | Context that is passed to all the handlers
 data Context = Context
   { memoryLimitInMb    :: !Int
   , functionName       :: !String
@@ -23,6 +24,7 @@ data Context = Context
   , deadline           :: !Int
   } deriving (Generic, FromJSON, ToJSON)
 
+-- | Initializes the context out of the environment
 initialize :: Throws Error.Parsing => Throws Error.EnvironmentVariableNotSet => ApiInfo.Event -> IO Context
 initialize ApiInfo.Event{..} = do
   functionName          <- Environment.functionName

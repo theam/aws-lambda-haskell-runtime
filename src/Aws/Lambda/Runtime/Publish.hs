@@ -1,3 +1,5 @@
+{-| Publishing of results/errors back to the
+AWS Lambda runtime API -}
 module Aws.Lambda.Runtime.Publish
   ( result
   , invocationError
@@ -15,6 +17,7 @@ import Aws.Lambda.Runtime.Context (Context (..))
 import qualified Aws.Lambda.Runtime.Error as Error
 import Aws.Lambda.Runtime.Result (LambdaResult (..))
 
+-- | Publishes the result back to AWS Lambda
 result :: LambdaResult -> String -> Context -> Http.Manager -> IO ()
 result (LambdaResult res) lambdaApi context manager = do
   let Endpoints.Endpoint endpoint = Endpoints.response lambdaApi (awsRequestId context)
@@ -25,16 +28,19 @@ result (LambdaResult res) lambdaApi context manager = do
                 }
   void $ Http.httpNoBody request manager
 
+-- | Publishes an invocation error back to AWS Lambda
 invocationError :: Error.Invocation -> String -> Context -> Http.Manager -> IO ()
 invocationError err lambdaApi context =
   publish err (Endpoints.invocationError lambdaApi $ awsRequestId context)
     context
 
+-- | Publishes a parsing error back to AWS Lambda
 parsingError :: Error.Parsing -> String -> Context -> Http.Manager -> IO ()
 parsingError err lambdaApi context =
   publish err (Endpoints.invocationError lambdaApi $ awsRequestId context)
     context
 
+-- | Publishes a runtime initialization error back to AWS Lambda
 runtimeInitError :: ToJSON err => err -> String -> Context -> Http.Manager -> IO ()
 runtimeInitError err lambdaApi =
   publish err (Endpoints.runtimeInitError lambdaApi)

@@ -17,6 +17,7 @@ import qualified Network.HTTP.Types.Header as Http
 import qualified Aws.Lambda.Runtime.API.Endpoints as Endpoints
 import qualified Aws.Lambda.Runtime.Error as Error
 
+-- | Event that is fetched out of the AWS Lambda API
 data Event = Event
   { deadlineMs         :: !Int
   , traceId            :: !String
@@ -25,6 +26,7 @@ data Event = Event
   , event              :: !Lazy.ByteString
   }
 
+-- | Performs a GET to the endpoint that provides the next event
 fetchEvent :: Throws Error.Parsing => Http.Manager -> String -> IO Event
 fetchEvent manager lambdaApi = do
   response <- fetchApiData manager lambdaApi

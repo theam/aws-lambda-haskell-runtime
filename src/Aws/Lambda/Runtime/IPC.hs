@@ -1,3 +1,18 @@
+{-| Inter-Process Communication
+
+Used for when the user project is called from a layer.
+
+This is used to call the @haskell_lambda@ executable, which is
+provided by the user, when they want to use the layer.
+
+This IPC protocol is based on printing an UUID that is
+created by the layer, and then the result. So everything that
+is printed before the UUID, is considered STDOUT printed by
+the lambda, while what comes after the UUID is considered.
+
+In the case that the lambda execution fails, the exit code
+won't be 0 (exit-success), so it will use the STDERR.
+-}
 module Aws.Lambda.Runtime.IPC
   ( invoke
   , returnAndFail
@@ -23,6 +38,7 @@ import qualified Aws.Lambda.Runtime.Environment as Environment
 import qualified Aws.Lambda.Runtime.Error as Error
 import Aws.Lambda.Runtime.Result (LambdaResult (..))
 
+-- | Returns the JSON value failing, according to the protocol
 returnAndFail :: ToJSON a => String -> a -> IO ()
 returnAndFail uuid v = do
   IO.hFlush IO.stdout
@@ -33,6 +49,7 @@ returnAndFail uuid v = do
   IO.hFlush IO.stderr
   Exit.exitFailure
 
+-- | Returns the JSON value succeeding, according to the protocol
 returnAndSucceed :: ToJSON a => String -> a -> IO ()
 returnAndSucceed uuid v = do
   IO.hFlush IO.stdout
@@ -42,6 +59,7 @@ returnAndSucceed uuid v = do
   IO.hFlush IO.stdout
   Exit.exitSuccess
 
+-- | Invokes a function defined by the user as the @haskell_lambda@ executable
 invoke
   :: Throws Error.Invocation
   => Throws Error.Parsing
