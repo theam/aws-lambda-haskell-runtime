@@ -45,7 +45,7 @@ modulesWithHandler files =
     && isNotIgnoredPath file
 
   isNotIgnoredPath file =
-    filter ((Text.pack $ toFilePath file) `Text.isInfixOf`) ignoredPaths
+    filter (Text.isInfixOf (Text.pack $ toFilePath file)) ignoredPaths
     & null
 
 handlerNames :: [Path Rel File] -> [Text]
@@ -60,4 +60,7 @@ handlerNames modules =
 containsHandler :: Path Rel File -> IO Bool
 containsHandler file = do
   fileContents <- readFile $ toFilePath file
-  pure $ "handler :: " `Text.isInfixOf` Text.pack fileContents
+  lines fileContents
+    & filter (Text.isPrefixOf "handler :: " . Text.pack)
+    & (not . null)
+    & pure
