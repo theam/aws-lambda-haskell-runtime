@@ -1,7 +1,5 @@
 module Aws.Lambda.Runtime.Error
   ( EnvironmentVariableNotSet(..)
-  , ApiConnection(..)
-  , ApiHeaderNotSet(..)
   , Parsing(..)
   , Invocation(..)
   ) where
@@ -17,26 +15,6 @@ instance ToJSON EnvironmentVariableNotSet where
   toJSON (EnvironmentVariableNotSet msg) = object
     [ "errorType" .= ("EnvironmentVariableNotSet" :: String)
     , "errorMessage" .= msg
-    ]
-
-data ApiConnection =
-  ApiConnection
-  deriving (Show, Exception)
-
-instance ToJSON ApiConnection where
-  toJSON ApiConnection = object
-    [ "errorType" .= ("ApiConnection" :: String)
-    , "errorMessage" .= ("Could not connect to API to retrieve AWS Lambda parameters" :: String)
-    ]
-
-newtype ApiHeaderNotSet =
-  ApiHeaderNotSet String
-  deriving (Show, Exception)
-
-instance ToJSON ApiHeaderNotSet where
-  toJSON (ApiHeaderNotSet headerName) = object
-    [ "errorType" .= ("ApiHeaderNotSet" :: String)
-    , "errorMessage" .= headerName
     ]
 
 data Parsing = Parsing

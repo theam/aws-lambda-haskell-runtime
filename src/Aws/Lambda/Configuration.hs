@@ -12,24 +12,19 @@ where
 import Data.Aeson
 
 import Control.Monad
-import Control.Monad.Trans
 import qualified Data.ByteString.Lazy as LazyByteString
-import qualified Data.Conduit as Conduit
 import Data.Function ((&))
 import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.Encoding as Encoding
-import Data.Void
 import GHC.Generics
 import Language.Haskell.TH
 import qualified Options.Generic as Options
-import qualified System.Directory as Directory
 import System.Exit (exitFailure, exitSuccess)
-import System.FilePath ((</>))
 import System.IO (hFlush, stderr, stdout)
-import System.IO.Error
 
-
+import Path
+import qualified Path.IO as PathIO
 
 import Aws.Lambda.ThHelpers
 
@@ -69,12 +64,11 @@ dispatcherCaseQ fileNames = do
 
 handlerCaseQ :: Text -> Q Match
 handlerCaseQ lambdaHandler = do
-  let pattern = LitP (StringL $ Text.unpack lambdaHandler)
+  let pat = LitP (StringL $ Text.unpack lambdaHandler)
   body <- [e|do
     result <- $(eName qualifiedName) (decodeObj $(eName "eventObject")) (decodeObj $(eName "contextObject"))
-    either (returnAndFail $(eName "executionUuid")) (returnAndSucceed $(eName "executionUuid")) result
-    |]
-  pure $ Match pattern (NormalB body) []
+    either (returnAndFail $(eName "executionUuid")) (returnAndSucceed $(eName "executionUuid")) result |]
+  pure $ Match pat (NormalB body) []
  where
   qualifiedName =
     lambdaHandler
@@ -123,51 +117,11 @@ decodeObj x =
     Left e  -> error e
     Right v -> v
 
-
-data DirContent = DirList [FilePath] [FilePath]
-                | DirError IOError
-data DirData = DirData FilePath DirContent
-
-
--- Produces directory data
-walk :: FilePath -> Conduit.ConduitM () DirData IO ()
-walk path = do
-  result <- lift $ tryIOError listdir
-  case result of
-    Right dl@(DirList subdirs _) -> do
-      Conduit.yield (DirData path dl)
-      forM_ subdirs (walk . (path </>))
-    Right e -> Conduit.yield (DirData path e)
-    Left e -> Conduit.yield (DirData path (DirError e))
- where
-  listdir = do
-    entries <- filterHidden <$> Directory.getDirectoryContents path
-    subdirs <- filterM isDir entries
-    files   <- filterM isFile entries
-    return $ DirList subdirs files
-   where
-    isFile entry = Directory.doesFileExist (path </> entry)
-    isDir entry = Directory.doesDirectoryExist (path </> entry)
-    filterHidden paths = filter (\p -> head p /= '.' && p /= "node_modules") paths
-
-
--- Consume directories
-myVisitor :: Conduit.ConduitM DirData Void IO [FilePath]
-myVisitor = loop []
- where
-  loop n = do
-    r <- Conduit.await
-    case r of
-      Nothing     -> return n
-      Just result -> loop (process result <> n)
-  process (DirData _ (DirError _))        = []
-  process (DirData dir (DirList _ files)) = map (\f -> dir <> "/" <> f) files
-
-
 getHandlers :: IO [Text]
 getHandlers = do
-  files <- Conduit.runConduit $ walk "." Conduit..| myVisitor
+  (_, files) <- PathIO.listDirRecurRel [reldir|.|]
   handlerFiles <- files
+                   & fmap toFilePath
                    & fmap Text.pack
                    & filter (Text.isSuffixOf ".hs")
                    & filterM containsHandler

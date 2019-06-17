@@ -16,25 +16,21 @@ description: Please see the README on GitHub at <https://github.com/theam/aws-la
 
 dependencies:
   - base >= 4.7 && < 5
-  - mtl
-  - http-client
 
 library:
   dependencies:
     - aeson
     - bytestring
-    - case-insensitive
-    - conduit
-    - directory
-    - filepath
+    - http-client
     - http-types
-    - microlens-platform
     - optparse-generic
     - process
     - template-haskell
     - text
     - uuid
     - safe-exceptions-checked
+    - path
+    - path-io
   source-dirs: src
   exposed-modules:
     - Aws.Lambda
@@ -46,6 +42,7 @@ executables:
     main: Main.hs
     dependencies:
       - aws-lambda-haskell-runtime
+      - http-client
 
 tests:
   aws-lambda-haskell-runtime-test:
@@ -67,6 +64,7 @@ default-extensions:
   - TypeApplications
   - FlexibleContexts
   - DeriveAnyClass
+  - QuasiQuotes
 
 ghc-options:
   - -Wall
