@@ -8,22 +8,31 @@
 
 # Specify additional command line arguments
 #
-# - arguments: [--color, --cpp-simple, -XQuasiQuotes]
+- arguments:
+  - TemplateHaskell
+  - OverloadedStrings
+  - RecordWildCards
+  - ScopedTypeVariables
+  - DeriveGeneric
+  - TypeApplications
+  - FlexibleContexts
+  - DeriveAnyClass
+  - QuasiQuotes
 
 
 # Control which extensions/flags/modules/functions can be used
 #
-- extensions:
-  - name:
-    - TemplateHaskell
-    - OverloadedStrings
-    - RecordWildCards
-    - ScopedTypeVariables
-    - DeriveGeneric
-    - TypeApplications
-    - FlexibleContexts
-    - DeriveAnyClass
-    - QuasiQuotes
+# - extensions:
+#   - name:
+#     - TemplateHaskell
+#     - OverloadedStrings
+#     - RecordWildCards
+#     - ScopedTypeVariables
+#     - DeriveGeneric
+#     - TypeApplications
+#     - FlexibleContexts
+#     - DeriveAnyClass
+#     - QuasiQuotes
 #
 # - flags:
 #   - {name: -w, within: []} # -w is allowed nowhere

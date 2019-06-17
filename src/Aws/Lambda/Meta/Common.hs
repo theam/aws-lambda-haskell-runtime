@@ -1,7 +1,7 @@
-module Aws.Lambda.ThHelpers
-  ( pName
-  , eName
-  , recordQ
+module Aws.Lambda.Meta.Common
+  ( declarationName
+  , expressionName
+  , getFieldsFrom
   ) where
 
 import Data.Text (Text)
@@ -10,13 +10,13 @@ import Language.Haskell.TH
 
 -- | Helper for defining names in declarations
 -- think of @myValue@ in @myValue = 2@
-pName :: Text -> Q Pat
-pName = pure . VarP . mkName . Text.unpack
+declarationName :: Text -> Q Pat
+declarationName = pure . VarP . mkName . Text.unpack
 
 -- | Helper for defining names in expressions
 -- think of @myFunction@ in @quux = myFunction 3@
-eName :: Text -> Q Exp
-eName = pure . VarE . mkName . Text.unpack
+expressionName :: Text -> Q Exp
+expressionName = pure . VarE . mkName . Text.unpack
 
 
 -- | Helper for extracting fields of a specified record
@@ -24,12 +24,12 @@ eName = pure . VarE . mkName . Text.unpack
 -- and the list of fields to bring into scope as second
 -- think of @Person@, and @personAge@, @personName@ in
 -- @myFunction Person { personAge, personName } = ...@
-recordQ :: Text -> [Text] -> Q Pat
-recordQ name fields = do
-  extractedFields <- traverse fName fields
+getFieldsFrom :: Text -> [Text] -> Q Pat
+getFieldsFrom name fields = do
+  extractedFields <- traverse extractField fields
   pure $ RecP (mkName $ Text.unpack name) extractedFields
  where
   -- | Helper for extracting fields of records
   -- think of @personAge@ in @myFunction Person { personAge = personAge } = ...@
-  fName :: Text -> Q FieldPat
-  fName n = pure (mkName $ Text.unpack n, VarP $ mkName $ Text.unpack n)
+  extractField :: Text -> Q FieldPat
+  extractField n = pure (mkName $ Text.unpack n, VarP $ mkName $ Text.unpack n)
