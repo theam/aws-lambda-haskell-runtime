@@ -1,5 +1,5 @@
 name: aws-lambda-haskell-runtime
-version: 1.0.10
+version: 1.1.0
 github: "theam/aws-lambda-haskell-runtime"
 license: Apache-2.0
 author: Nikita Tchayka
@@ -16,28 +16,25 @@ description: Please see the README on GitHub at <https://github.com/theam/aws-la
 
 dependencies:
   - base >= 4.7 && < 5
-  - mtl
 
 library:
   dependencies:
     - aeson
     - bytestring
-    - case-insensitive
-    - conduit
-    - directory
-    - filepath
     - http-client
-    - microlens-platform
+    - http-types
     - optparse-generic
     - process
     - template-haskell
     - text
     - uuid
-    - wreq
+    - safe-exceptions-checked
+    - path
+    - path-io
   source-dirs: src
   exposed-modules:
+    - Aws.Lambda
     - Aws.Lambda.Runtime
-    - Aws.Lambda.Configuration
 
 executables:
   bootstrap:
@@ -45,6 +42,7 @@ executables:
     main: Main.hs
     dependencies:
       - aws-lambda-haskell-runtime
+      - http-client
 
 tests:
   aws-lambda-haskell-runtime-test:
@@ -64,7 +62,21 @@ default-extensions:
   - ScopedTypeVariables
   - DeriveGeneric
   - TypeApplications
+  - FlexibleContexts
+  - DeriveAnyClass
+  - QuasiQuotes
 
 ghc-options:
   - -Wall
+  - -fno-warn-orphans
   - -optP-Wno-nonportable-include-path
+  - -Wincomplete-uni-patterns
+  - -Wincomplete-record-updates
+  - -Wcompat
+  - -Widentities
+  - -Wredundant-constraints
+  - -Wmissing-export-lists
+  - -Wpartial-fields
+  - -fhide-source-paths
+  - -freverse-errors
+  - -O2

@@ -1,13 +1,21 @@
-module Main where
+-- | Main entry point for the layer
+module Main
+  ( main
+  ) where
 
-import Control.Monad
-import Control.Monad.Except
 import Aws.Lambda.Runtime
+import Control.Monad
+import qualified Network.HTTP.Client as Http
 
+
+httpManagerSettings :: Http.ManagerSettings
+httpManagerSettings =
+  -- We set the timeout to none, as AWS Lambda freezes the containers.
+  Http.defaultManagerSettings
+  { Http.managerResponseTimeout = Http.responseTimeoutNone
+  }
 
 main :: IO ()
-main = forever $ do
-  res <- runExceptT lambdaRunner
-  case res of
-    Right _ -> return ()
-    Left err  -> putStrLn $ show err
+main = do
+  manager <- Http.newManager httpManagerSettings
+  forever (runLambda manager)
