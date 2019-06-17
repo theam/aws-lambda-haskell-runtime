@@ -1,6 +1,6 @@
 {-| Discovery of AWS Lambda handlers
 A handler is basically a function that has a type definition that
-starts with "handler :: ".
+starts with "handler " and two colons.
  -}
 module Aws.Lambda.Meta.Discover
   ( handlers
@@ -14,6 +14,13 @@ import qualified Data.Text as Text
 
 import Path
 import qualified Path.IO as PathIO
+
+-- | Paths to ignore during compilation
+ignoredPaths :: [Text]
+ignoredPaths =
+  [ "node_modules"
+  , ".stack-work"
+  ]
 
 {-| Returns a list of handler paths that look like
 
@@ -35,6 +42,11 @@ modulesWithHandler files =
  where
   isHaskellModule file =
     fileExtension file == ".hs"
+    && isNotIgnoredPath file
+
+  isNotIgnoredPath file =
+    filter ((Text.pack $ toFilePath file) `Text.isInfixOf`) ignoredPaths
+    & null
 
 handlerNames :: [Path Rel File] -> [Text]
 handlerNames modules =
