@@ -6,8 +6,8 @@ module Aws.Lambda.Meta.Main
 
 import GHC.Generics (Generic)
 
-import qualified Options.Generic as Options
 import qualified Language.Haskell.TH as Meta
+import qualified Options.Generic as Options
 
 import Aws.Lambda.Meta.Common
 

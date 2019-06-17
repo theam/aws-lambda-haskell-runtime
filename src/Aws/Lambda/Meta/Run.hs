@@ -5,8 +5,8 @@ module Aws.Lambda.Meta.Run
 import qualified Language.Haskell.TH as Meta
 
 import Aws.Lambda.Meta.Common
-import qualified Aws.Lambda.Meta.Dispatch as Dispatch
 import qualified Aws.Lambda.Meta.Discover as Discover
+import qualified Aws.Lambda.Meta.Dispatch as Dispatch
 
 generate :: Meta.DecQ
 generate = do

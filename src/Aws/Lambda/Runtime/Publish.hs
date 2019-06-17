@@ -7,8 +7,8 @@ module Aws.Lambda.Runtime.Publish
 
 import Control.Monad (void)
 import Data.Aeson
-import qualified Network.HTTP.Client as Http
 import qualified Data.ByteString.Char8 as ByteString
+import qualified Network.HTTP.Client as Http
 
 import qualified Aws.Lambda.Runtime.API.Endpoints as Endpoints
 import Aws.Lambda.Runtime.Context (Context (..))

@@ -1,11 +1,11 @@
 module Aws.Lambda.Meta.Discover
   (handlers) where
 
-import Data.Text (Text)
-import Data.Function ((&))
-import qualified Data.Text as Text
 import qualified Control.Monad as Monad
+import Data.Function ((&))
 import qualified Data.Maybe as Maybe
+import Data.Text (Text)
+import qualified Data.Text as Text
 
 import Path
 import qualified Path.IO as PathIO
