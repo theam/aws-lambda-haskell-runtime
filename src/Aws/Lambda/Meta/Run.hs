@@ -1,5 +1,6 @@
 module Aws.Lambda.Meta.Run
   ( generate
+  , generateNoIPC
   ) where
 
 import qualified Language.Haskell.TH as Meta
@@ -7,6 +8,7 @@ import qualified Language.Haskell.TH as Meta
 import Aws.Lambda.Meta.Common
 import qualified Aws.Lambda.Meta.Discover as Discover
 import qualified Aws.Lambda.Meta.Dispatch as Dispatch
+import qualified Aws.Lambda.Meta.DispatchNoIPC as DispatchNoIPC
 
 {-| Generate the run function
 
@@ -19,4 +21,11 @@ generate = do
   handlers <- Meta.runIO Discover.handlers
   clause' <- getFieldsFrom "LambdaOptions" ["functionHandler", "contextObject", "eventObject", "executionUuid"]
   body <- Dispatch.generate handlers
+  pure $ Meta.FunD (Meta.mkName "run") [Meta.Clause [clause'] (Meta.NormalB body) []]
+
+generateNoIPC :: Meta.DecQ
+generateNoIPC = do
+  handlers <- Meta.runIO Discover.handlers
+  clause' <- getFieldsFrom "LambdaOptions" ["functionHandler", "contextObject", "eventObject", "executionUuid"]
+  body <- DispatchNoIPC.generate handlers
   pure $ Meta.FunD (Meta.mkName "run") [Meta.Clause [clause'] (Meta.NormalB body) []]

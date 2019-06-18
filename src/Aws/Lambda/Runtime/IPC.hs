@@ -36,7 +36,7 @@ import qualified Data.UUID.V4 as UUID
 import Aws.Lambda.Runtime.Context (Context (..))
 import qualified Aws.Lambda.Runtime.Environment as Environment
 import qualified Aws.Lambda.Runtime.Error as Error
-import Aws.Lambda.Runtime.Result (LambdaResult (..))
+import Aws.Lambda.Runtime.Common
 
 -- | Returns the JSON value failing, according to the protocol
 returnAndFail :: ToJSON a => String -> a -> IO ()

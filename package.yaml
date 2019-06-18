@@ -37,7 +37,7 @@ library:
     - Aws.Lambda.Runtime
 
 executables:
-  bootstrap:
+  bootstrap-lol:
     source-dirs: app
     main: Main.hs
     dependencies:

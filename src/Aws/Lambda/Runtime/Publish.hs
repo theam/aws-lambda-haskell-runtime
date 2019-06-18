@@ -15,7 +15,7 @@ import qualified Network.HTTP.Client as Http
 import qualified Aws.Lambda.Runtime.API.Endpoints as Endpoints
 import Aws.Lambda.Runtime.Context (Context (..))
 import qualified Aws.Lambda.Runtime.Error as Error
-import Aws.Lambda.Runtime.Result (LambdaResult (..))
+import Aws.Lambda.Runtime.Common
 
 -- | Publishes the result back to AWS Lambda
 result :: LambdaResult -> String -> Context -> Http.Manager -> IO ()
