@@ -48,18 +48,18 @@ invokeAndRun
   -> Context.Context
   -> IO ()
 invokeAndRun callback manager lambdaApi event context = do
-  result    <- invokeWithMode callback event context
+  result    <- invokeWithCallback callback event context
   Publish.result result lambdaApi context manager
     `catch` \err -> Publish.invocationError err lambdaApi context manager
 
-invokeWithMode
+invokeWithCallback
   :: Throws Error.Invocation
   => Throws Error.EnvironmentVariableNotSet
   => Runtime.RunCallback
   -> ApiInfo.Event
   -> Context.Context
   -> IO Runtime.LambdaResult
-invokeWithMode callback event context = do
+invokeWithCallback callback event context = do
   handlerName <- Environment.handlerName
   let lambdaOptions = Runtime.LambdaOptions
                       { eventObject = LazyByteString.unpack $ ApiInfo.event event
