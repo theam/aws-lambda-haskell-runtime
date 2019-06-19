@@ -1,26 +1,14 @@
 module Aws.Lambda.Runtime.Common
-  ( Mode(..)
+  ( RunCallback
   , LambdaResult(..)
   , LambdaOptions(..)
   ) where
 
 import GHC.Generics (Generic)
-import qualified Options.Generic as Options
 
-{-| Mode of calling the user functions.
-
-It can be 'IPC' (inter-process communication), where the
-dispatcher will spawn a process with the handlers of the
-user. (Used when using the layer)
-
-Or, it can be 'DirectCall', for when the handlers are in
-the same process. (The runtime is bootstrapped with the
-project).
--}
-data Mode
-  = IPC
-  | DirectCall (LambdaOptions -> IO (Either String LambdaResult))
-  -- ^ This horrible signature implies the following
+-- | Callback that we pass to the dispatcher function
+type RunCallback =
+  LambdaOptions -> IO (Either String LambdaResult)
 
 -- | Options that the generated main expects
 data LambdaOptions = LambdaOptions
@@ -28,7 +16,7 @@ data LambdaOptions = LambdaOptions
   , contextObject   :: !String
   , functionHandler :: !String
   , executionUuid   :: !String
-  } deriving (Generic, Options.ParseRecord)
+  } deriving (Generic)
 
 -- | Wrapper type to handle the result of the user
 newtype LambdaResult =
