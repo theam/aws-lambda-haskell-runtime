@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-unused-pattern-binds #-}
 module Aws.Lambda.Configuration
   ( Main.LambdaOptions(..)
-  , configureLambda
+  , generateLambdaDispatcher
   , Dispatch.decodeObj
   , Dispatch.encodeObj
   )
@@ -15,8 +15,8 @@ import qualified Aws.Lambda.Meta.Run as Run
 
 {-| Generates a @main@ function that acts as a dispatcher
 -}
-configureLambda :: Meta.DecsQ
-configureLambda = do
+generateLambdaDispatcher :: Meta.DecsQ
+generateLambdaDispatcher = do
   main <- Main.generate
   run <- Run.generate
   return (main <> [run])
