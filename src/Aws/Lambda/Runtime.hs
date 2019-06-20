@@ -11,11 +11,11 @@ import Data.Aeson
 import qualified Data.ByteString.Lazy.Char8 as LazyByteString
 
 import qualified Aws.Lambda.Runtime.ApiInfo as ApiInfo
+import qualified Aws.Lambda.Runtime.Common as Runtime
 import qualified Aws.Lambda.Runtime.Context as Context
 import qualified Aws.Lambda.Runtime.Environment as Environment
 import qualified Aws.Lambda.Runtime.Error as Error
 import qualified Aws.Lambda.Runtime.Publish as Publish
-import qualified Aws.Lambda.Runtime.Common as Runtime
 
 -- | Runs the user @haskell_lambda@ executable and posts back the
 -- results. This is called from the layer's @main@ function.

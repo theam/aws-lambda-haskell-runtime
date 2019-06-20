@@ -9,7 +9,7 @@ This package provides a way of running Haskell projects on AWS Lambda.
 ## Sample lambda function
 
 ```
-stack new my-haskell-lambda https://github.com/theam/aws-lambda-haskell-runtime/raw/master/stack-template.hsfiles --resolver=lts-13.0 --omit-packages
+stack new my-haskell-lambda https://github.com/theam/aws-lambda-haskell-runtime/raw/master/stack-template.hsfiles --resolver=lts-13.25 --omit-packages
 cd my-haskell-lambda
 stack docker pull
 ```
@@ -21,7 +21,7 @@ packages:
 - .
 
 extra-deps:
-- aws-lambda-haskell-runtime-1.0.10
+- aws-lambda-haskell-runtime-2.0.0
 ```
 
 to your `stack.yaml`
@@ -33,15 +33,6 @@ make
 ```
 
 Now you should have a `build/function.zip` file that you can upload to your lambda.
-
-## Lambda function configuration
-
-When creating your lambda function you need to provide a layer with the Haskell runtime. We have deployed the layer to our AWS account, you can use it or deploy it to your own AWS account.
-
-The ARN of the runtime layer is:
-```
-arn:aws:lambda:<YOUR REGION>:785355572843:layer:aws-haskell-runtime:5
-````
 
 ## Full user guide
 
