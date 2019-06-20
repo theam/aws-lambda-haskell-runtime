@@ -11,14 +11,14 @@ description:         Please see the README on GitHub at <https://github.com/{{gi
 
 dependencies:
 - base >= 4.7 && < 5
-- aws-lambda-haskell-runtime >= 1.0.9
+- aws-lambda-haskell-runtime >= 2.0.0
 - aeson
 
 library:
   source-dirs: src
 
 executables:
-  haskell_lambda:
+  bootstrap:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
@@ -43,14 +43,15 @@ all:
 	@rm -rf ./build/*
 	@stack clean --docker
 	@stack build --docker
-	@cp `stack --docker path --local-install-root`/bin/haskell_lambda build
-	@cd build && zip function.zip haskell_lambda && rm haskell_lambda && cd ..
+	@cp `stack --docker path --local-install-root`/bin/bootstrap build
+	@cd build && zip function.zip bootstrap && rm bootstrap && cd ..
 {-# START_FILE src/Lib.hs #-}
 module Lib where
 
 import GHC.Generics
-import Aws.Lambda.Runtime
 import Data.Aeson
+
+import Aws.Lambda
 
 data Person = Person
   { personName :: String
@@ -69,8 +70,7 @@ handler person context =
 {-# START_FILE app/Main.hs #-}
 module Main where
 
-import Aws.Lambda.Configuration
-import Aws.Lambda.Runtime
+import Aws.Lambda
 
 import qualified Lib
 

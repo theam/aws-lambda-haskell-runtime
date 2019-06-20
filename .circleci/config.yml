@@ -20,11 +20,6 @@ jobs:
             - stack-{{checksum "stack.yaml"}}-{{checksum "package.yaml"}}
       - run: stack setup
       - run: stack build
-      - run: cd $(stack path --local-install-root)/bin/ && zip -j /tmp/runtime.zip bootstrap
-      - save-cache:
-          key: zip-file
-          paths:
-            - "/tmp/runtime.zip"
       - save-cache:
           key: stack-{{ checksum "stack.yaml" }}
           paths:
@@ -63,42 +58,12 @@ jobs:
       - store_test_results:
           path: ~/.stack-work/logs/*
 
-  deploy:
-    docker:
-      - image: circleci/python:2.7-jessie
-    working_directory: ~/aws-lambda-haskell-runtime
-    steps:
-      - checkout
-      - restore-cache:
-          key: zip-file
-          paths:
-            - "/tmp/"
-      - run:
-          name: Install awscli
-          command: sudo pip install awscli
-      - run:
-          name: Deploy to AWS Layers
-          command: |
-            LAYER_NAME="aws-haskell-runtime"
-            REGIONS_LIST="us-east-1 us-east-2 us-west-1 us-west-2 ap-south-1 ap-northeast-2 ap-southeast-1 ap-southeast-2 ap-northeast-1 ca-central-1 eu-central-1 eu-west-1 eu-west-2 eu-west-3 eu-north-1 sa-east-1"
-            for region in $REGIONS_LIST
-            do
-              aws lambda publish-layer-version --layer-name $LAYER_NAME --zip-file fileb:///tmp/runtime.zip --region $region
-              aws lambda add-layer-version-permission --layer-name $LAYER_NAME --version-number $(aws lambda list-layer-versions --layer-name $LAYER_NAME --region $region | grep Version | tail -n+3 | head -n 1 | cut -d: -f2- | rev | cut -d, -f2 | rev) --principal '*' --action lambda:GetLayerVersion --statement-id allow-getLayerVersion-all --region $region
-            done
-
 workflows:
   version: 2
   build-and-deploy:
     jobs:
       - build
       - test
-      - deploy:
-          requires:
-            - build
-          filters:
-            branches:
-              only: master
 
 general:
   branches:

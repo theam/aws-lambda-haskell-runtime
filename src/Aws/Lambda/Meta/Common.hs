@@ -3,6 +3,7 @@ module Aws.Lambda.Meta.Common
   ( declarationName
   , expressionName
   , getFieldsFrom
+  , constructorName
   ) where
 
 import Data.Text (Text)
@@ -19,6 +20,10 @@ declarationName = pure . VarP . mkName . Text.unpack
 expressionName :: Text -> Q Exp
 expressionName = pure . VarE . mkName . Text.unpack
 
+-- | Helper for defining names for constructors
+-- think of @Foo@ in @quux = Foo 3@
+constructorName :: Text -> Q Exp
+constructorName = pure . ConE . mkName . Text.unpack
 
 -- | Helper for extracting fields of a specified record
 -- it expects the constructor name as the first parameter,
