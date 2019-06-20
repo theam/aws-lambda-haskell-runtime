@@ -20,11 +20,6 @@ jobs:
             - stack-{{checksum "stack.yaml"}}-{{checksum "package.yaml"}}
       - run: stack setup
       - run: stack build
-      - run: cd $(stack path --local-install-root)/bin/ && zip -j /tmp/runtime.zip bootstrap
-      - save-cache:
-          key: zip-file
-          paths:
-            - "/tmp/runtime.zip"
       - save-cache:
           key: stack-{{ checksum "stack.yaml" }}
           paths:
