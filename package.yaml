@@ -8,7 +8,6 @@ copyright: 2018 The Agile Monkeys SL
 
 extra-source-files:
   - README.md
-  - ChangeLog.md
 
 synopsis: Haskell runtime for AWS Lambda
 category: AWS
