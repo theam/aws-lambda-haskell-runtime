@@ -23,8 +23,8 @@ import qualified Aws.Lambda.Runtime.Publish as Publish
 runLambda :: Runtime.RunCallback -> IO ()
 runLambda callback = do
   manager <- Http.newManager httpManagerSettings
+  lambdaApi <- Environment.apiEndpoint `catch` variableNotSet
   forever $ do
-    lambdaApi <- Environment.apiEndpoint `catch` variableNotSet
     event     <- ApiInfo.fetchEvent manager lambdaApi `catch` errorParsing
     context   <- Context.initialize event `catch` errorParsing `catch` variableNotSet
     ((invokeAndRun callback manager lambdaApi event context
