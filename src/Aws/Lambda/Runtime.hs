@@ -8,9 +8,6 @@ import Control.Exception.Safe.Checked
 import Control.Monad (forever)
 import qualified Network.HTTP.Client as Http
 
-import Data.Aeson
-import qualified Data.ByteString.Lazy.Char8 as LazyByteString
-
 import qualified Aws.Lambda.Runtime.ApiInfo as ApiInfo
 import qualified Aws.Lambda.Runtime.Common as Runtime
 import qualified Aws.Lambda.Runtime.Context as Context
@@ -63,8 +60,8 @@ invokeWithCallback
 invokeWithCallback callback event context = do
   handlerName <- Environment.handlerName
   let lambdaOptions = Runtime.LambdaOptions
-                      { eventObject = LazyByteString.unpack $ ApiInfo.event event
-                      , contextObject = LazyByteString.unpack . encode $ context
+                      { eventObject = ApiInfo.event event
+                      , contextObject = context
                       , functionHandler = handlerName
                       , executionUuid = ""  -- DirectCall doesnt use UUID
                       }
