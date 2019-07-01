@@ -37,7 +37,10 @@ packages:
 # Dependency packages to be pulled from upstream that are not in the resolver
 # using the same syntax as the packages field.
 # (e.g., acme-missiles-0.3)
-extra-deps: []
+extra-deps:
+  - require-0.4.2
+  - github: theam/tintin
+    commit: 655f5a84448b001f78d833f159ac786b6c50a3cb
 # Override default flag values for local packages and extra-deps
 # flags: {}
 
