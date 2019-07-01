@@ -20,6 +20,7 @@ ignoredPaths :: [Text]
 ignoredPaths =
   [ "node_modules"
   , ".stack-work"
+  , ".serverless"
   ]
 
 {-| Returns a list of handler paths that look like
@@ -45,7 +46,7 @@ modulesWithHandler files =
     && isNotIgnoredPath file
 
   isNotIgnoredPath file =
-    filter (Text.isInfixOf (Text.pack $ toFilePath file)) ignoredPaths
+    filter (\ignoredPath -> ignoredPath `Text.isInfixOf` (Text.pack $ toFilePath file)) ignoredPaths
     & null
 
 handlerNames :: [Path Rel File] -> [Text]

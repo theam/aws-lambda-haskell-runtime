@@ -9,6 +9,7 @@ module Aws.Lambda.Meta.Dispatch
 import Data.Function ((&))
 import Data.Text (Text)
 import qualified Data.Text as Text
+import qualified Data.Char as Char
 
 import Data.Aeson
 import qualified Data.ByteString.Lazy.Char8 as LazyByteString
@@ -59,9 +60,9 @@ handlerCase lambdaHandler = do
  where
   qualifiedName =
     lambdaHandler
-    & Text.dropWhile (/= '/')
-    & Text.drop 1
-    & Text.replace "/" "."
+    & Text.splitOn "/"
+    & filter (Char.isUpper . Text.head)
+    & Text.intercalate "."
 
 unmatchedCase :: Meta.MatchQ
 unmatchedCase = do
