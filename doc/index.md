@@ -2,12 +2,13 @@
 title: Home
 ---
 
-# AWS Lambda Haskell Runtime
+# Haskell Runtime for AWS Lambda
 
 [![CircleCI](https://circleci.com/gh/theam/aws-lambda-haskell-runtime.svg?style=shield)](https://circleci.com/gh/theam/aws-lambda-haskell-runtime)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=shield)](http://makeapullrequest.com)
 [![Hackage version](https://img.shields.io/hackage/v/aws-lambda-haskell-runtime.svg)](https://hackage.haskell.org/package/aws-lambda-haskell-runtime)
 [![Open Source Love png1](https://badges.frapsoft.com/os/v1/open-source.png?v=103)](https://github.com/ellerbrock/open-source-badges/)
+[![Linter](https://img.shields.io/badge/code%20style-HLint-brightgreen.svg)](https://github.com/ndmitchell/hlint)
 
 **aws-lambda-haskell-runtime** allows you to use Haskell as a first-class citizen of AWS Lambda. It allows you to deploy projects built with Haskell, and select the handler as you would do with Node.js. It discovers which modules of the project implement a handler for AWS, and generates a dispatcher dynamically, so you don't have to worry about wiring the lambda calls, as it uses the
 handler name specified in the AWS Lambda console.
