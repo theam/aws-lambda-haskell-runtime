@@ -11,7 +11,7 @@ description:         Please see the README on GitHub at <https://github.com/{{gi
 
 dependencies:
 - base >= 4.7 && < 5
-- aws-lambda-haskell-runtime >= 2.0.0
+- aws-lambda-haskell-runtime >= 2.0.1
 - aeson
 
 library:
@@ -74,7 +74,7 @@ import Aws.Lambda
 
 import qualified Lib
 
-configureLambda
+generateLambdaDispatcher
 {-# START_FILE README.md #-}
 # {{name}}
 
