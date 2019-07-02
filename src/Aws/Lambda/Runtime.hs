@@ -7,8 +7,7 @@ import Control.Exception.Safe.Checked
 import Control.Monad (forever)
 import qualified Network.HTTP.Client as Http
 
-import Data.Aeson
-import qualified Data.ByteString.Lazy.Char8 as LazyByteString
+import qualified Data.ByteString.Lazy.Char8 as ByteString
 
 import qualified Aws.Lambda.Runtime.ApiInfo as ApiInfo
 import qualified Aws.Lambda.Runtime.Common as Runtime
@@ -22,8 +21,8 @@ import qualified Aws.Lambda.Runtime.Publish as Publish
 runLambda :: Runtime.RunCallback -> IO ()
 runLambda callback = do
   manager <- Http.newManager httpManagerSettings
+  lambdaApi <- Environment.apiEndpoint `catch` variableNotSet
   forever $ do
-    lambdaApi <- Environment.apiEndpoint `catch` variableNotSet
     event     <- ApiInfo.fetchEvent manager lambdaApi `catch` errorParsing
     context   <- Context.initialize event `catch` errorParsing `catch` variableNotSet
     ((invokeAndRun callback manager lambdaApi event context
@@ -62,15 +61,15 @@ invokeWithCallback
 invokeWithCallback callback event context = do
   handlerName <- Environment.handlerName
   let lambdaOptions = Runtime.LambdaOptions
-                      { eventObject = LazyByteString.unpack $ ApiInfo.event event
-                      , contextObject = LazyByteString.unpack . encode $ context
+                      { eventObject = ApiInfo.event event
+                      , contextObject = context
                       , functionHandler = handlerName
                       , executionUuid = ""  -- DirectCall doesnt use UUID
                       }
   result <- callback lambdaOptions
   case result of
     Left err ->
-      throw $ Error.Invocation err
+      throw $ Error.Invocation (ByteString.unpack err)
     Right value ->
       pure value
 

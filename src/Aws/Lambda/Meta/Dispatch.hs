@@ -22,9 +22,9 @@ import qualified Aws.Lambda.Runtime.Common as Runtime
 decode the JSON that comes as an AWS Lambda event into the
 appropriate type expected by the handler.
 -}
-decodeObj :: FromJSON a => String -> a
+decodeObj :: FromJSON a => LazyByteString.ByteString -> a
 decodeObj x =
-  case (eitherDecode $ LazyByteString.pack x) of
+  case eitherDecode x of
     Left e  -> error e
     Right v -> v
 
@@ -32,8 +32,8 @@ decodeObj x =
 decode the JSON that comes as an AWS Lambda event into the
 appropriate type expected by the handler.
 -}
-encodeObj :: ToJSON a => a -> String
-encodeObj x = LazyByteString.unpack (encode x)
+encodeObj :: ToJSON a => a -> LazyByteString.ByteString
+encodeObj x = encode x
 
 
 {-| Generates the dispatcher out of a list of
@@ -54,7 +54,7 @@ handlerCase :: Text -> Meta.MatchQ
 handlerCase lambdaHandler = do
   let pat = Meta.LitP (Meta.StringL $ Text.unpack lambdaHandler)
   body <- [e|do
-    result <- $(expressionName qualifiedName) (decodeObj $(expressionName "eventObject")) (decodeObj $(expressionName "contextObject"))
+    result <- $(expressionName qualifiedName) (decodeObj $(expressionName "eventObject")) $(expressionName "contextObject")
     either (pure . Left . encodeObj) (pure . Right . $(constructorName "LambdaResult") . encodeObj) result |]
   pure $ Meta.Match pat (Meta.NormalB body) []
  where
@@ -68,6 +68,6 @@ unmatchedCase :: Meta.MatchQ
 unmatchedCase = do
   let pattern = Meta.WildP
   body <- [e|
-    pure $ Left ("Handler " <> $(expressionName "functionHandler") <> " does not exist on project")
+    pure $ Left (LazyByteString.pack $ "Handler " <> $(expressionName "functionHandler") <> " does not exist on project")
     |]
   pure $ Meta.Match pattern (Meta.NormalB body) []

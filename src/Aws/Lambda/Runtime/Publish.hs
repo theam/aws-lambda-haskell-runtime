@@ -9,7 +9,6 @@ module Aws.Lambda.Runtime.Publish
 
 import Control.Monad (void)
 import Data.Aeson
-import qualified Data.ByteString.Char8 as ByteString
 import qualified Network.HTTP.Client as Http
 
 import qualified Aws.Lambda.Runtime.API.Endpoints as Endpoints
@@ -24,7 +23,7 @@ result (LambdaResult res) lambdaApi context manager = do
   rawRequest <- Http.parseRequest endpoint
   let request = rawRequest
                 { Http.method = "POST"
-                , Http.requestBody = Http.RequestBodyBS (ByteString.pack res)
+                , Http.requestBody = Http.RequestBodyLBS res
                 }
   void $ Http.httpNoBody request manager
 
