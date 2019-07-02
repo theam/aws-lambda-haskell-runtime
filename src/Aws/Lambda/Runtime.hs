@@ -1,5 +1,6 @@
 module Aws.Lambda.Runtime
   ( runLambda
+  , Runtime.RunCallback
   , Runtime.LambdaResult(..)
   ) where
 
