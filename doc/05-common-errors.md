@@ -13,7 +13,12 @@ it might be possible that you have encountered yourself facing an error that loo
 
 ## Solution
 
-To solve this, we have to make sure that whatever is packaging/deploying our function is copying these libraries to our function package.
+To solve this, we have to make sure that whatever is packaging/deploying our function is copying these libraries to our function package. If you are using the scaffold example provided by The Agile Monkeys, then you should substitute the last line of your makefile for these lines:
+`
+@rsync -rl <path-to-your-extra-libraries>
+@cd build && zip -r function.zip bootstrap <name-of-library-directory> && rm bootstrap && cd ..
+`
+additionally, you will want to make sure you have the amd64 version of these libraries, and when you download them that they live in lib/x86_64/. When you download amd64 files they are usually saved to lib/x86_64_gnu_linux.
 Please note that you might have to adjust your `LD_LIBRARY_PATH` environment variable, so it also points to the directory where you've
 placed these files.
 
