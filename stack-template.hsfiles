@@ -24,7 +24,11 @@ executables:
     ghc-options:
     - -threaded
     - -rtsopts
+    - -O2
+    - -static
     - -with-rtsopts=-N
+    cc-options: -static
+    ld-options: -static -pthread
     dependencies:
     - {{name}}
 
