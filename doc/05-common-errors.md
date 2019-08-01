@@ -23,7 +23,7 @@ To solve this, we have to make sure that whatever is packaging/deploying our fun
 Additionally, you will want to make sure you have the `amd64` version of these libraries, and when you download them that they live in `lib/x86_64/`. When you download `amd64` files, they are usually saved to `lib/x86_64_gnu_linux`.
 
 Please note that you might have to adjust your `LD_LIBRARY_PATH` environment variable, so it also points to the directory where you've
-placed these files.
+placed these files. `$LAMBDA_TASK_ROOT/lib` is already part of `LD_LIBRARY_PATH`, so if <name-of-library-directory> is `lib` this should be handled automatically.
 
 Here is a more comprehensive list of libraries that you might want to copy if they are used by your project. You can use it to check if
 some library of those might appear in your project.
