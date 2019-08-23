@@ -4,7 +4,6 @@ module Aws.Lambda.Runtime.ApiInfo
   ) where
 
 import qualified Control.Monad as Monad
-import qualified Text.Read as Read
 
 import Control.Exception (IOException)
 import Control.Exception.Safe.Checked
@@ -44,9 +43,9 @@ reduceEvent :: Throws Error.Parsing => Event -> (Http.HeaderName, ByteString) ->
 reduceEvent event header =
   case header of
     ("Lambda-Runtime-Deadline-Ms", value) ->
-      case Read.readMaybe $ ByteString.unpack value of
-        Just ms -> pure event { deadlineMs = ms }
-        Nothing -> throw (Error.Parsing "deadlineMs" $ ByteString.unpack value)
+      case ByteString.readInt value of
+        Just (ms, _) -> pure event { deadlineMs = ms }
+        Nothing      -> throw (Error.Parsing "deadlineMs" $ ByteString.unpack value)
 
     ("Lambda-Runtime-Trace-Id", value) ->
       pure event { traceId = ByteString.unpack value }
