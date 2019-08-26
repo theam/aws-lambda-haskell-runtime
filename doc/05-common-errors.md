@@ -8,7 +8,7 @@ title: Common errors
 
 **Long version**:
 
-Sometimes, it is possible that the runtime can throw an error that looks more or less like this:
+Sometimes, it is possible that the runtime can print an error that looks more or less like this:
 
 ```text
 bootstrap: c_poll: permission denied (Operation not permitted)
