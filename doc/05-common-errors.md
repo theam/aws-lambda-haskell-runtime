@@ -2,6 +2,24 @@
 title: Common errors
 ---
 
+# `c_poll` permission denied
+
+**TL;DR**: The error is harmless.
+
+**Long version**:
+
+Sometimes, it is possible that the runtime can throw an error that looks more or less like this:
+
+```text
+bootstrap: c_poll: permission denied (Operation not permitted)
+```
+
+This is because when the Haskell runtime system (the Haskell RTS is equivalent to Java's JVM) is initialized, the
+runtime system polls some OS stuff, to see what features of the OS it can use for IO execution. Given that Amazon Linux
+does not support some of these features, it fails with a `permission denied` error.
+
+If this error makes your application crash for some reason, please [do open an issue](https://github.com/theam/aws-lambda-haskell-runtime/issues/43).
+
 # Error while loading shared libraries
 
 Given the native nature of Haskell, and it's possibility to interoperate with shared libraries,
