@@ -49,7 +49,7 @@ packages:
 - .
 
 extra-deps:
-- aws-lambda-haskell-runtime-2.0.0
+- aws-lambda-haskell-runtime-2.0.1
 ```
 
 ## Adding the dependency to an existing project
@@ -60,7 +60,7 @@ to the `stack.yaml` file:
 
 ```yaml
 extra-deps:
-- aws-lambda-haskell-runtime-2.0.0
+- aws-lambda-haskell-runtime-2.0.1
 ```
 
 and, to the `package.yaml` file:
