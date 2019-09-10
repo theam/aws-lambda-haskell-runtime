@@ -88,6 +88,6 @@ table, th, td {
 
 We were there when [Werner Vogels](https://twitter.com/Werner) announced the new custom lambda runtimes on stage, and we couldn’t have been more excited. It was definitely one of our favorite announcements that morning. We have been trying Haskell (and other flavors of Haskell, like Eta and PureScript) on AWS lambda since we started working on Serverless more than a year ago. From the beginning we felt like Haskell fit like a glove in AWS Lambda — it produces fast and reliable binaries and it’s a pure functional language! There’s nothing like a pure functional language to write Lambda Functions, right?
 
-Well, the reality is that Haskell didn’t work as well as the supported languages did. We had to apply ugly hacks to make it work, and we ended up switching to TypeScript or other better supported languages for production projects. But that’s all in the past!
+Well, the reality is that Haskell didn’t work as well as the supported languages did. We had to apply ugly hacks to make it work, like compiling an executable/dynamic library and then wrapping it around in a Node.js module that performed a native call. We always ended up switching to TypeScript or other better supported languages for production projects. But that’s all in the past!
 
 Excited as we are? Keep reading! 👇
