@@ -23,6 +23,7 @@ data Event = Event
   , traceId            :: !String
   , awsRequestId       :: !String
   , invokedFunctionArn :: !String
+  , clientContext      :: !ByteString
   , event              :: !Lazy.ByteString
   }
 
@@ -57,6 +58,9 @@ reduceEvent event header =
     ("Lambda-Runtime-Invoked-Function-Arn", value) ->
       pure event { invokedFunctionArn = ByteString.unpack value }
 
+    ("Lambda-Runtime-Client-Context", value) ->
+      pure event { clientContext = value }
+
     _ ->
       pure event
 
@@ -66,6 +70,7 @@ initialEvent body = Event
   , traceId = ""
   , awsRequestId = ""
   , invokedFunctionArn = ""
+  , clientContext = ""
   , event = body
   }
 
