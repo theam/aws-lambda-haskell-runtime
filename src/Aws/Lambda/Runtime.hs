@@ -69,9 +69,8 @@ invokeWithCallback callback event context = do
                       , executionUuid = ""  -- DirectCall doesnt use UUID
                       }
   result <- callback lambdaOptions
-  -- Flush output handlers to insure output goes into CloudWatch logs
-  hFlush stdout
-  hFlush stderr
+  -- Flush output to insure output goes into CloudWatch logs
+  flushOutput
   case result of
     Left err ->
       throw $ Error.Invocation err
@@ -85,3 +84,9 @@ variableNotSet (Error.EnvironmentVariableNotSet env) =
 errorParsing :: Error.Parsing -> IO a
 errorParsing Error.Parsing{..} =
   error ("Failed parsing " <> errorMessage <> ", got" <> actualValue)
+
+-- | Flush standard output ('stdout') and standard error output ('stderr') handlers
+flushOutput :: IO ()
+flushOutput = do
+  hFlush stdout
+  hFlush stderr
