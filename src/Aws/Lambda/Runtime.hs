@@ -5,6 +5,7 @@ module Aws.Lambda.Runtime
 
 import Control.Exception.Safe.Checked
 import Control.Monad (forever)
+import System.IO (hFlush, stdout, stderr)
 import qualified Network.HTTP.Client as Http
 
 import Data.Aeson
@@ -68,6 +69,9 @@ invokeWithCallback callback event context = do
                       , executionUuid = ""  -- DirectCall doesnt use UUID
                       }
   result <- callback lambdaOptions
+  -- Flush output handlers to insure output goes into CloudWatch logs
+  hFlush stdout
+  hFlush stderr
   case result of
     Left err ->
       throw $ Error.Invocation err
