@@ -5,6 +5,7 @@ module Aws.Lambda.Runtime
 
 import Control.Exception.Safe.Checked
 import Control.Monad (forever)
+import System.IO (hFlush, stdout, stderr)
 import qualified Network.HTTP.Client as Http
 
 import Data.Aeson
@@ -68,6 +69,8 @@ invokeWithCallback callback event context = do
                       , executionUuid = ""  -- DirectCall doesnt use UUID
                       }
   result <- callback lambdaOptions
+  -- Flush output to insure output goes into CloudWatch logs
+  flushOutput
   case result of
     Left err ->
       throw $ Error.Invocation err
@@ -81,3 +84,9 @@ variableNotSet (Error.EnvironmentVariableNotSet env) =
 errorParsing :: Error.Parsing -> IO a
 errorParsing Error.Parsing{..} =
   error ("Failed parsing " <> errorMessage <> ", got" <> actualValue)
+
+-- | Flush standard output ('stdout') and standard error output ('stderr') handlers
+flushOutput :: IO ()
+flushOutput = do
+  hFlush stdout
+  hFlush stderr
