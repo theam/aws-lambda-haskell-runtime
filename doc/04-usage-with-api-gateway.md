@@ -59,6 +59,9 @@ Note that `HeaderName` comes from [`Network.HTTP.Simple`](https://hackage.haskel
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+
+module Lib where
+
 import GHC.Generics
 import Aws.Lambda
 import Data.Aeson
