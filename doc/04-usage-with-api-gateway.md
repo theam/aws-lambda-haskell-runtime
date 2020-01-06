@@ -52,6 +52,8 @@ data APIGatewayResponse = APIGatewayResponse
 Again, you can use this type in your project, and use only the fields you need.
 Note that `HeaderName` comes from [`Network.HTTP.Simple`](https://hackage.haskell.org/package/http-conduit-2.3.7.1/docs/Network-HTTP-Simple.html#t:Header).
 
+Notice some fields need implementation of ToJSON. See the example with headers below.
+
 ## An example
 
 ```haskell top
@@ -102,4 +104,58 @@ handler Event{..} context = do
         { statusCode = 200
         , body = "bad person"
         }
+```
+## An example with headers
+```src/Hello.hs```
+```haskell
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
+
+module Hello where
+
+import           GHC.Generics
+import           Aws.Lambda
+import           Data.Aeson
+import           Network.HTTP.Types.Header
+import           Data.Text.Encoding
+import qualified Data.CaseInsensitive          as CI
+import qualified Data.Aeson.Types              as T
+
+-- Input
+data Event = Event
+  { resource :: String
+  , body :: String
+  } deriving (Generic, FromJSON)
+
+-- Output
+data ApiGateWayResponse = ApiGateWayResponse
+  { statusCode:: Int
+  , headers :: ResponseHeaders
+  , body :: String
+  } deriving (Generic)
+
+-- function to encode Header
+headerToPair :: Header -> T.Pair
+headerToPair (cibyte, bstr) = k .= v
+ where
+  k = (decodeUtf8 . CI.original) cibyte
+  v = decodeUtf8 bstr
+
+instance ToJSON ApiGateWayResponse  where
+  toJSON ApiGateWayResponse {..} = object
+    [ "statusCode" .= statusCode
+    , "body" .= body
+    , "headers" .= object (map headerToPair headers)
+    ]
+
+handler :: Event -> Context -> IO (Either String  ApiGateWayResponse)
+handler Event {..} _ = pure $ Right ApiGateWayResponse
+  { statusCode = 200
+  , headers    = [("Access-Control-Allow-Origin", "*")]
+  , body       = "hello, cors"
+  }
 ```
