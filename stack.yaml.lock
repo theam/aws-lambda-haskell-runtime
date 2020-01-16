@@ -12,6 +12,13 @@ packages:
   original:
     hackage: require-0.4.2
 - completed:
+    hackage: path-0.6.1@sha256:7a9a56f767a8e47b361af855fea0b4a8d18e7b029734957a65dcd5c0c1abef16,2423
+    pantry-tree:
+      size: 643
+      sha256: af9100a9534fc004de21e2615c155cd38d9012f16296ab3a394d4bcf2dc8defe
+  original:
+    hackage: path-0.6.1
+- completed:
     size: 37827
     url: https://github.com/theam/tintin/archive/655f5a84448b001f78d833f159ac786b6c50a3cb.tar.gz
     cabal-file:
