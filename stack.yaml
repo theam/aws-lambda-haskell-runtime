@@ -17,7 +17,7 @@
 #
 # resolver: ./custom-snapshot.yaml
 # resolver: https://example.com/snapshots/2018-01-01.yaml
-resolver: lts-13.25
+resolver: lts-15.5
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -39,7 +39,6 @@ packages:
 # (e.g., acme-missiles-0.3)
 extra-deps:
   - require-0.4.2
-  - path-0.6.1
   - github: theam/tintin
     commit: 655f5a84448b001f78d833f159ac786b6c50a3cb
 # Override default flag values for local packages and extra-deps

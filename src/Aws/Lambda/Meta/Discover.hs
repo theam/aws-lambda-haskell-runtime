@@ -42,7 +42,7 @@ modulesWithHandler files =
   & Monad.filterM containsHandler
  where
   isHaskellModule file =
-    fileExtension file == ".hs"
+    fileExtension file == Just ".hs"
     && isNotIgnoredPath file
 
   isNotIgnoredPath file =
