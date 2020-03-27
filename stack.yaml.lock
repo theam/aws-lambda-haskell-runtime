@@ -12,13 +12,6 @@ packages:
   original:
     hackage: require-0.4.2
 - completed:
-    hackage: path-0.6.1@sha256:7a9a56f767a8e47b361af855fea0b4a8d18e7b029734957a65dcd5c0c1abef16,2423
-    pantry-tree:
-      size: 643
-      sha256: af9100a9534fc004de21e2615c155cd38d9012f16296ab3a394d4bcf2dc8defe
-  original:
-    hackage: path-0.6.1
-- completed:
     size: 37827
     url: https://github.com/theam/tintin/archive/655f5a84448b001f78d833f159ac786b6c50a3cb.tar.gz
     cabal-file:
@@ -34,7 +27,7 @@ packages:
     url: https://github.com/theam/tintin/archive/655f5a84448b001f78d833f159ac786b6c50a3cb.tar.gz
 snapshots:
 - completed:
-    size: 499461
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/13/25.yaml
-    sha256: aed98969628e20615e96b06083c933c7e3354ae56b08b75e607a26569225d6c0
-  original: lts-13.25
+    size: 491372
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/15/5.yaml
+    sha256: 1b549cfff328040c382a70a84a2087aac8dab6d778bf92f32a93a771a1980dfc
+  original: lts-15.5
