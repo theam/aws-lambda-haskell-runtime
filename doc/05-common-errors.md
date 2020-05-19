@@ -31,6 +31,21 @@ it might be possible that you have encountered yourself facing an error that loo
 
 ## Solution
 
+### Solution 1: Enable static linking
+
+The easiest solution is likely to just enable static linking for your project by adding the following to your `package.yaml` or `.cabal` file (this will be already included if you're using the Stack template):
+
+```yaml
+ghc-options: -O2 -static -threaded
+cc-options: -static
+ld-options: -static -pthread
+
+# If you want to pass a custom path to your dependencies
+# extra-lib-dirs: ./some/path
+```
+
+### Solution 2: Deploy the libraries with your lamdba
+
 To solve this, we have to make sure that whatever is packaging/deploying our function is copying these libraries to our function package. If you are using the Stack template, then you should substitute the last line of your makefile for these lines:
 
 ```text
