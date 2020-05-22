@@ -1,9 +1,15 @@
 module Aws.Lambda.Runtime
   ( runLambda
   , Runtime.LambdaResult(..)
+  , Runtime.DispatcherStrategy(..)
+  , Runtime.DispatcherOptions(..)
+  , Runtime.ApiGatewayDispatcherOptions(..)
+  , Runtime.defaultDispatcherOptions
+  , Error.Parsing(..)
   ) where
 
 import Control.Exception.Safe.Checked
+import qualified Control.Exception.Safe.Checked as Checked
 import Control.Monad (forever)
 import System.IO (hFlush, stdout, stderr)
 import qualified Network.HTTP.Client as Http
@@ -17,6 +23,7 @@ import qualified Aws.Lambda.Runtime.Context as Context
 import qualified Aws.Lambda.Runtime.Environment as Environment
 import qualified Aws.Lambda.Runtime.Error as Error
 import qualified Aws.Lambda.Runtime.Publish as Publish
+import qualified Control.Exception as Unchecked
 
 -- | Runs the user @haskell_lambda@ executable and posts back the
 -- results. This is called from the layer's @main@ function.
@@ -27,10 +34,12 @@ runLambda callback = do
     lambdaApi <- Environment.apiEndpoint `catch` variableNotSet
     event     <- ApiInfo.fetchEvent manager lambdaApi `catch` errorParsing
     context   <- Context.initialize event `catch` errorParsing `catch` variableNotSet
-    ((invokeAndRun callback manager lambdaApi event context
-      `catch` \err -> Publish.parsingError err lambdaApi context manager)
-      `catch` \err -> Publish.invocationError err lambdaApi context manager)
-      `catch` \(err :: Error.EnvironmentVariableNotSet) -> Publish.runtimeInitError err lambdaApi context manager
+
+    (((invokeAndRun callback manager lambdaApi event context
+      `Checked.catch` \err -> Publish.parsingError err lambdaApi context manager)
+      `Checked.catch` \err -> Publish.invocationError err lambdaApi context manager)
+      `Checked.catch` \(err :: Error.EnvironmentVariableNotSet) -> Publish.runtimeInitError err lambdaApi context manager)
+      `Unchecked.catch` \err -> Publish.invocationError err lambdaApi context manager
 
 httpManagerSettings :: Http.ManagerSettings
 httpManagerSettings =
@@ -49,7 +58,8 @@ invokeAndRun
   -> Context.Context
   -> IO ()
 invokeAndRun callback manager lambdaApi event context = do
-  result    <- invokeWithCallback callback event context
+  result <- invokeWithCallback callback event context
+
   Publish.result result lambdaApi context manager
     `catch` \err -> Publish.invocationError err lambdaApi context manager
 
@@ -72,8 +82,11 @@ invokeWithCallback callback event context = do
   -- Flush output to insure output goes into CloudWatch logs
   flushOutput
   case result of
-    Left err ->
-      throw $ Error.Invocation err
+    Left lambdaError -> case lambdaError of
+      Runtime.StandaloneLambdaError err ->
+        throw $ Error.Invocation $ toJSON err
+      Runtime.ApiGatewayLambdaError err ->
+        throw $ Error.Invocation $ toJSON err
     Right value ->
       pure value
 

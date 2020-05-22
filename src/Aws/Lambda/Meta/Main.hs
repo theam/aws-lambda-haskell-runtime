@@ -1,6 +1,10 @@
 {-| main function generation for interoperation with the layer -}
 module Aws.Lambda.Meta.Main
   ( Runtime.LambdaOptions(..)
+  , Runtime.DispatcherStrategy(..)
+  , Runtime.DispatcherOptions(..)
+  , Runtime.ApiGatewayDispatcherOptions(..)
+  , Runtime.defaultDispatcherOptions
   , generate
   ) where
 
@@ -16,6 +20,6 @@ generate = [d|
   |]
  where
   directCallBody =
-    [e|do
+    [e|
     runLambda run
     |]

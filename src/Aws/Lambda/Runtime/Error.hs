@@ -7,7 +7,7 @@ module Aws.Lambda.Runtime.Error
   ) where
 
 import Control.Exception.Safe.Checked
-import Data.Aeson (ToJSON (..), object, (.=))
+import Data.Aeson (ToJSON (..), object, (.=), Value)
 
 newtype EnvironmentVariableNotSet =
   EnvironmentVariableNotSet String
@@ -22,18 +22,19 @@ instance ToJSON EnvironmentVariableNotSet where
 data Parsing = Parsing
   { errorMessage :: String
   , actualValue  :: String
+  , valueName    :: String
   } deriving (Show, Exception)
 
 instance ToJSON Parsing where
-  toJSON (Parsing objectBeingParsed value) = object
+  toJSON (Parsing errorMessage value _) = object
     [ "errorType" .= ("Parsing" :: String)
-    , "errorMessage" .= ("Parse error for " <> objectBeingParsed <> ", could not parse value '" <> value <> "'")
+    , "errorMessage" .= ("Could not parse value '" <> value <> "': " <> errorMessage)
     ]
 
 newtype Invocation =
-  Invocation String
+  Invocation Value
   deriving (Show, Exception)
 
 instance ToJSON Invocation where
   -- We return the user error as it is
-  toJSON (Invocation err) = toJSON err
+  toJSON (Invocation err) = err
