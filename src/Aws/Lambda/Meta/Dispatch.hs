@@ -24,7 +24,7 @@ import qualified Aws.Lambda.Runtime.Error as Error
 import qualified Aws.Lambda.Runtime.ApiGatewayInfo as ApiGatewayInfo
 import qualified Control.Exception as Unchecked
 import qualified Aws.Lambda.Meta.Main as Main
-import Data.Typeable (Typeable, typeOf, Proxy (..))
+import Data.Typeable (Typeable, typeRep, Proxy (..))
 
 {-| Helper function that the dispatcher will use to
 decode the JSON that comes as an AWS Lambda event into the
@@ -32,7 +32,7 @@ appropriate type expected by the handler.
 -}
 decodeObj :: forall a. (FromJSON a, Typeable a) => String -> Either Error.Parsing a
 decodeObj x =
-  let objName = show (typeOf (Proxy :: Proxy a)) in
+  let objName = show (typeRep (Proxy :: Proxy a)) in
   case (eitherDecode $ LazyByteString.pack x) of
     Left e  -> Left $ Error.Parsing e x objName
     Right v -> return v
@@ -91,7 +91,7 @@ apiGatewayHandlerCase :: Main.DispatcherOptions -> Text -> Meta.MatchQ
 apiGatewayHandlerCase options lambdaHandler = do
   let pat = Meta.LitP (Meta.StringL $ Text.unpack lambdaHandler)
   body <- [e|do
-    let err500 = pure . Left . Runtime.ApiGatewayLambdaError . ApiGatewayInfo.mkApiGatewayResponse 500
+    let returnErr statusCode = pure . Left . Runtime.ApiGatewayLambdaError . ApiGatewayInfo.mkApiGatewayResponse statusCode
     case decodeObj $(expressionName "eventObject") of
       Right eventObject -> case decodeObj $(expressionName "contextObject") of
         Right context -> do
@@ -101,10 +101,10 @@ apiGatewayHandlerCase options lambdaHandler = do
               either (pure . Left . Runtime.ApiGatewayLambdaError . fmap toJSON) (pure . Right . Runtime.ApiGatewayResult . fmap toJSON) result
             Left (handlerError :: Unchecked.SomeException) ->
               if (Runtime.propagateImpureExceptions . Runtime.apiGatewayDispatcherOptions $ options)
-              then err500 . toJSON . show $ handlerError
-              else err500 . toJSON $ "Something went wrong."
-        Left err -> err500 . toJSON $ err
-      Left err -> err500 . toJSON $ err|]
+              then returnErr 500 . toJSON . show $ handlerError
+              else returnErr 500 . toJSON $ "Something went wrong."
+        Left err -> returnErr 500 . toJSON $ err
+      Left err -> returnErr 400 . toJSON $ err|]
   pure $ Meta.Match pat (Meta.NormalB body) []
 
 apiGatewayUnmatchedCase :: Meta.MatchQ

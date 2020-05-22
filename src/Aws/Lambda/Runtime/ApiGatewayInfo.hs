@@ -2,6 +2,8 @@
 
 module Aws.Lambda.Runtime.ApiGatewayInfo
   ( ApiGatewayRequest(..)
+  , ApiGatewayRequestContext(..)
+  , ApiGatewayRequestContextIdentity(..)
   , ApiGatewayResponse(..)
   , mkApiGatewayResponse ) where
 
@@ -17,7 +19,6 @@ import qualified Data.Aeson.Types as T
 import qualified Data.ByteString.Lazy.Char8 as LazyByteString
 import Data.Aeson.Types (Parser)
 
--- TODO: Add the rest of the fields
 data ApiGatewayRequest body = ApiGatewayRequest
   { apiGatewayRequestResource              :: !Text
   , apiGatewayRequestPath                  :: !Text
@@ -26,8 +27,10 @@ data ApiGatewayRequest body = ApiGatewayRequest
   , apiGatewayRequestQueryStringParameters :: !(Maybe [(Text, Maybe Text)])
   , apiGatewayRequestPathParameters        :: !(Maybe (HashMap Text Text))
   , apiGatewayRequestStageVariables        :: !(Maybe (HashMap Text Text))
+  , apiGatewayRequestIsBase64Encoded       :: !Bool
+  , apiGatewayRequestRequestContext        :: !ApiGatewayRequestContext
   , apiGatewayRequestBody                  :: !body
-  } deriving (Generic, Show)
+  } deriving (Show)
 
 instance FromJSON body => FromJSON (ApiGatewayRequest body) where
   parseJSON (Object v) = ApiGatewayRequest <$>
@@ -38,8 +41,76 @@ instance FromJSON body => FromJSON (ApiGatewayRequest body) where
     v .: "queryStringParameters" <*>
     v .: "pathParameters" <*>
     v .: "stageVariables" <*>
+    v .: "isBase64Encoded" <*>
+    v .: "requestContext" <*>
     v `parseObjectFromStringField` "body"
   parseJSON _ = fail "Expected ApiGatewayRequest to be an object."
+
+data ApiGatewayRequestContext = ApiGatewayRequestContext
+  { apiGatewayRequestContextResourceId        :: !Text
+  , apiGatewayRequestContextResourcePath      :: !Text
+  , apiGatewayRequestContextHttpMethod        :: !Text
+  , apiGatewayRequestContextExtendedRequestId :: !Text
+  , apiGatewayRequestContextRequestTime       :: !Text
+  , apiGatewayRequestContextPath              :: !Text
+  , apiGatewayRequestContextAccountId         :: !Text
+  , apiGatewayRequestContextProtocol          :: !Text
+  , apiGatewayRequestContextStage             :: !Text
+  , apiGatewayRequestContextDomainPrefix      :: !Text
+  , apiGatewayRequestContextRequestId         :: !Text
+  , apiGatewayRequestContextDomainName        :: !Text
+  , apiGatewayRequestContextApiId             :: !Text
+  , apiGatewayRequestContextIdentity          :: !ApiGatewayRequestContextIdentity
+  } deriving (Show)
+
+instance FromJSON ApiGatewayRequestContext where
+  parseJSON (Object v) = ApiGatewayRequestContext <$>
+    v .: "resourceId" <*>
+    v .: "path" <*>
+    v .: "httpMethod" <*>
+    v .: "extendedRequestId" <*>
+    v .: "requestTime" <*>
+    v .: "path" <*>
+    v .: "accountId" <*>
+    v .: "protocol" <*>
+    v .: "stage" <*>
+    v .: "domainPrefix" <*>
+    v .: "requestId" <*>
+    v .: "domainName" <*>
+    v .: "apiId" <*>
+    v .: "identity"
+  parseJSON _ = fail "Expected ApiGatewayRequestContext to be an object."
+
+data ApiGatewayRequestContextIdentity = ApiGatewayRequestContextIdentity
+  { apiGatewayRequestContextIdentityCognitoIdentityPoolId         :: !(Maybe Text)
+  , apiGatewayRequestContextIdentityAccountId                     :: !(Maybe Text)
+  , apiGatewayRequestContextIdentityCognitoIdentityId             :: !(Maybe Text)
+  , apiGatewayRequestContextIdentityCaller                        :: !(Maybe Text)
+  , apiGatewayRequestContextIdentitySourceIp                      :: !(Maybe Text)
+  , apiGatewayRequestContextIdentityPrincipalOrgId                :: !(Maybe Text)
+  , apiGatewayRequestContextIdentityAccesskey                     :: !(Maybe Text)
+  , apiGatewayRequestContextIdentityCognitoAuthenticationType     :: !(Maybe Text)
+  , apiGatewayRequestContextIdentityCognitoAuthenticationProvider :: !(Maybe Value)
+  , apiGatewayRequestContextIdentityUserArn                       :: !(Maybe Text)
+  , apiGatewayRequestContextIdentityUserAgent                     :: !(Maybe Text)
+  , apiGatewayRequestContextIdentityUser                          :: !(Maybe Text)
+  } deriving (Show)
+
+instance FromJSON ApiGatewayRequestContextIdentity where
+  parseJSON (Object v) = ApiGatewayRequestContextIdentity <$>
+    v .: "cognitoIdentityPoolId" <*>
+    v .: "accountId" <*>
+    v .: "cognitoIdentityId" <*>
+    v .: "caller" <*>
+    v .: "sourceIp" <*>
+    v .: "principalOrgId" <*>
+    v .: "accessKey" <*>
+    v .: "cognitoAuthenticationType" <*>
+    v .: "cognitoAuthenticationProvider" <*>
+    v .: "userArn" <*>
+    v .: "userAgent" <*>
+    v .: "user"
+  parseJSON _ = fail "Expected ApiGatewayRequestContextIdentity to be an object."
 
 -- We need this because API Gateway is going to send us the payload as a JSON string
 parseObjectFromStringField :: FromJSON a => Object -> Text -> Parser a

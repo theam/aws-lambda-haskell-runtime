@@ -26,9 +26,9 @@ data Parsing = Parsing
   } deriving (Show, Exception)
 
 instance ToJSON Parsing where
-  toJSON (Parsing errorMessage value _) = object
+  toJSON (Parsing errorMessage _ valueName) = object
     [ "errorType" .= ("Parsing" :: String)
-    , "errorMessage" .= ("Could not parse value '" <> value <> "': " <> errorMessage)
+    , "errorMessage" .= ("Could not parse '" <> valueName <> "': " <> errorMessage)
     ]
 
 newtype Invocation =
