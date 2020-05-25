@@ -55,7 +55,7 @@ functionMemory = do
   memoryValue <- readEnvironmentVariable envVar
   case Read.readMaybe memoryValue of
     Just value -> pure value
-    Nothing    -> throw (Error.Parsing envVar memoryValue)
+    Nothing    -> throw (Error.Parsing envVar memoryValue envVar)
 
 readEnvironmentVariable :: Throws Error.EnvironmentVariableNotSet => String -> IO String
 readEnvironmentVariable envVar = do

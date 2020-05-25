@@ -19,20 +19,24 @@ import qualified Aws.Lambda.Runtime.Error as Error
 
 -- | Publishes the result back to AWS Lambda
 result :: LambdaResult -> String -> Context -> Http.Manager -> IO ()
-result (LambdaResult res) lambdaApi context manager = do
+result lambdaResult lambdaApi context manager = do
   let Endpoints.Endpoint endpoint = Endpoints.response lambdaApi (awsRequestId context)
   rawRequest <- Http.parseRequest endpoint
-  let request = rawRequest
+
+  let requestBody = case lambdaResult of
+        (StandaloneLambdaResult res) -> Http.RequestBodyBS (ByteString.pack res)
+        (ApiGatewayResult res) -> Http.RequestBodyLBS (encode res)
+      request = rawRequest
                 { Http.method = "POST"
-                , Http.requestBody = Http.RequestBodyBS (ByteString.pack res)
+                , Http.requestBody = requestBody
                 }
+
   void $ Http.httpNoBody request manager
 
 -- | Publishes an invocation error back to AWS Lambda
 invocationError :: Error.Invocation -> String -> Context -> Http.Manager -> IO ()
 invocationError err lambdaApi context =
-  publish err (Endpoints.invocationError lambdaApi $ awsRequestId context)
-    context
+  publish err (Endpoints.invocationError lambdaApi $ awsRequestId context) context
 
 -- | Publishes a parsing error back to AWS Lambda
 parsingError :: Error.Parsing -> String -> Context -> Http.Manager -> IO ()
@@ -48,8 +52,11 @@ runtimeInitError err lambdaApi =
 publish :: ToJSON err => err -> Endpoints.Endpoint -> Context -> Http.Manager -> IO ()
 publish err (Endpoints.Endpoint endpoint) Context{..} manager = do
   rawRequest <- Http.parseRequest endpoint
-  let request = rawRequest
+
+  let requestBody = Http.RequestBodyLBS (encode err)
+      request = rawRequest
                 { Http.method = "POST"
-                , Http.requestBody = Http.RequestBodyLBS (encode err)
+                , Http.requestBody = requestBody
                 }
+
   void $ Http.httpNoBody request manager

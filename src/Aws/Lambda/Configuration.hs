@@ -15,8 +15,8 @@ import qualified Aws.Lambda.Meta.Run as Run
 
 {-| Generates a @main@ function that acts as a dispatcher
 -}
-generateLambdaDispatcher :: Meta.DecsQ
-generateLambdaDispatcher = do
+generateLambdaDispatcher :: Main.DispatcherStrategy -> Main.DispatcherOptions -> Meta.DecsQ
+generateLambdaDispatcher strategy options = do
   main <- Main.generate
-  run <- Run.generate
+  run <- Run.generate options strategy
   return (main <> [run])

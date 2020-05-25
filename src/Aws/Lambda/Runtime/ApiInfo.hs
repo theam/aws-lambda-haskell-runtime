@@ -24,14 +24,14 @@ data Event = Event
   , awsRequestId       :: !String
   , invokedFunctionArn :: !String
   , event              :: !Lazy.ByteString
-  }
+  } deriving (Show)
 
 -- | Performs a GET to the endpoint that provides the next event
 fetchEvent :: Throws Error.Parsing => Http.Manager -> String -> IO Event
 fetchEvent manager lambdaApi = do
   response <- fetchApiData manager lambdaApi
   let body = Http.responseBody response
-  let headers = Http.responseHeaders response
+      headers = Http.responseHeaders response
   Monad.foldM reduceEvent (initialEvent body) headers
 
 fetchApiData :: Http.Manager -> String -> IO (Http.Response Lazy.ByteString)
@@ -46,7 +46,7 @@ reduceEvent event header =
     ("Lambda-Runtime-Deadline-Ms", value) ->
       case Read.readMaybe $ ByteString.unpack value of
         Just ms -> pure event { deadlineMs = ms }
-        Nothing -> throw (Error.Parsing "deadlineMs" $ ByteString.unpack value)
+        Nothing -> throw (Error.Parsing "Could not parse deadlineMs." (ByteString.unpack value) "deadlineMs")
 
     ("Lambda-Runtime-Trace-Id", value) ->
       pure event { traceId = ByteString.unpack value }

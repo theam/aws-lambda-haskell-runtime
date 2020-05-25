@@ -29,5 +29,9 @@ cabal.project.local~
 .HTF/
 .ghc.environment.*
 
+# IntelliJ
+.idea
+*.iml
+
 # End of https://www.gitignore.io/api/haskell
 .DS_Store
