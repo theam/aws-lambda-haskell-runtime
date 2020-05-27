@@ -29,7 +29,7 @@ data ApiGatewayRequest body = ApiGatewayRequest
   , apiGatewayRequestStageVariables        :: !(Maybe (HashMap Text Text))
   , apiGatewayRequestIsBase64Encoded       :: !Bool
   , apiGatewayRequestRequestContext        :: !ApiGatewayRequestContext
-  , apiGatewayRequestBody                  :: !body
+  , apiGatewayRequestBody                  :: !(Maybe body)
   } deriving (Show)
 
 instance FromJSON body => FromJSON (ApiGatewayRequest body) where
@@ -113,7 +113,7 @@ instance FromJSON ApiGatewayRequestContextIdentity where
   parseJSON _ = fail "Expected ApiGatewayRequestContextIdentity to be an object."
 
 -- We need this because API Gateway is going to send us the payload as a JSON string
-parseObjectFromStringField :: FromJSON a => Object -> Text -> Parser a
+parseObjectFromStringField :: FromJSON a => Object -> Text -> Parser (Maybe a)
 parseObjectFromStringField obj fieldName = do
   fieldContents <- obj .: fieldName
   case fieldContents of
@@ -121,7 +121,8 @@ parseObjectFromStringField obj fieldName = do
       case eitherDecodeStrict (T.encodeUtf8 stringContents) of
         Right success -> pure success
         Left err -> fail err
-    other -> T.typeMismatch "String" other
+    Null -> pure Nothing
+    other -> T.typeMismatch "String or Null" other
 
 data ApiGatewayResponse body = ApiGatewayResponse
   { apiGatewayResponseStatusCode      :: !Int
