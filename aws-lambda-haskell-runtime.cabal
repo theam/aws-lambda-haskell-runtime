@@ -1,0 +1,81 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: eab5b338b49db7854613ecd43b17245f105c8c936c40230ecf9d08c5dfad9d6d
+
+name:           aws-lambda-haskell-runtime
+version:        2.0.6
+synopsis:       Haskell runtime for AWS Lambda
+description:    Please see the README on GitHub at <https://github.com/theam/aws-lambda-haskell-runtime#readme>
+category:       AWS
+homepage:       https://github.com/theam/aws-lambda-haskell-runtime#readme
+bug-reports:    https://github.com/theam/aws-lambda-haskell-runtime/issues
+author:         Nikita Tchayka
+maintainer:     hackers@theagilemonkeys.com
+copyright:      2018 The Agile Monkeys SL
+license:        Apache-2.0
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+
+source-repository head
+  type: git
+  location: https://github.com/theam/aws-lambda-haskell-runtime
+
+library
+  exposed-modules:
+      Aws.Lambda
+      Aws.Lambda.Runtime
+  other-modules:
+      Aws.Lambda.Configuration
+      Aws.Lambda.Meta.Common
+      Aws.Lambda.Meta.Discover
+      Aws.Lambda.Meta.Dispatch
+      Aws.Lambda.Meta.Main
+      Aws.Lambda.Meta.Run
+      Aws.Lambda.Runtime.API.Endpoints
+      Aws.Lambda.Runtime.API.Version
+      Aws.Lambda.Runtime.ApiGatewayInfo
+      Aws.Lambda.Runtime.ApiInfo
+      Aws.Lambda.Runtime.Common
+      Aws.Lambda.Runtime.Context
+      Aws.Lambda.Runtime.Environment
+      Aws.Lambda.Runtime.Error
+      Aws.Lambda.Runtime.Publish
+      Paths_aws_lambda_haskell_runtime
+  hs-source-dirs:
+      src
+  default-extensions: TemplateHaskell OverloadedStrings RecordWildCards ScopedTypeVariables DeriveGeneric TypeApplications FlexibleContexts DeriveAnyClass QuasiQuotes
+  ghc-options: -Wall -fno-warn-orphans -optP-Wno-nonportable-include-path -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Widentities -Wredundant-constraints -Wmissing-export-lists -Wpartial-fields -fhide-source-paths -freverse-errors
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , bytestring
+    , case-insensitive
+    , http-client
+    , http-types
+    , path >0.7
+    , path-io
+    , safe-exceptions-checked
+    , template-haskell
+    , text
+    , unordered-containers
+  default-language: Haskell2010
+
+test-suite aws-lambda-haskell-runtime-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_aws_lambda_haskell_runtime
+  hs-source-dirs:
+      test
+  default-extensions: TemplateHaskell OverloadedStrings RecordWildCards ScopedTypeVariables DeriveGeneric TypeApplications FlexibleContexts DeriveAnyClass QuasiQuotes
+  ghc-options: -Wall -fno-warn-orphans -optP-Wno-nonportable-include-path -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Widentities -Wredundant-constraints -Wmissing-export-lists -Wpartial-fields -fhide-source-paths -freverse-errors -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , hspec
+  default-language: Haskell2010

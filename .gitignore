@@ -1,5 +1,4 @@
 .stack-work/
-aws-lambda-haskell-runtime.cabal
 *~
 
 # Created by https://www.gitignore.io/api/haskell
