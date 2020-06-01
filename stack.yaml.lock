@@ -12,19 +12,26 @@ packages:
   original:
     hackage: require-0.4.2
 - completed:
-    size: 37827
-    url: https://github.com/theam/tintin/archive/655f5a84448b001f78d833f159ac786b6c50a3cb.tar.gz
-    cabal-file:
-      size: 3087
-      sha256: 5a61c29fd07a6e54c33b60af77562faf9db65a1282894d5ce4597322b517c243
-    name: tintin
-    version: 1.10.0
-    sha256: c24b2b16898fc2faacc98d369b390f4a3bf960681aed5360cd5e167e854fed8a
+    hackage: cheapskate-0.1.1.2@sha256:b8ae3cbb826610ea45e6840b7fde0af2c2ea6690cb311edfe9683f61c0a50d96,3072
     pantry-tree:
-      size: 2442
-      sha256: 35e33c4e6cc4ffa67b6389a57e8d5d7103ac306831378f96ce422e459541c5c5
+      size: 866
+      sha256: f3d8b45723bf9851163e50b900b5397e22dca07af70c2c6145a5aea34e3a0e49
   original:
-    url: https://github.com/theam/tintin/archive/655f5a84448b001f78d833f159ac786b6c50a3cb.tar.gz
+    hackage: cheapskate-0.1.1.2@sha256:b8ae3cbb826610ea45e6840b7fde0af2c2ea6690cb311edfe9683f61c0a50d96,3072
+- completed:
+    hackage: inliterate-0.1.0@sha256:61b17ab3cef803512c264e27e463390b47af59d7d2b3a2a89bea2eac0cf84266,1853
+    pantry-tree:
+      size: 618
+      sha256: 2cea999a63449b913f6186c3b8b276050e7a1a7195f5e94ac94fa4007da36558
+  original:
+    hackage: inliterate-0.1.0@sha256:61b17ab3cef803512c264e27e463390b47af59d7d2b3a2a89bea2eac0cf84266,1853
+- completed:
+    hackage: megaparsec-7.0.5@sha256:45e1f1348fab2783646fdb4d9e6097568981a740951c7356d36d794e2baba305,3902
+    pantry-tree:
+      size: 1428
+      sha256: 1f8baf6e07326f8c8a2dd31de6b2860427f158b0892c52ba5fe9ffeb6cd3bf7f
+  original:
+    hackage: megaparsec-7.0.5@sha256:45e1f1348fab2783646fdb4d9e6097568981a740951c7356d36d794e2baba305,3902
 snapshots:
 - completed:
     size: 491372

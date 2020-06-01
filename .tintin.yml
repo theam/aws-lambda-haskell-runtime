@@ -1,9 +1,9 @@
 name: AWS λ Runtime
-synopsis: Deploy Haskell applications to AWS Lambda
+synopsis: Build fast and solid serverless applications
 github: theam/aws-lambda-haskell-runtime
 author: The Agile Monkeys
 authorWebsite: https://www.theagilemonkeys.com
-color: #fca737
-titleFont: Montserrat
-titleFontWeight: 600
-bodyFont: PT Sans
+color: #662480
+logo: https://i.imgur.com/I64VEiF.png
+titleFont: Lato
+bodyFont: Lato
