@@ -28,3 +28,38 @@ cp $(stack --docker path --local-install-root)/bin/bootstrap build
 # Create a `function.zip` file to upload
 cd build && zip function.zip bootstrap && rm bootstrap && cd ..
 ```
+
+## AWS Lambda Console
+
+In the AWS Lambda console select `Create function` and give your function a name, 
+e.g. `myHaskellLambda`, and for the runtime select `'Provide your own bootstrap'`.
+<P> 
+Inside your function configuration, select `'Upload a .zip file'` for code entry type.   
+Select the `function.zip` in the Function package.   Change the Handler 
+to `src/Lib.handler`.  
+<P>
+Remember to select `Save` to save your configuration.
+<P>
+Next to the Test button select `'Configure test events'` and use the following JSON for 
+a successful test.
+
+```
+{
+"personName": "Bobby",
+"personAge": 21
+}
+```
+
+For a test which captures the error and results in a failure use the following JSON.
+
+```
+{
+"personName": "Bobby",
+"personAge": -1
+}
+```
+After selecting the test you wish to run and pressing `Test` you will see the resul in the `Execution result` area.  For successful execution the returned data will be the same as the input.
+<P>
+In the failure case the returned data will be `'A person's age must be positive'`.
+<P>
+Congratulations you have ran your first AWS Lambda using the Haskell runtime!
