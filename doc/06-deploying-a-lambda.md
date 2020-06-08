@@ -31,17 +31,27 @@ cd build && zip function.zip bootstrap && rm bootstrap && cd ..
 
 ## AWS Lambda Console
 
-In the AWS Lambda console select `Create function` and give your function a name, 
+In the AWS Lambda console select `Create function` and give your function a name,
 e.g. `myHaskellLambda`, and for the runtime select `'Provide your own bootstrap'`.
-<P> 
-Inside your function configuration, select `'Upload a .zip file'` for code entry type.   
-Select the `function.zip` in the Function package.   Change the Handler 
-to `src/Lib.handler`.  
-<P>
+
+![creating a lambda screenshot](https://imgur.com/Q8vT9ow.png)
+
+![filling aws lambda information](https://imgur.com/OaUL8aA.png)
+
+Inside your function configuration, select `'Upload a .zip file'` for code entry type.
+Select the `function.zip` in the Function package.   Change the Handler
+to `src/Lib.handler`.
+
 Remember to select `Save` to save your configuration.
-<P>
-Next to the Test button select `'Configure test events'` and use the following JSON for 
+
+![uploading handler](https://imgur.com/fdCmjGS.png)
+
+
+Next to the Test button select `'Configure test events'` and use the following JSON for
 a successful test.
+
+![configuring test events location](https://imgur.com/mYLA3xX.png)
+![configuring test events window](https://imgur.com/gpvKMSD.png)
 
 ```
 {
@@ -59,7 +69,9 @@ For a test which captures the error and results in a failure use the following J
 }
 ```
 After selecting the test you wish to run and pressing `Test` you will see the resul in the `Execution result` area.  For successful execution the returned data will be the same as the input.
-<P>
+
 In the failure case the returned data will be `'A person's age must be positive'`.
-<P>
+
+![failed execution](https://imgur.com/P4J1AQc.png)
+
 Congratulations you have ran your first AWS Lambda using the Haskell runtime!
