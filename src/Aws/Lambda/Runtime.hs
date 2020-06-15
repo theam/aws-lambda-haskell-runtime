@@ -1,3 +1,6 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications    #-}
+
 module Aws.Lambda.Runtime
   ( runLambda
   , Runtime.LambdaResult(..)
@@ -15,6 +18,7 @@ import System.IO (hFlush, stdout, stderr)
 import qualified Network.HTTP.Client as Http
 
 import Data.Aeson
+import Data.IORef
 import qualified Data.ByteString.Lazy.Char8 as LazyByteString
 
 import qualified Aws.Lambda.Runtime.ApiInfo as ApiInfo
@@ -27,13 +31,15 @@ import qualified Control.Exception as Unchecked
 
 -- | Runs the user @haskell_lambda@ executable and posts back the
 -- results. This is called from the layer's @main@ function.
-runLambda :: Runtime.RunCallback -> IO ()
-runLambda callback = do
+runLambda :: forall context. IO context -> Runtime.RunCallback context -> IO ()
+runLambda initializeCustomContext callback = do
   manager <- Http.newManager httpManagerSettings
+  customContext <- initializeCustomContext
+  customContextRef <- newIORef customContext
   forever $ do
     lambdaApi <- Environment.apiEndpoint `catch` variableNotSet
     event     <- ApiInfo.fetchEvent manager lambdaApi `catch` errorParsing
-    context   <- Context.initialize event `catch` errorParsing `catch` variableNotSet
+    context   <- Context.initialize @context customContextRef event `catch` errorParsing `catch` variableNotSet
 
     (((invokeAndRun callback manager lambdaApi event context
       `Checked.catch` \err -> Publish.parsingError err lambdaApi context manager)
@@ -51,11 +57,11 @@ httpManagerSettings =
 invokeAndRun
   :: Throws Error.Invocation
   => Throws Error.EnvironmentVariableNotSet
-  => Runtime.RunCallback
+  => Runtime.RunCallback c
   -> Http.Manager
   -> String
   -> ApiInfo.Event
-  -> Context.Context
+  -> Context.Context c
   -> IO ()
 invokeAndRun callback manager lambdaApi event context = do
   result <- invokeWithCallback callback event context
@@ -66,15 +72,15 @@ invokeAndRun callback manager lambdaApi event context = do
 invokeWithCallback
   :: Throws Error.Invocation
   => Throws Error.EnvironmentVariableNotSet
-  => Runtime.RunCallback
+  => Runtime.RunCallback c
   -> ApiInfo.Event
-  -> Context.Context
+  -> Context.Context c
   -> IO Runtime.LambdaResult
 invokeWithCallback callback event context = do
   handlerName <- Environment.handlerName
   let lambdaOptions = Runtime.LambdaOptions
                       { eventObject = LazyByteString.unpack $ ApiInfo.event event
-                      , contextObject = LazyByteString.unpack . encode $ context
+                      , contextObject = context
                       , functionHandler = handlerName
                       , executionUuid = ""  -- DirectCall doesnt use UUID
                       }

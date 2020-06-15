@@ -70,12 +70,10 @@ standaloneLambdaHandlerCase lambdaHandler = do
   let pat = Meta.LitP (Meta.StringL $ Text.unpack lambdaHandler)
   body <- [e|do
     case decodeObj $(expressionName "eventObject") of
-      Right eventObject -> case decodeObj $(expressionName "contextObject") of
-        Right context -> (do
-          result <- $(expressionName (qualifiedHandlerName lambdaHandler)) eventObject context
+      Right eventObject -> (do
+          result <- $(expressionName (qualifiedHandlerName lambdaHandler)) eventObject contextObject
           either (pure . Left . Runtime.StandaloneLambdaError . encodeObj) (pure . Right . Runtime.StandaloneLambdaResult . encodeObj) result)
           `Unchecked.catch` \(handlerError :: Unchecked.SomeException) -> pure . Left . Runtime.StandaloneLambdaError . encodeObj . show $ handlerError
-        Left err -> pure . Left . Runtime.StandaloneLambdaError . encodeObj $ err
       Left err -> pure . Left . Runtime.StandaloneLambdaError . encodeObj $ err|]
   pure $ Meta.Match pat (Meta.NormalB body) []
 
@@ -93,17 +91,15 @@ apiGatewayHandlerCase options lambdaHandler = do
   body <- [e|do
     let returnErr statusCode = pure . Left . Runtime.ApiGatewayLambdaError . ApiGatewayInfo.mkApiGatewayResponse statusCode
     case decodeObj $(expressionName "eventObject") of
-      Right eventObject -> case decodeObj $(expressionName "contextObject") of
-        Right context -> do
-          resultE <- Unchecked.try $ $(expressionName (qualifiedHandlerName lambdaHandler)) eventObject context
-          case resultE of
-            Right result ->
-              either (pure . Left . Runtime.ApiGatewayLambdaError . fmap toJSON) (pure . Right . Runtime.ApiGatewayResult . fmap toJSON) result
-            Left (handlerError :: Unchecked.SomeException) ->
-              if (Runtime.propagateImpureExceptions . Runtime.apiGatewayDispatcherOptions $ options)
-              then returnErr 500 . toJSON . show $ handlerError
-              else returnErr 500 . toJSON $ "Something went wrong."
-        Left err -> returnErr 500 . toJSON $ err
+      Right eventObject -> do
+        resultE <- Unchecked.try $ $(expressionName (qualifiedHandlerName lambdaHandler)) eventObject contextObject
+        case resultE of
+          Right result ->
+            either (pure . Left . Runtime.ApiGatewayLambdaError . fmap toJSON) (pure . Right . Runtime.ApiGatewayResult . fmap toJSON) result
+          Left (handlerError :: Unchecked.SomeException) ->
+            if (Runtime.propagateImpureExceptions . Runtime.apiGatewayDispatcherOptions $ options)
+            then returnErr 500 . toJSON . show $ handlerError
+            else returnErr 500 . toJSON $ "Something went wrong."
       Left err -> returnErr 400 . toJSON $ err|]
   pure $ Meta.Match pat (Meta.NormalB body) []
 

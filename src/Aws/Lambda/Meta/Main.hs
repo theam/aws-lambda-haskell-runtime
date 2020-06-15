@@ -21,5 +21,5 @@ generate = [d|
  where
   directCallBody =
     [e|
-    runLambda run
+    runLambda initializeContext run
     |]

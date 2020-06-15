@@ -15,6 +15,7 @@ import Aws.Lambda.Runtime.ApiGatewayInfo
 import Data.Aeson (Value)
 import GHC.Generics (Generic)
 import Language.Haskell.TH.Syntax (Lift)
+import Aws.Lambda.Runtime.Context (Context)
 
 -- | API Gateway specific dispatcher options
 newtype ApiGatewayDispatcherOptions = ApiGatewayDispatcherOptions
@@ -38,8 +39,8 @@ data DispatcherStrategy =
   deriving (Lift)
 
 -- | Callback that we pass to the dispatcher function
-type RunCallback =
-  LambdaOptions -> IO (Either LambdaError LambdaResult)
+type RunCallback context =
+  LambdaOptions context -> IO (Either LambdaError LambdaResult)
 
 -- | Wrapper type for lambda execution results
 data LambdaError =
@@ -52,9 +53,9 @@ data LambdaResult =
   ApiGatewayResult (ApiGatewayResponse Value)
 
 -- | Options that the generated main expects
-data LambdaOptions = LambdaOptions
+data LambdaOptions context = LambdaOptions
   { eventObject     :: !String
-  , contextObject   :: !String
+  , contextObject   :: !(Context context)
   , functionHandler :: !String
   , executionUuid   :: !String
   } deriving (Generic)
