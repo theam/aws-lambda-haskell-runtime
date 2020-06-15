@@ -102,7 +102,7 @@ apiGatewayHandlerCase options lambdaHandler = do
             Left (handlerError :: Unchecked.SomeException) ->
               if (Runtime.propagateImpureExceptions . Runtime.apiGatewayDispatcherOptions $ options)
               then returnErr 500 . toJSON . show $ handlerError
-              else returnErr 500 . toJSON $ "Something went wrong."
+              else returnErr 500 . toJSON $ ("Something went wrong." :: String)
         Left err -> returnErr 500 . toJSON $ err
       Left err -> returnErr 400 . toJSON $ err|]
   pure $ Meta.Match pat (Meta.NormalB body) []
