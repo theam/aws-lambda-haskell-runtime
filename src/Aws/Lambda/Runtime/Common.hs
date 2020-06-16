@@ -16,6 +16,7 @@ import Data.Aeson (Value)
 import GHC.Generics (Generic)
 import Language.Haskell.TH.Syntax (Lift)
 import Aws.Lambda.Runtime.Context (Context)
+import qualified Data.ByteString.Lazy as Lazy
 
 -- | API Gateway specific dispatcher options
 newtype ApiGatewayDispatcherOptions = ApiGatewayDispatcherOptions
@@ -54,7 +55,7 @@ data LambdaResult =
 
 -- | Options that the generated main expects
 data LambdaOptions context = LambdaOptions
-  { eventObject     :: !String
+  { eventObject     :: !Lazy.ByteString
   , functionHandler :: !String
   , executionUuid   :: !String
   , contextObject   :: !(Context context)

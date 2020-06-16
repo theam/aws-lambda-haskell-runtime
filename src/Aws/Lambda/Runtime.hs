@@ -19,7 +19,6 @@ import qualified Network.HTTP.Client as Http
 
 import Data.Aeson
 import Data.IORef
-import qualified Data.ByteString.Lazy.Char8 as LazyByteString
 
 import qualified Aws.Lambda.Runtime.ApiInfo as ApiInfo
 import qualified Aws.Lambda.Runtime.Common as Runtime
@@ -79,7 +78,7 @@ invokeWithCallback
 invokeWithCallback callback event context = do
   handlerName <- Environment.handlerName
   let lambdaOptions = Runtime.LambdaOptions
-                      { eventObject = LazyByteString.unpack $ ApiInfo.event event
+                      { eventObject = ApiInfo.event event
                       , functionHandler = handlerName
                       , executionUuid = ""  -- DirectCall doesnt use UUID
                       , contextObject = context
