@@ -30,11 +30,11 @@ import Data.Typeable (Typeable, typeRep, Proxy (..))
 decode the JSON that comes as an AWS Lambda event into the
 appropriate type expected by the handler.
 -}
-decodeObj :: forall a. (FromJSON a, Typeable a) => String -> Either Error.Parsing a
+decodeObj :: forall a. (FromJSON a, Typeable a) => LazyByteString.ByteString -> Either Error.Parsing a
 decodeObj x =
   let objName = show (typeRep (Proxy :: Proxy a)) in
-  case (eitherDecode $ LazyByteString.pack x) of
-    Left e  -> Left $ Error.Parsing e x objName
+  case (eitherDecode x) of
+    Left e  -> Left $ Error.Parsing e (LazyByteString.unpack x) objName
     Right v -> return v
 
 {-| Helper function that the dispatcher will use to
