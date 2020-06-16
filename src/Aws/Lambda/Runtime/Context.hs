@@ -1,5 +1,3 @@
-{-# LANGUAGE ScopedTypeVariables #-}
-
 module Aws.Lambda.Runtime.Context
   ( Context(..)
   , initialize
@@ -7,7 +5,6 @@ module Aws.Lambda.Runtime.Context
 
 import Control.Exception.Safe.Checked
 import Data.IORef
-import Data.Aeson
 
 import qualified Aws.Lambda.Runtime.ApiInfo as ApiInfo
 import qualified Aws.Lambda.Runtime.Environment as Environment
@@ -27,21 +24,9 @@ data Context context = Context
   , customContext      :: !(IORef context)
   }
 
-instance ToJSON (Context c) where
-  toJSON Context{..} = object
-    [ "memoryLimitInMb" .= memoryLimitInMb
-    , "functionName" .= functionName
-    , "functionVersion" .= functionVersion
-    , "invokedFunctionArn" .= invokedFunctionArn
-    , "awsRequestId" .= awsRequestId
-    , "xrayTraceId" .= xrayTraceId
-    , "logStreamName" .= logStreamName
-    , "logGroupName" .= logGroupName
-    , "deadline" .= deadline ]
-
 -- | Initializes the context out of the environment
 initialize
-  :: forall context. Throws Error.Parsing
+  :: Throws Error.Parsing
   => Throws Error.EnvironmentVariableNotSet
   => IORef context
   -> ApiInfo.Event

@@ -55,7 +55,7 @@ data LambdaResult =
 -- | Options that the generated main expects
 data LambdaOptions context = LambdaOptions
   { eventObject     :: !String
-  , contextObject   :: !(Context context)
   , functionHandler :: !String
   , executionUuid   :: !String
+  , contextObject   :: !(Context context)
   } deriving (Generic)

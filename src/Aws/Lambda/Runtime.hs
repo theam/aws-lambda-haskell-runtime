@@ -57,11 +57,11 @@ httpManagerSettings =
 invokeAndRun
   :: Throws Error.Invocation
   => Throws Error.EnvironmentVariableNotSet
-  => Runtime.RunCallback c
+  => Runtime.RunCallback context
   -> Http.Manager
   -> String
   -> ApiInfo.Event
-  -> Context.Context c
+  -> Context.Context context
   -> IO ()
 invokeAndRun callback manager lambdaApi event context = do
   result <- invokeWithCallback callback event context
@@ -80,9 +80,9 @@ invokeWithCallback callback event context = do
   handlerName <- Environment.handlerName
   let lambdaOptions = Runtime.LambdaOptions
                       { eventObject = LazyByteString.unpack $ ApiInfo.event event
-                      , contextObject = context
                       , functionHandler = handlerName
                       , executionUuid = ""  -- DirectCall doesnt use UUID
+                      , contextObject = context
                       }
   result <- callback lambdaOptions
   -- Flush output to insure output goes into CloudWatch logs
