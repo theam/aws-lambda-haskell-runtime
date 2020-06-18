@@ -49,7 +49,7 @@ runtimeInitError :: ToJSON err => err -> String -> Context context -> Http.Manag
 runtimeInitError err lambdaApi =
   publish err (Endpoints.runtimeInitError lambdaApi)
 
-publish :: ToJSON err => err -> Endpoints.Endpoint -> Context c -> Http.Manager -> IO ()
+publish :: ToJSON err => err -> Endpoints.Endpoint -> Context context -> Http.Manager -> IO ()
 publish err (Endpoints.Endpoint endpoint) Context{..} manager = do
   rawRequest <- Http.parseRequest endpoint
 

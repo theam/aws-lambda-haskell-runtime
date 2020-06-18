@@ -71,9 +71,9 @@ invokeAndRun callback manager lambdaApi event context = do
 invokeWithCallback
   :: Throws Error.Invocation
   => Throws Error.EnvironmentVariableNotSet
-  => Runtime.RunCallback c
+  => Runtime.RunCallback context
   -> ApiInfo.Event
-  -> Context.Context c
+  -> Context.Context context
   -> IO Runtime.LambdaResult
 invokeWithCallback callback event context = do
   handlerName <- Environment.handlerName
