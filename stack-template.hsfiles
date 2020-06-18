@@ -33,7 +33,6 @@ executables:
     - {{name}}
 
 default-extensions:
-  - TemplateHaskell
   - RecordWildCards
   - OverloadedLists
   - OverloadedStrings
@@ -73,6 +72,9 @@ handler person context =
     return (Left "A person's age must be positive")
 
 {-# START_FILE app/Main.hs #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+
 module Main where
 
 import Aws.Lambda

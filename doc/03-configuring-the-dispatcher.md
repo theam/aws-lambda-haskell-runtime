@@ -20,15 +20,21 @@ To continue the person age validator lambda, activate `TemplateHaskell` for enab
 Then, import the `Aws.Lambda` module:
 
 ```haskell
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell     #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Main where
 import Aws.Lambda
 ```
 
-After this, add a line with the following statement:
+After this, add the following lines:
 
 ```haskell
+-- Use this action if you want to have context that is shared between lambda calls.
+-- It is called once per every cold start. We do not wish to have a shared context for our lambda, so we simply use Unit.
+initializeContext :: IO ()
+initializeContext = return ()
+
 generateLambdaDispatcher StandaloneLambda defaultDispatcherOptions
 ```
 
