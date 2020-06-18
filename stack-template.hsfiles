@@ -11,7 +11,7 @@ description:         Please see the README on GitHub at <https://github.com/{{gi
 
 dependencies:
 - base >= 4.7 && < 5
-- aws-lambda-haskell-runtime >= 2.0.1
+- aws-lambda-haskell-runtime >= 3.0.0
 - aeson
 
 library:
@@ -61,10 +61,11 @@ data Person = Person
   { personName :: String
   , personAge :: Int
   } deriving (Generic)
+
 instance FromJSON Person
 instance ToJSON Person
 
-handler :: Person -> Context -> IO (Either String Person)
+handler :: Person -> Context () -> IO (Either String Person)
 handler person context =
   if personAge person > 0 then
     return (Right person)
@@ -78,7 +79,12 @@ import Aws.Lambda
 
 import qualified Lib
 
-generateLambdaDispatcher
+-- This action is run on each cold start, and the context returned
+-- is kept alive while the lambda is run, you can access it in your handler.
+initializeContext :: IO ()
+initializeContext = return ()
+
+generateLambdaDispatcher StandaloneLambda defaultDispatcherOptions
 {-# START_FILE README.md #-}
 # {{name}}
 
