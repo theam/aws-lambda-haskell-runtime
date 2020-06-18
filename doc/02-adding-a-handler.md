@@ -21,6 +21,7 @@ modules:
 ```haskell
 {-# LANGUAGE DeriveGeneric  #-}
 {-# LANGUAGE DeriveAnyClass #-}
+
 module Lib where
 ```
 
@@ -46,7 +47,7 @@ Now, let's write the handler. It **must** be a function that is called `handler`
 The arguments to this function will always go like this:
 
 * The first argument to this handler will always be the input type we expect (note that it has to implement `FromJSON`).
-* The second argument is the `Aws.Lambda` `Context` type, which has some information regarding our Lambda execution.
+* The second argument is the `Aws.Lambda` `Context` type, which has some information regarding our Lambda execution. The `Context` type also takes a `context` parameter, which we can use if we want to have some state that is shared between Lambda calls. For this example, we don't want to have such state, so we'll just use `()`.
 
 The output will always be an `IO (Either errorType resultType)` where
 
@@ -59,7 +60,7 @@ For example, here we will check if the age of a `Person` is positive, and will r
 will return a `String` error:
 
 ```haskell top
-handler :: Person -> Context -> IO (Either String Person)
+handler :: Person -> Context () -> IO (Either String Person)
 handler person context =
   if age person > 0 then
     pure (Right person)

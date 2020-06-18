@@ -20,7 +20,7 @@ module WordCount where
 
 import Aws.Lambda
 
-handler :: String -> Context -> IO (Either String Int)
+handler :: String -> Context () -> IO (Either String Int)
 handler someText _ = do
   let wordsCount = length (words someText)
   if wordsCount > 0 then
@@ -34,7 +34,11 @@ Then, in the `Main` module:
 ```haskell
 import Aws.Lambda
 import qualified WordCount
-generateLambdaDispatcher
+
+initializeContext :: IO ()
+initializeContext = return ()
+
+generateLambdaDispatcher StandaloneLambda defaultDispatcherOptions
 ```
 
 # Performance
