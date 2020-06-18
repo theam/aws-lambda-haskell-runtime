@@ -9,7 +9,7 @@ module Aws.Lambda.Runtime.Publish
 
 import Control.Monad (void)
 import Data.Aeson
-import qualified Data.ByteString.Char8 as ByteString
+import qualified Data.Text.Encoding as T
 import qualified Network.HTTP.Client as Http
 
 import qualified Aws.Lambda.Runtime.API.Endpoints as Endpoints
@@ -24,7 +24,7 @@ result lambdaResult lambdaApi context manager = do
   rawRequest <- Http.parseRequest endpoint
 
   let requestBody = case lambdaResult of
-        (StandaloneLambdaResult res) -> Http.RequestBodyBS (ByteString.pack res)
+        (StandaloneLambdaResult res) -> Http.RequestBodyBS (T.encodeUtf8 . unLambdaResponseBody $ res)
         (ApiGatewayResult res)       -> Http.RequestBodyLBS (encode res)
       request = rawRequest
                 { Http.method = "POST"

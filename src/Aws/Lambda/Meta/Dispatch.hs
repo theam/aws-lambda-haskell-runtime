@@ -4,7 +4,6 @@
 module Aws.Lambda.Meta.Dispatch
   ( generate
   , decodeObj
-  , encodeObj
   , Runtime.LambdaResult(..)
   ) where
 
@@ -20,6 +19,7 @@ import qualified Language.Haskell.TH as Meta
 import Aws.Lambda.Meta.Common
 import qualified Aws.Lambda.Meta.Main as Main
 import qualified Aws.Lambda.Runtime.ApiGatewayInfo as ApiGatewayInfo
+import Aws.Lambda.Runtime.Common (toStandaloneLambdaResponse)
 import qualified Aws.Lambda.Runtime.Common as Runtime
 import qualified Aws.Lambda.Runtime.Error as Error
 import qualified Control.Exception as Unchecked
@@ -35,13 +35,6 @@ decodeObj x =
   case (eitherDecode x) of
     Left e  -> Left $ Error.Parsing e (LazyByteString.unpack x) objName
     Right v -> return v
-
-{-| Helper function that the dispatcher will use to
-decode the JSON that comes as an AWS Lambda event into the
-appropriate type expected by the handler.
--}
-encodeObj :: ToJSON a => a -> String
-encodeObj x = LazyByteString.unpack (encode x)
 
 {-| Generates the dispatcher out of a list of
 handler names in the form @src/Foo/Bar.handler@
@@ -70,16 +63,16 @@ standaloneLambdaHandlerCase lambdaHandler = do
     case decodeObj $(expressionName "eventObject") of
       Right eventObject -> (do
           result <- $(expressionName (qualifiedHandlerName lambdaHandler)) eventObject contextObject
-          either (pure . Left . Runtime.StandaloneLambdaError . encodeObj) (pure . Right . Runtime.StandaloneLambdaResult . encodeObj) result)
-          `Unchecked.catch` \(handlerError :: Unchecked.SomeException) -> pure . Left . Runtime.StandaloneLambdaError . encodeObj . show $ handlerError
-      Left err -> pure . Left . Runtime.StandaloneLambdaError . encodeObj $ err|]
+          either (pure . Left . Runtime.StandaloneLambdaError . toStandaloneLambdaResponse) (pure . Right . Runtime.StandaloneLambdaResult . toStandaloneLambdaResponse) result)
+          `Unchecked.catch` \(handlerError :: Unchecked.SomeException) -> pure . Left . Runtime.StandaloneLambdaError . toStandaloneLambdaResponse . show $ handlerError
+      Left err -> pure . Left . Runtime.StandaloneLambdaError . toStandaloneLambdaResponse $ err|]
   pure $ Meta.Match pat (Meta.NormalB body) []
 
 standaloneLambdaUnmatchedCase :: Meta.MatchQ
 standaloneLambdaUnmatchedCase = do
   let pattern = Meta.WildP
   body <- [e|
-    pure . Left . Runtime.StandaloneLambdaError . encodeObj $ ("Handler " <> $(expressionName "functionHandler") <> " does not exist on project")
+    pure . Left . Runtime.StandaloneLambdaError . toStandaloneLambdaResponse $ ("Handler " <> $(expressionName "functionHandler") <> " does not exist on project" :: String)
     |]
   pure $ Meta.Match pattern (Meta.NormalB body) []
 

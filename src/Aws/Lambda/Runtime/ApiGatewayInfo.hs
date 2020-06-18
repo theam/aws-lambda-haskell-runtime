@@ -14,10 +14,10 @@ module Aws.Lambda.Runtime.ApiGatewayInfo
   , ToApiGatewayResponseBody(..)
   , mkApiGatewayResponse ) where
 
+import Aws.Lambda.Utilities
 import Data.Aeson
 import Data.Aeson.Types (Parser)
 import qualified Data.Aeson.Types as T
-import qualified Data.ByteString.Lazy.Char8 as LazyByteString
 import qualified Data.CaseInsensitive as CI
 import Data.HashMap.Strict (HashMap)
 import Data.Text (Text)
@@ -189,6 +189,3 @@ headerToPair (cibyte, bstr) = k .= v
  where
   k = (T.decodeUtf8 . CI.original) cibyte
   v = T.decodeUtf8 bstr
-
-toJSONText :: ToJSON a => a -> Text
-toJSONText = T.pack . LazyByteString.unpack . encode

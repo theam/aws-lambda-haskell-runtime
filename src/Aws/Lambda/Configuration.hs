@@ -3,7 +3,6 @@ module Aws.Lambda.Configuration
   ( Main.LambdaOptions(..)
   , generateLambdaDispatcher
   , Dispatch.decodeObj
-  , Dispatch.encodeObj
   )
 where
 
