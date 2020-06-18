@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: eab5b338b49db7854613ecd43b17245f105c8c936c40230ecf9d08c5dfad9d6d
+-- hash: c27e1b0a071f3c0ebc02eac12fbefd43b148464edc8f7a6f3fada3d17051bacc
 
 name:           aws-lambda-haskell-runtime
-version:        2.0.6
+version:        3.0.0
 synopsis:       Haskell runtime for AWS Lambda
 description:    Please see the README on GitHub at <https://github.com/theam/aws-lambda-haskell-runtime#readme>
 category:       AWS
