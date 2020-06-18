@@ -1,5 +1,4 @@
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE BangPatterns #-}
 
 {-| Dispatcher generation -}
 module Aws.Lambda.Meta.Dispatch
@@ -9,22 +8,22 @@ module Aws.Lambda.Meta.Dispatch
   , Runtime.LambdaResult(..)
   ) where
 
+import qualified Data.Char as Char
 import Data.Function ((&))
 import Data.Text (Text)
 import qualified Data.Text as Text
-import qualified Data.Char as Char
 
 import Data.Aeson
 import qualified Data.ByteString.Lazy.Char8 as LazyByteString
 import qualified Language.Haskell.TH as Meta
 
 import Aws.Lambda.Meta.Common
+import qualified Aws.Lambda.Meta.Main as Main
+import qualified Aws.Lambda.Runtime.ApiGatewayInfo as ApiGatewayInfo
 import qualified Aws.Lambda.Runtime.Common as Runtime
 import qualified Aws.Lambda.Runtime.Error as Error
-import qualified Aws.Lambda.Runtime.ApiGatewayInfo as ApiGatewayInfo
 import qualified Control.Exception as Unchecked
-import qualified Aws.Lambda.Meta.Main as Main
-import Data.Typeable (Typeable, typeRep, Proxy (..))
+import Data.Typeable (Proxy (..), Typeable, typeRep)
 
 {-| Helper function that the dispatcher will use to
 decode the JSON that comes as an AWS Lambda event into the
@@ -43,7 +42,6 @@ appropriate type expected by the handler.
 -}
 encodeObj :: ToJSON a => a -> String
 encodeObj x = LazyByteString.unpack (encode x)
-
 
 {-| Generates the dispatcher out of a list of
 handler names in the form @src/Foo/Bar.handler@
@@ -95,19 +93,19 @@ apiGatewayHandlerCase options lambdaHandler = do
         resultE <- Unchecked.try $ $(expressionName (qualifiedHandlerName lambdaHandler)) eventObject contextObject
         case resultE of
           Right result ->
-            either (pure . Left . Runtime.ApiGatewayLambdaError . fmap toJSON) (pure . Right . Runtime.ApiGatewayResult . fmap toJSON) result
+            either (pure . Left . Runtime.ApiGatewayLambdaError . fmap toApiGatewayResponseBody) (pure . Right . Runtime.ApiGatewayResult . fmap toApiGatewayResponseBody) result
           Left (handlerError :: Unchecked.SomeException) ->
             if (Runtime.propagateImpureExceptions . Runtime.apiGatewayDispatcherOptions $ options)
-            then returnErr 500 . toJSON . show $ handlerError
-            else returnErr 500 . toJSON $ "Something went wrong."
-      Left err -> returnErr 400 . toJSON $ err|]
+            then returnErr 500 . toApiGatewayResponseBody . show $ handlerError
+            else returnErr 500 . toApiGatewayResponseBody . Text.pack $ "Something went wrong."
+      Left err -> returnErr 400 . toApiGatewayResponseBody . show $ err|]
   pure $ Meta.Match pat (Meta.NormalB body) []
 
 apiGatewayUnmatchedCase :: Meta.MatchQ
 apiGatewayUnmatchedCase = do
   let pattern = Meta.WildP
   body <- [e|
-    pure . Left . Runtime.ApiGatewayLambdaError . ApiGatewayInfo.mkApiGatewayResponse 500 . toJSON $ ("Handler " <> $(expressionName "functionHandler") <> " does not exist on project")
+    pure . Left . Runtime.ApiGatewayLambdaError . ApiGatewayInfo.mkApiGatewayResponse 500 . toApiGatewayResponseBody $ ("Handler " <> $(expressionName "functionHandler") <> " does not exist on project")
     |]
   pure $ Meta.Match pattern (Meta.NormalB body) []
 

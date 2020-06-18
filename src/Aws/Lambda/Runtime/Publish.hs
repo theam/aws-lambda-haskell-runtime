@@ -25,7 +25,7 @@ result lambdaResult lambdaApi context manager = do
 
   let requestBody = case lambdaResult of
         (StandaloneLambdaResult res) -> Http.RequestBodyBS (ByteString.pack res)
-        (ApiGatewayResult res) -> Http.RequestBodyLBS (encode res)
+        (ApiGatewayResult res)       -> Http.RequestBodyLBS (encode res)
       request = rawRequest
                 { Http.method = "POST"
                 , Http.requestBody = requestBody

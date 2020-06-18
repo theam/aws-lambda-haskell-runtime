@@ -12,11 +12,10 @@ module Aws.Lambda.Runtime.Common
   ) where
 
 import Aws.Lambda.Runtime.ApiGatewayInfo
-import Data.Aeson (Value)
-import GHC.Generics (Generic)
-import Language.Haskell.TH.Syntax (Lift)
 import Aws.Lambda.Runtime.Context (Context)
 import qualified Data.ByteString.Lazy as Lazy
+import GHC.Generics (Generic)
+import Language.Haskell.TH.Syntax (Lift)
 
 -- | API Gateway specific dispatcher options
 newtype ApiGatewayDispatcherOptions = ApiGatewayDispatcherOptions
@@ -46,12 +45,12 @@ type RunCallback context =
 -- | Wrapper type for lambda execution results
 data LambdaError =
   StandaloneLambdaError String |
-  ApiGatewayLambdaError (ApiGatewayResponse Value)
+  ApiGatewayLambdaError (ApiGatewayResponse ApiGatewayResponseBody)
 
 -- | Wrapper type to handle the result of the user
 data LambdaResult =
   StandaloneLambdaResult String |
-  ApiGatewayResult (ApiGatewayResponse Value)
+  ApiGatewayResult (ApiGatewayResponse ApiGatewayResponseBody)
 
 -- | Options that the generated main expects
 data LambdaOptions context = LambdaOptions
