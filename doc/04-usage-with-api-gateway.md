@@ -4,158 +4,42 @@ title: Usage with API Gateway
 
 # Usage with API Gateway
 
-In order to write a handler for the API Gateway, we will receive a special JSON with
-a lot of fields with information from the API Gateway, and we will have to return
-a special JSON as the response.
+A common use-case is to expose your lambdas through API Gateway. Luckily, `aws-lambda-haskell-runtime` has native support for that.
 
-## The request
-
-The full request type looks more or less like this:
+If you're using API Gateway, simply pass the `UseWithAPIGateway` option to `generateLambdaDispatcher` in your `app/Main.hs` file.
 
 ```haskell
-data APIGatewayRequest = APIGatewayRequest
-  { resource :: String
-  , path :: ByteString
-  , httpMethod :: Method
-  , headers :: RequestHeaders
-  , queryStringParameters :: [(ByteString, Maybe ByteString)]
-  , pathParameters :: HashMap String String
-  , stageVariables :: HashMap String String
-  , body :: String
-  } deriving (Generic, FromJSON)
+generateLambdaDispatcher UseWithAPIGateway defaultDispatcherOptions 
 ```
 
-Feel free to copy-paste this data type into your project. Note that you don't have to use all of
-it's fields, if you only need, say, the `body` and the `httpMethod` fields, you can use this one
-(`resource` is mandatory):
+Passing `UseWithAPIGateway` will make the compiler error if you do not have your handlers in the following form:
 
 ```haskell
-data APIGatewayRequest	= APIGatewayRequest
-  { resource :: String
-  , httpMethod :: Method
-  , body :: String
-  } deriving (Generic, FromJSON)
+handler :: ApiGatewayRequest request -> Context context -> IO (Either (ApiGatewayResponse error) (ApiGatewayResponse success))
+handler = ...
 ```
 
-## The response
+You can use the `ApiGatewayRequest` wrapper to access additional request information that API Gateway provides, such as path, query string parameters, authentication info and much more. You can find more information about that under the `Input format of a Lambda function for proxy integration` section [here](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html).
 
-The response type looks more or less like this:
+You can use the `ApiGatewayResponse` wrapper in order to return a custom status code or attach custom headers to the response.
+
+Also note the `defaultDispatcherOptions`. They look like this:
 
 ```haskell
-data APIGatewayResponse = APIGatewayResponse
-  { statusCode :: Int
-  , headers :: [(HeaderName, ByteString)]
-  , body :: String
-  } deriving (Generic, ToJSON)
+-- | Options that the dispatcher generator expects
+newtype DispatcherOptions = DispatcherOptions
+  { apiGatewayDispatcherOptions :: ApiGatewayDispatcherOptions
+  } deriving (Lift)
+
+-- | API Gateway specific dispatcher options
+newtype ApiGatewayDispatcherOptions = ApiGatewayDispatcherOptions
+  { propagateImpureExceptions :: Bool
+  -- ^ Should impure exceptions be propagated through the API Gateway interface
+  } deriving (Lift)
+
+defaultDispatcherOptions :: DispatcherOptions
+defaultDispatcherOptions =
+  DispatcherOptions (ApiGatewayDispatcherOptions True)
 ```
 
-Again, you can use this type in your project, and use only the fields you need.
-Note that `HeaderName` comes from [`Network.HTTP.Simple`](https://hackage.haskell.org/package/http-conduit-2.3.7.1/docs/Network-HTTP-Simple.html#t:Header).
-
-Notice some fields need implementation of ToJSON. See the example with headers below.
-
-## An example
-
-```haskell top
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DeriveGeneric #-}
-
-module Lib where
-
-import GHC.Generics
-import Aws.Lambda
-import Data.Aeson
-import qualified Data.ByteString.Lazy.Char8 as ByteString
-
--- Input
-data Event = Event
-  { resource :: String
-  , body :: String
-  } deriving (Generic, FromJSON)
-
--- Output
-data Response = Response
-  { statusCode:: Int
-  , body :: String
-  } deriving (Generic, ToJSON)
-
--- Type that we decode from the 'body' of 'Event'
-data Person = Person
-  { name :: String
-  , age :: Int
-  } deriving (Generic, FromJSON, ToJSON)
-
-greet :: Person -> String
-greet person =
-  "Hello, " ++ name person ++ "!"
-
-handler :: Event -> Context -> IO (Either String Response)
-handler Event{..} context = do
-  case decode (ByteString.pack body) of
-    Just person ->
-      pure $ Right Response
-        { statusCode = 200
-        , body = greet person
-        }
-    Nothing ->
-      pure $ Right Response
-        { statusCode = 200
-        , body = "bad person"
-        }
-```
-## An example with headers
-```src/Hello.hs```
-```haskell
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DeriveGeneric #-}
-
-module Hello where
-
-import           GHC.Generics
-import           Aws.Lambda
-import           Data.Aeson
-import           Network.HTTP.Types.Header
-import           Data.Text.Encoding
-import qualified Data.CaseInsensitive          as CI
-import qualified Data.Aeson.Types              as T
-
--- Input
-data Event = Event
-  { resource :: String
-  , body :: String
-  } deriving (Generic, FromJSON)
-
--- Output
-data ApiGateWayResponse = ApiGateWayResponse
-  { statusCode:: Int
-  , headers :: ResponseHeaders
-  , body :: String
-  } deriving (Generic)
-
--- function to encode Header
-headerToPair :: Header -> T.Pair
-headerToPair (cibyte, bstr) = k .= v
- where
-  k = (decodeUtf8 . CI.original) cibyte
-  v = decodeUtf8 bstr
-
-instance ToJSON ApiGateWayResponse  where
-  toJSON ApiGateWayResponse {..} = object
-    [ "statusCode" .= statusCode
-    , "body" .= body
-    , "headers" .= object (map headerToPair headers)
-    ]
-
-handler :: Event -> Context -> IO (Either String  ApiGateWayResponse)
-handler Event {..} _ = pure $ Right ApiGateWayResponse
-  { statusCode = 200
-  , headers    = [("Access-Control-Allow-Origin", "*")]
-  , body       = "hello, cors"
-  }
-```
+For production environments, you'd likely want to set `propagateImpureExceptions` to `False` in order to prevent your exception messages from being seen.

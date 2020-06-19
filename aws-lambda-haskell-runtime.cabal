@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: eab5b338b49db7854613ecd43b17245f105c8c936c40230ecf9d08c5dfad9d6d
+-- hash: c21b3c988844f7c4bfb806aff4e307c5d5dc63a7973eff4a83eb329e7bccb1c9
 
 name:           aws-lambda-haskell-runtime
-version:        2.0.6
+version:        3.0.0
 synopsis:       Haskell runtime for AWS Lambda
 description:    Please see the README on GitHub at <https://github.com/theam/aws-lambda-haskell-runtime#readme>
 category:       AWS
@@ -46,6 +46,7 @@ library
       Aws.Lambda.Runtime.Environment
       Aws.Lambda.Runtime.Error
       Aws.Lambda.Runtime.Publish
+      Aws.Lambda.Utilities
       Paths_aws_lambda_haskell_runtime
   hs-source-dirs:
       src

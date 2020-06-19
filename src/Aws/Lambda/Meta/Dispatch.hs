@@ -1,49 +1,40 @@
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE BangPatterns #-}
 
 {-| Dispatcher generation -}
 module Aws.Lambda.Meta.Dispatch
   ( generate
   , decodeObj
-  , encodeObj
   , Runtime.LambdaResult(..)
   ) where
 
+import qualified Data.Char as Char
 import Data.Function ((&))
 import Data.Text (Text)
 import qualified Data.Text as Text
-import qualified Data.Char as Char
 
 import Data.Aeson
 import qualified Data.ByteString.Lazy.Char8 as LazyByteString
 import qualified Language.Haskell.TH as Meta
 
 import Aws.Lambda.Meta.Common
+import qualified Aws.Lambda.Meta.Main as Main
+import qualified Aws.Lambda.Runtime.ApiGatewayInfo as ApiGatewayInfo
+import Aws.Lambda.Runtime.Common (toStandaloneLambdaResponse)
 import qualified Aws.Lambda.Runtime.Common as Runtime
 import qualified Aws.Lambda.Runtime.Error as Error
-import qualified Aws.Lambda.Runtime.ApiGatewayInfo as ApiGatewayInfo
 import qualified Control.Exception as Unchecked
-import qualified Aws.Lambda.Meta.Main as Main
-import Data.Typeable (Typeable, typeRep, Proxy (..))
+import Data.Typeable (Proxy (..), Typeable, typeRep)
 
 {-| Helper function that the dispatcher will use to
 decode the JSON that comes as an AWS Lambda event into the
 appropriate type expected by the handler.
 -}
-decodeObj :: forall a. (FromJSON a, Typeable a) => String -> Either Error.Parsing a
+decodeObj :: forall a. (FromJSON a, Typeable a) => LazyByteString.ByteString -> Either Error.Parsing a
 decodeObj x =
   let objName = show (typeRep (Proxy :: Proxy a)) in
-  case (eitherDecode $ LazyByteString.pack x) of
-    Left e  -> Left $ Error.Parsing e x objName
+  case (eitherDecode x) of
+    Left e  -> Left $ Error.Parsing e (LazyByteString.unpack x) objName
     Right v -> return v
-
-{-| Helper function that the dispatcher will use to
-decode the JSON that comes as an AWS Lambda event into the
-appropriate type expected by the handler.
--}
-encodeObj :: ToJSON a => a -> String
-encodeObj x = LazyByteString.unpack (encode x)
-
 
 {-| Generates the dispatcher out of a list of
 handler names in the form @src/Foo/Bar.handler@
@@ -70,20 +61,18 @@ standaloneLambdaHandlerCase lambdaHandler = do
   let pat = Meta.LitP (Meta.StringL $ Text.unpack lambdaHandler)
   body <- [e|do
     case decodeObj $(expressionName "eventObject") of
-      Right eventObject -> case decodeObj $(expressionName "contextObject") of
-        Right context -> (do
-          result <- $(expressionName (qualifiedHandlerName lambdaHandler)) eventObject context
-          either (pure . Left . Runtime.StandaloneLambdaError . encodeObj) (pure . Right . Runtime.StandaloneLambdaResult . encodeObj) result)
-          `Unchecked.catch` \(handlerError :: Unchecked.SomeException) -> pure . Left . Runtime.StandaloneLambdaError . encodeObj . show $ handlerError
-        Left err -> pure . Left . Runtime.StandaloneLambdaError . encodeObj $ err
-      Left err -> pure . Left . Runtime.StandaloneLambdaError . encodeObj $ err|]
+      Right eventObject -> (do
+          result <- $(expressionName (qualifiedHandlerName lambdaHandler)) eventObject contextObject
+          either (pure . Left . Runtime.StandaloneLambdaError . toStandaloneLambdaResponse) (pure . Right . Runtime.StandaloneLambdaResult . toStandaloneLambdaResponse) result)
+          `Unchecked.catch` \(handlerError :: Unchecked.SomeException) -> pure . Left . Runtime.StandaloneLambdaError . toStandaloneLambdaResponse . show $ handlerError
+      Left err -> pure . Left . Runtime.StandaloneLambdaError . toStandaloneLambdaResponse $ err|]
   pure $ Meta.Match pat (Meta.NormalB body) []
 
 standaloneLambdaUnmatchedCase :: Meta.MatchQ
 standaloneLambdaUnmatchedCase = do
   let pattern = Meta.WildP
   body <- [e|
-    pure . Left . Runtime.StandaloneLambdaError . encodeObj $ ("Handler " <> $(expressionName "functionHandler") <> " does not exist on project")
+    pure . Left . Runtime.StandaloneLambdaError . toStandaloneLambdaResponse $ ("Handler " <> $(expressionName "functionHandler") <> " does not exist on project" :: String)
     |]
   pure $ Meta.Match pattern (Meta.NormalB body) []
 
@@ -93,25 +82,23 @@ apiGatewayHandlerCase options lambdaHandler = do
   body <- [e|do
     let returnErr statusCode = pure . Left . Runtime.ApiGatewayLambdaError . ApiGatewayInfo.mkApiGatewayResponse statusCode
     case decodeObj $(expressionName "eventObject") of
-      Right eventObject -> case decodeObj $(expressionName "contextObject") of
-        Right context -> do
-          resultE <- Unchecked.try $ $(expressionName (qualifiedHandlerName lambdaHandler)) eventObject context
-          case resultE of
-            Right result ->
-              either (pure . Left . Runtime.ApiGatewayLambdaError . fmap toJSON) (pure . Right . Runtime.ApiGatewayResult . fmap toJSON) result
-            Left (handlerError :: Unchecked.SomeException) ->
-              if (Runtime.propagateImpureExceptions . Runtime.apiGatewayDispatcherOptions $ options)
-              then returnErr 500 . toJSON . show $ handlerError
-              else returnErr 500 . toJSON $ ("Something went wrong." :: String)
-        Left err -> returnErr 500 . toJSON $ err
-      Left err -> returnErr 400 . toJSON $ err|]
+      Right eventObject -> do
+        resultE <- Unchecked.try $ $(expressionName (qualifiedHandlerName lambdaHandler)) eventObject contextObject
+        case resultE of
+          Right result ->
+            either (pure . Left . Runtime.ApiGatewayLambdaError . fmap toApiGatewayResponseBody) (pure . Right . Runtime.ApiGatewayResult . fmap toApiGatewayResponseBody) result
+          Left (handlerError :: Unchecked.SomeException) ->
+            if (Runtime.propagateImpureExceptions . Runtime.apiGatewayDispatcherOptions $ options)
+            then returnErr 500 . toApiGatewayResponseBody . show $ handlerError
+            else returnErr 500 . toApiGatewayResponseBody . Text.pack $ "Something went wrong."
+      Left err -> returnErr 400 . toApiGatewayResponseBody . show $ err|]
   pure $ Meta.Match pat (Meta.NormalB body) []
 
 apiGatewayUnmatchedCase :: Meta.MatchQ
 apiGatewayUnmatchedCase = do
   let pattern = Meta.WildP
   body <- [e|
-    pure . Left . Runtime.ApiGatewayLambdaError . ApiGatewayInfo.mkApiGatewayResponse 500 . toJSON $ ("Handler " <> $(expressionName "functionHandler") <> " does not exist on project")
+    pure . Left . Runtime.ApiGatewayLambdaError . ApiGatewayInfo.mkApiGatewayResponse 500 . toApiGatewayResponseBody $ ("Handler " <> $(expressionName "functionHandler") <> " does not exist on project")
     |]
   pure $ Meta.Match pattern (Meta.NormalB body) []
 

@@ -22,7 +22,7 @@ If you are testing the package, or you are starting a new project, we have provi
 To use it, enter the following command:
 
 ```bash
-stack new my-haskell-lambda https://github.com/theam/aws-lambda-haskell-runtime/raw/master/stack-template.hsfiles --resolver=lts-13.25 --omit-packages
+stack new my-haskell-lambda https://github.com/theam/aws-lambda-haskell-runtime/raw/master/stack-template.hsfiles --resolver=lts-15.16 --omit-packages
 ```
 
 This will create a `my-haskell-lambda` directory with the following structure:
@@ -49,7 +49,7 @@ packages:
 - .
 
 extra-deps:
-- aws-lambda-haskell-runtime-2.0.1
+- aws-lambda-haskell-runtime-3.0.0
 ```
 
 ## Adding the dependency to an existing project
@@ -60,7 +60,7 @@ to the `stack.yaml` file:
 
 ```yaml
 extra-deps:
-- aws-lambda-haskell-runtime-2.0.1
+- aws-lambda-haskell-runtime-3.0.0
 ```
 
 and, to the `package.yaml` file:
@@ -68,7 +68,7 @@ and, to the `package.yaml` file:
 ```yaml
 dependencies:
 - ... # other dependencies of your project
-- aws-lambda-haskell-runtime >= 2.0
+- aws-lambda-haskell-runtime >= 3.0.0
 ```
 
 ## Keep reading!

@@ -1,4 +1,8 @@
-{-# LANGUAGE DeriveLift #-}
+{-# LANGUAGE DeriveLift                 #-}
+{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE UndecidableInstances       #-}
 
 module Aws.Lambda.Runtime.Common
   ( RunCallback
@@ -8,11 +12,18 @@ module Aws.Lambda.Runtime.Common
   , DispatcherOptions(..)
   , ApiGatewayDispatcherOptions(..)
   , DispatcherStrategy(..)
+  , ToLambdaResponseBody(..)
+  , unLambdaResponseBody
   , defaultDispatcherOptions
   ) where
 
 import Aws.Lambda.Runtime.ApiGatewayInfo
-import Data.Aeson (Value)
+import Aws.Lambda.Runtime.Context (Context)
+import Aws.Lambda.Utilities
+import Data.Aeson (FromJSON, ToJSON)
+import qualified Data.ByteString.Lazy as Lazy
+import Data.Text (Text)
+import qualified Data.Text as Text
 import GHC.Generics (Generic)
 import Language.Haskell.TH.Syntax (Lift)
 
@@ -38,23 +49,42 @@ data DispatcherStrategy =
   deriving (Lift)
 
 -- | Callback that we pass to the dispatcher function
-type RunCallback =
-  LambdaOptions -> IO (Either LambdaError LambdaResult)
+type RunCallback context =
+  LambdaOptions context -> IO (Either LambdaError LambdaResult)
+
+-- | Wrapper type for lambda response body
+newtype LambdaResponseBody =
+  LambdaResponseBody { unLambdaResponseBody :: Text }
+  deriving newtype (ToJSON, FromJSON)
+
+class ToLambdaResponseBody a where
+  toStandaloneLambdaResponse :: a -> LambdaResponseBody
+
+-- We need to special case String and Text to avoid unneeded encoding
+-- which results in extra quotes put around plain text responses
+instance {-# OVERLAPPING #-} ToLambdaResponseBody String where
+  toStandaloneLambdaResponse = LambdaResponseBody . Text.pack
+
+instance {-# OVERLAPPING #-} ToLambdaResponseBody Text where
+  toStandaloneLambdaResponse = LambdaResponseBody
+
+instance ToJSON a => ToLambdaResponseBody a where
+  toStandaloneLambdaResponse = LambdaResponseBody . toJSONText
 
 -- | Wrapper type for lambda execution results
 data LambdaError =
-  StandaloneLambdaError String |
-  ApiGatewayLambdaError (ApiGatewayResponse Value)
+  StandaloneLambdaError LambdaResponseBody |
+  ApiGatewayLambdaError (ApiGatewayResponse ApiGatewayResponseBody)
 
 -- | Wrapper type to handle the result of the user
 data LambdaResult =
-  StandaloneLambdaResult String |
-  ApiGatewayResult (ApiGatewayResponse Value)
+  StandaloneLambdaResult LambdaResponseBody |
+  ApiGatewayResult (ApiGatewayResponse ApiGatewayResponseBody)
 
 -- | Options that the generated main expects
-data LambdaOptions = LambdaOptions
-  { eventObject     :: !String
-  , contextObject   :: !String
+data LambdaOptions context = LambdaOptions
+  { eventObject     :: !Lazy.ByteString
   , functionHandler :: !String
   , executionUuid   :: !String
+  , contextObject   :: !(Context context)
   } deriving (Generic)
