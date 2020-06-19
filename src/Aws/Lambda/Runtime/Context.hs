@@ -1,6 +1,7 @@
 module Aws.Lambda.Runtime.Context
   ( Context(..)
   , initialize
+  , setEventData
   ) where
 
 import Control.Exception.Safe.Checked
@@ -29,25 +30,40 @@ initialize
   :: Throws Error.Parsing
   => Throws Error.EnvironmentVariableNotSet
   => IORef context
-  -> ApiInfo.Event
   -> IO (Context context)
-initialize customContextRef ApiInfo.Event{..} = do
+initialize customContextRef = do
   functionName          <- Environment.functionName
   version               <- Environment.functionVersion
   logStream             <- Environment.logStreamName
   logGroup              <- Environment.logGroupName
   memoryLimitInMb       <- Environment.functionMemory
 
-  Environment.setXRayTrace traceId
-  pure Context
+  pure $ Context
     { functionName       = functionName
     , functionVersion    = version
     , logStreamName      = logStream
     , logGroupName       = logGroup
     , memoryLimitInMb    = memoryLimitInMb
-    , invokedFunctionArn = invokedFunctionArn
+    , customContext      = customContextRef
+
+    -- We set those to "empty" values because they will be assigned
+    -- from the incoming event once one has been received. (see setEventData)
+    , invokedFunctionArn = mempty
+    , xrayTraceId        = mempty
+    , awsRequestId       = mempty
+    , deadline           = 0
+    }
+
+-- | Sets the context's event data
+setEventData
+  :: Context context
+  -> ApiInfo.Event
+  -> IO (Context context)
+setEventData context ApiInfo.Event{..} = do
+  Environment.setXRayTrace traceId
+
+  return $ context
+    { invokedFunctionArn = invokedFunctionArn
     , xrayTraceId        = traceId
     , awsRequestId       = awsRequestId
-    , deadline           = deadlineMs
-    , customContext      = customContextRef
-    }
+    , deadline           = deadlineMs }

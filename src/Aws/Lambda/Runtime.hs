@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -fno-warn-name-shadowing #-}
+
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications    #-}
 
@@ -35,10 +37,13 @@ runLambda initializeCustomContext callback = do
   manager <- Http.newManager httpManagerSettings
   customContext <- initializeCustomContext
   customContextRef <- newIORef customContext
+  context   <- Context.initialize @context customContextRef `catch` errorParsing `catch` variableNotSet
   forever $ do
     lambdaApi <- Environment.apiEndpoint `catch` variableNotSet
     event     <- ApiInfo.fetchEvent manager lambdaApi `catch` errorParsing
-    context   <- Context.initialize @context customContextRef event `catch` errorParsing `catch` variableNotSet
+
+    -- Purposefully shadowing to prevent using the initial "empty" context
+    context <- Context.setEventData context event
 
     (((invokeAndRun callback manager lambdaApi event context
       `Checked.catch` \err -> Publish.parsingError err lambdaApi context manager)
