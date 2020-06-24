@@ -3,7 +3,10 @@
 
 module Aws.Lambda.Runtime
   ( runLambda
+  , Runtime.LambdaError(..)
   , Runtime.LambdaResult(..)
+  , Runtime.RunCallback
+  , Runtime.ToLambdaResponseBody(..)
   , Runtime.DispatcherStrategy(..)
   , Runtime.DispatcherOptions(..)
   , Runtime.ApiGatewayDispatcherOptions(..)
