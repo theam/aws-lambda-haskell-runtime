@@ -19,27 +19,49 @@ import qualified Aws.Lambda.Runtime.Context as Context
 import qualified Aws.Lambda.Runtime.Environment as Environment
 import qualified Aws.Lambda.Runtime.Error as Error
 import qualified Aws.Lambda.Runtime.Publish as Publish
-import qualified Aws.Lambda.Utilities as Utilities
 import qualified Control.Exception as Unchecked
 import Control.Exception.Safe.Checked
 import qualified Control.Exception.Safe.Checked as Checked
 import Control.Monad (forever)
 import Data.Aeson
+import qualified Data.ByteString.Lazy as Lazy
 import Data.IORef
 import qualified Network.HTTP.Client as Http
 import System.IO (hFlush, stderr, stdout)
 
--- | Runs the user @haskell_lambda@ executable and posts back the
--- results. This is called from the layer's @main@ function.
 runLambda ::
-  forall context event error result.
-  FromJSON event =>
-  ToJSON error =>
-  ToJSON result =>
+  ( FromJSON event,
+    Runtime.ToLambdaResponseBody error,
+    Runtime.ToLambdaResponseBody result
+  ) =>
   IO context ->
-  (Context.Context context -> event -> IO (Either error result)) ->
+  (event -> Context.Context context -> IO (Either error result)) ->
   IO ()
-runLambda initializeCustomContext userCode = do
+runLambda initializer userCode =
+  runtime initializer (wrapStandaloneLambda userCode)
+
+wrapStandaloneLambda ::
+  ( FromJSON event,
+    Runtime.ToLambdaResponseBody error,
+    Runtime.ToLambdaResponseBody result
+  ) =>
+  (event -> Context.Context context -> IO (Either error result)) ->
+  Runtime.LambdaOptions context ->
+  IO (Either Runtime.LambdaError Runtime.LambdaResult)
+wrapStandaloneLambda userCode Runtime.LambdaOptions {..} =
+  case eitherDecode eventObject of
+    Left err ->
+      pure . Left . Runtime.StandaloneLambdaError $ Runtime.toStandaloneLambdaResponse err
+    Right event -> do
+      result <- userCode event contextObject
+      case result of
+        Left err ->
+          pure . Left . Runtime.StandaloneLambdaError $ Runtime.toStandaloneLambdaResponse err
+        Right ok ->
+          pure . Right . Runtime.StandaloneLambdaResult $ Runtime.toStandaloneLambdaResponse ok
+
+runtime :: forall context. IO context -> Runtime.RunCallback context -> IO ()
+runtime initializeCustomContext callback = do
   manager <- Http.newManager httpManagerSettings
   customContext <- initializeCustomContext
   customContextRef <- newIORef customContext
@@ -49,7 +71,7 @@ runLambda initializeCustomContext userCode = do
     event <- ApiInfo.fetchEvent manager lambdaApi `catch` errorParsing
     -- Purposefully shadowing to prevent using the initial "empty" context
     context <- Context.setEventData context event
-    ( ( ( invokeAndRun userCode manager lambdaApi event context
+    ( ( ( invokeAndRun callback manager lambdaApi event context
             `Checked.catch` \err -> Publish.parsingError err lambdaApi context manager
         )
           `Checked.catch` \err -> Publish.invocationError err lambdaApi context manager
@@ -67,47 +89,45 @@ httpManagerSettings =
 
 invokeAndRun ::
   Throws Error.Invocation =>
-  FromJSON event =>
-  ToJSON error =>
-  ToJSON result =>
-  (Context.Context context -> event -> IO (Either error result)) ->
+  Throws Error.EnvironmentVariableNotSet =>
+  Runtime.RunCallback context ->
   Http.Manager ->
   String ->
   ApiInfo.Event ->
   Context.Context context ->
   IO ()
-invokeAndRun userCode manager lambdaApi event context = do
-  result <- invokeWithCallback userCode event context
+invokeAndRun callback manager lambdaApi event context = do
+  result <- invokeWithCallback callback event context
   Publish.result result lambdaApi context manager
     `catch` \err -> Publish.invocationError err lambdaApi context manager
 
 invokeWithCallback ::
   Throws Error.Invocation =>
-  FromJSON event =>
-  ToJSON error =>
-  ToJSON result =>
-  (Context.Context context -> event -> IO (Either error result)) ->
+  Throws Error.EnvironmentVariableNotSet =>
+  Runtime.RunCallback context ->
   ApiInfo.Event ->
   Context.Context context ->
   IO Runtime.LambdaResult
-invokeWithCallback userCode event context = do
-  eventObject <-
-    case eitherDecode $ ApiInfo.event event of
-      Right obj -> pure obj
-      Left err -> throw $ Error.Invocation $ toJSON err
-  result <- userCode context eventObject
+invokeWithCallback callback event context = do
+  handlerName <- Environment.handlerName
+  let lambdaOptions =
+        Runtime.LambdaOptions
+          { eventObject = ApiInfo.event event,
+            functionHandler = handlerName,
+            executionUuid = "", -- DirectCall doesnt use UUID
+            contextObject = context
+          }
+  result <- callback lambdaOptions
   -- Flush output to insure output goes into CloudWatch logs
   flushOutput
   case result of
-    Left err ->
-      throw $ Error.Invocation $ toJSON err
-    -- Left lambdaError -> case lambdaError of
-    --   Runtime.StandaloneLambdaError err ->
-    --     throw $ Error.Invocation $ toJSON err
-    --   Runtime.ApiGatewayLambdaError err ->
-    --     throw $ Error.Invocation $ toJSON err
+    Left lambdaError -> case lambdaError of
+      Runtime.StandaloneLambdaError err ->
+        throw $ Error.Invocation $ toJSON err
+      Runtime.ApiGatewayLambdaError err ->
+        throw $ Error.Invocation $ toJSON err
     Right value ->
-      pure (Runtime.StandaloneLambdaResult (Runtime.LambdaResponseBody $ Utilities.toJSONText value))
+      pure value
 
 variableNotSet :: Error.EnvironmentVariableNotSet -> IO a
 variableNotSet (Error.EnvironmentVariableNotSet env) =
