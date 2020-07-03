@@ -78,12 +78,6 @@ library
       Aws.Lambda
       Aws.Lambda.Runtime
   other-modules:
-      Aws.Lambda.Configuration
-      Aws.Lambda.Meta.Common
-      Aws.Lambda.Meta.Discover
-      Aws.Lambda.Meta.Dispatch
-      Aws.Lambda.Meta.Main
-      Aws.Lambda.Meta.Run
       Aws.Lambda.Runtime.API.Endpoints
       Aws.Lambda.Runtime.API.Version
       Aws.Lambda.Runtime.ApiGatewayInfo
@@ -94,7 +88,6 @@ library
       Aws.Lambda.Runtime.Error
       Aws.Lambda.Runtime.Publish
       Aws.Lambda.Utilities
-      Paths_aws_lambda_haskell_runtime
   hs-source-dirs:
       src
   build-depends:
@@ -112,12 +105,12 @@ library
   default-language: Haskell2010
 
 test-suite aws-lambda-haskell-runtime-test
+  import:              common-options
   type: exitcode-stdio-1.0
   main-is: Spec.hs
-  other-modules:
-      Paths_aws_lambda_haskell_runtime
   hs-source-dirs:
       test
   build-depends:
       hspec
+    , hspec-discover
   default-language: Haskell2010
