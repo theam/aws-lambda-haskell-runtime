@@ -98,7 +98,6 @@ library
     , http-types
     , path >0.7
     , path-io
-    , safe-exceptions-checked
     , template-haskell
     , text
     , unordered-containers

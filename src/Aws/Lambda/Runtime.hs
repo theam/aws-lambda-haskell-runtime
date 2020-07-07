@@ -19,12 +19,9 @@ import qualified Aws.Lambda.Runtime.Context as Context
 import qualified Aws.Lambda.Runtime.Environment as Environment
 import qualified Aws.Lambda.Runtime.Error as Error
 import qualified Aws.Lambda.Runtime.Publish as Publish
-import qualified Control.Exception as Unchecked
-import Control.Exception.Safe.Checked
-import qualified Control.Exception.Safe.Checked as Checked
+import Control.Exception
 import Control.Monad (forever)
 import Data.Aeson
-import qualified Data.ByteString.Lazy as Lazy
 import Data.IORef
 import qualified Network.HTTP.Client as Http
 import System.IO (hFlush, stderr, stdout)
@@ -71,14 +68,12 @@ runtime initializeCustomContext callback = do
     event <- ApiInfo.fetchEvent manager lambdaApi `catch` errorParsing
     -- Purposefully shadowing to prevent using the initial "empty" context
     context <- Context.setEventData context event
-    ( ( ( invokeAndRun callback manager lambdaApi event context
-            `Checked.catch` \err -> Publish.parsingError err lambdaApi context manager
-        )
-          `Checked.catch` \err -> Publish.invocationError err lambdaApi context manager
-      )
-        `Checked.catch` \(err :: Error.EnvironmentVariableNotSet) -> Publish.runtimeInitError err lambdaApi context manager
-      )
-      `Unchecked.catch` \err -> Publish.invocationError err lambdaApi context manager
+    invokeAndRun callback manager lambdaApi event context
+      `catches` [ Handler $ \err -> Publish.parsingError err lambdaApi context manager,
+                  Handler $ \err -> Publish.invocationError err lambdaApi context manager,
+                  Handler $ \(err :: Error.EnvironmentVariableNotSet) -> Publish.runtimeInitError err lambdaApi context manager,
+                  Handler $ \err -> Publish.invocationError err lambdaApi context manager
+                ]
 
 httpManagerSettings :: Http.ManagerSettings
 httpManagerSettings =
@@ -88,8 +83,6 @@ httpManagerSettings =
     }
 
 invokeAndRun ::
-  Throws Error.Invocation =>
-  Throws Error.EnvironmentVariableNotSet =>
   Runtime.RunCallback context ->
   Http.Manager ->
   String ->
@@ -102,8 +95,6 @@ invokeAndRun callback manager lambdaApi event context = do
     `catch` \err -> Publish.invocationError err lambdaApi context manager
 
 invokeWithCallback ::
-  Throws Error.Invocation =>
-  Throws Error.EnvironmentVariableNotSet =>
   Runtime.RunCallback context ->
   ApiInfo.Event ->
   Context.Context context ->
