@@ -44,7 +44,7 @@ ld-options: -static -pthread
 # extra-lib-dirs: ./some/path
 ```
 
-### Solution 2: Deploy the libraries with your lamdba
+### Solution 2: Deploy the libraries with your lambda
 
 To solve this, we have to make sure that whatever is packaging/deploying our function is copying these libraries to our function package. If you are using the Stack template, then you should substitute the last line of your makefile for these lines:
 
