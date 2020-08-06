@@ -31,7 +31,7 @@ data ApiGatewayRequest body = ApiGatewayRequest
   , apiGatewayRequestPath                  :: !Text
   , apiGatewayRequestHttpMethod            :: !Text
   , apiGatewayRequestHeaders               :: !(HashMap Text Text)
-  , apiGatewayRequestQueryStringParameters :: !(Maybe [(Text, Maybe Text)])
+  , apiGatewayRequestQueryStringParameters :: !(Maybe (HashMap Text Text))
   , apiGatewayRequestPathParameters        :: !(Maybe (HashMap Text Text))
   , apiGatewayRequestStageVariables        :: !(Maybe (HashMap Text Text))
   , apiGatewayRequestIsBase64Encoded       :: !Bool
