@@ -55,7 +55,7 @@ handlerNames modules =
   & fmap (Text.pack . toFilePath)
  where
   changeExtensionToHandler file =
-    setFileExtension ".handler" file
+    replaceExtension ".handler" file
     & Maybe.fromJust  -- The path will be always parsable, as we just replace the extension
 
 containsHandler :: Path Rel File -> IO Bool
