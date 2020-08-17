@@ -30,7 +30,7 @@ data ApiGatewayRequest body = ApiGatewayRequest
   { apiGatewayRequestResource              :: !Text
   , apiGatewayRequestPath                  :: !Text
   , apiGatewayRequestHttpMethod            :: !Text
-  , apiGatewayRequestHeaders               :: !(HashMap Text Text)
+  , apiGatewayRequestHeaders               :: !(Maybe (HashMap Text Text))
   , apiGatewayRequestQueryStringParameters :: !(Maybe (HashMap Text Text))
   , apiGatewayRequestPathParameters        :: !(Maybe (HashMap Text Text))
   , apiGatewayRequestStageVariables        :: !(Maybe (HashMap Text Text))
