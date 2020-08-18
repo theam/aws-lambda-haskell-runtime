@@ -1,8 +1,3 @@
-{-# LANGUAGE DefaultSignatures #-}
-{-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GeneralisedNewtypeDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Aws.Lambda.Events.ApiGateway

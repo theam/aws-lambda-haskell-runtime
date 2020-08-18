@@ -38,19 +38,21 @@ common common-options
                        ConstraintKinds
                        DataKinds
                        DefaultSignatures
-                       DeriveAnyClass
                        DeriveDataTypeable
                        DeriveFoldable
                        DeriveFunctor
                        DeriveGeneric
+                       DerivingStrategies
                        DeriveTraversable
                        DoAndIfThenElse
+                       DuplicateRecordFields
                        EmptyDataDecls
                        ExistentialQuantification
                        FlexibleContexts
                        FlexibleInstances
                        FunctionalDependencies
                        GADTs
+                       GeneralisedNewtypeDeriving
                        InstanceSigs
                        KindSignatures
                        LambdaCase

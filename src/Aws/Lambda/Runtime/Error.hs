@@ -11,7 +11,9 @@ import Data.Aeson ((.=), ToJSON (..), Value, object)
 
 newtype EnvironmentVariableNotSet
   = EnvironmentVariableNotSet String
-  deriving (Show, Exception)
+  deriving (Show)
+
+instance Exception EnvironmentVariableNotSet
 
 instance ToJSON EnvironmentVariableNotSet where
   toJSON (EnvironmentVariableNotSet msg) =
@@ -26,7 +28,9 @@ data Parsing
         actualValue :: String,
         valueName :: String
       }
-  deriving (Show, Exception)
+  deriving (Show)
+
+instance Exception Parsing
 
 instance ToJSON Parsing where
   toJSON (Parsing errorMessage _ valueName) =
@@ -37,7 +41,9 @@ instance ToJSON Parsing where
 
 newtype Invocation
   = Invocation Value
-  deriving (Show, Exception)
+  deriving (Show)
+
+instance Exception Invocation
 
 instance ToJSON Invocation where
   -- We return the user error as it is
