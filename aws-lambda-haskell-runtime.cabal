@@ -1,11 +1,4 @@
-cabal-version: 1.12
-
--- This file has been generated from package.yaml by hpack version 0.34.1.
---
--- see: https://github.com/sol/hpack
---
--- hash: c833537a67bfa0d976f4297649380558f7db943dcac5a1b180e2ee2401abb3f7
-
+cabal-version:  2.2
 name:           aws-lambda-haskell-runtime
 version:        3.0.4
 synopsis:       Haskell runtime for AWS Lambda
@@ -15,7 +8,7 @@ homepage:       https://github.com/theam/aws-lambda-haskell-runtime#readme
 bug-reports:    https://github.com/theam/aws-lambda-haskell-runtime/issues
 author:         Nikita Tchayka
 maintainer:     hackers@theagilemonkeys.com
-copyright:      2018 The Agile Monkeys SL
+copyright:      2020 The Agile Monkeys SL
 license:        Apache-2.0
 license-file:   LICENSE
 build-type:     Simple
@@ -26,7 +19,62 @@ source-repository head
   type: git
   location: https://github.com/theam/aws-lambda-haskell-runtime
 
+common common-options
+  build-depends:       base >= 4.12 && < 4.14
+
+  ghc-options:         -Wall
+                       -Wincomplete-uni-patterns
+                       -Wincomplete-record-updates
+                       -Wcompat
+                       -Widentities
+                       -Wredundant-constraints
+                       -fhide-source-paths
+                       -Wmissing-export-lists
+                       -Wpartial-fields
+  default-language:    Haskell2010
+  default-extensions:  AutoDeriveTypeable
+                       BangPatterns
+                       BinaryLiterals
+                       ConstraintKinds
+                       DataKinds
+                       DefaultSignatures
+                       DeriveAnyClass
+                       DeriveDataTypeable
+                       DeriveFoldable
+                       DeriveFunctor
+                       DeriveGeneric
+                       DeriveTraversable
+                       DoAndIfThenElse
+                       EmptyDataDecls
+                       ExistentialQuantification
+                       FlexibleContexts
+                       FlexibleInstances
+                       FunctionalDependencies
+                       GADTs
+                       InstanceSigs
+                       KindSignatures
+                       LambdaCase
+                       MonadFailDesugaring
+                       MultiParamTypeClasses
+                       MultiWayIf
+                       NamedFieldPuns
+                       OverloadedStrings
+                       PartialTypeSignatures
+                       PatternGuards
+                       PolyKinds
+                       QuasiQuotes
+                       RankNTypes
+                       RecordWildCards
+                       ScopedTypeVariables
+                       StandaloneDeriving
+                       TemplateHaskell
+                       TupleSections
+                       TypeFamilies
+                       TypeSynonymInstances
+                       ViewPatterns
+
 library
+  import:              common-options
   exposed-modules:
       Aws.Lambda
       Aws.Lambda.Runtime
@@ -50,11 +98,8 @@ library
       Paths_aws_lambda_haskell_runtime
   hs-source-dirs:
       src
-  default-extensions: TemplateHaskell OverloadedStrings RecordWildCards ScopedTypeVariables DeriveGeneric TypeApplications FlexibleContexts DeriveAnyClass QuasiQuotes
-  ghc-options: -Wall -fno-warn-orphans -optP-Wno-nonportable-include-path -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Widentities -Wredundant-constraints -Wmissing-export-lists -Wpartial-fields -fhide-source-paths -freverse-errors
   build-depends:
       aeson
-    , base >=4.7 && <5
     , bytestring
     , case-insensitive
     , http-client
@@ -74,9 +119,6 @@ test-suite aws-lambda-haskell-runtime-test
       Paths_aws_lambda_haskell_runtime
   hs-source-dirs:
       test
-  default-extensions: TemplateHaskell OverloadedStrings RecordWildCards ScopedTypeVariables DeriveGeneric TypeApplications FlexibleContexts DeriveAnyClass QuasiQuotes
-  ghc-options: -Wall -fno-warn-orphans -optP-Wno-nonportable-include-path -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Widentities -Wredundant-constraints -Wmissing-export-lists -Wpartial-fields -fhide-source-paths -freverse-errors -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
-    , hspec
+      hspec
   default-language: Haskell2010
