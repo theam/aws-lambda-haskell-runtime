@@ -18,7 +18,7 @@ module Aws.Lambda.Runtime.Common
   )
 where
 
-import Aws.Lambda.Runtime.ApiGatewayInfo
+import Aws.Lambda.Events.ApiGateway
 import Aws.Lambda.Runtime.Context (Context)
 import Aws.Lambda.Utilities
 import Data.Aeson (FromJSON, ToJSON)

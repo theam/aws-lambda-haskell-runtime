@@ -5,7 +5,7 @@
 {-# LANGUAGE GeneralisedNewtypeDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Aws.Lambda.Runtime.ApiGatewayInfo
+module Aws.Lambda.Events.ApiGateway
   ( ApiGatewayRequest (..),
     ApiGatewayRequestContext (..),
     ApiGatewayRequestContextIdentity (..),

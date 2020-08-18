@@ -20,7 +20,7 @@ source-repository head
   location: https://github.com/theam/aws-lambda-haskell-runtime
 
 common common-options
-  build-depends:       base >= 4.12 && < 4.14
+  build-depends:       base >= 4.14 && < 4.15
 
   ghc-options:         -Wall
                        -Wincomplete-uni-patterns
@@ -77,10 +77,11 @@ library
   exposed-modules:
       Aws.Lambda
       Aws.Lambda.Runtime
+      Aws.Lambda.Events
   other-modules:
+      Aws.Lambda.Events.ApiGateway
       Aws.Lambda.Runtime.API.Endpoints
       Aws.Lambda.Runtime.API.Version
-      Aws.Lambda.Runtime.ApiGatewayInfo
       Aws.Lambda.Runtime.ApiInfo
       Aws.Lambda.Runtime.Common
       Aws.Lambda.Runtime.Context
