@@ -41,22 +41,6 @@ data ApiGatewayRequest body = ApiGatewayRequest
   , apiGatewayRequestBody                  :: !(Maybe body)
   } deriving (Show)
 
-data ApiGatewayRequest body
-  = ApiGatewayRequest
-      { apiGatewayRequestResource :: !Text,
-        apiGatewayRequestPath :: !Text,
-        apiGatewayRequestHttpMethod :: !Text,
-        apiGatewayRequestHeaders :: !(Maybe (HashMap Text Text)),
-        apiGatewayRequestQueryStringParameters :: !(Maybe [(Text, Maybe Text)]),
-        apiGatewayRequestPathParameters :: !(Maybe (HashMap Text Text)),
-        apiGatewayRequestStageVariables :: !(Maybe (HashMap Text Text)),
-        apiGatewayRequestIsBase64Encoded :: !Bool,
-        apiGatewayRequestRequestContext :: !ApiGatewayRequestContext,
-        apiGatewayRequestBody :: !(Maybe body)
-      }
-  deriving (Show)
->>>>>>> 50cd385... Format ApiGatewayInfo
-
 -- We special case String and Text in order
 -- to avoid unneeded encoding which will wrap them in quotes and break parsing
 instance {-# OVERLAPPING #-} FromJSON (ApiGatewayRequest Text) where
