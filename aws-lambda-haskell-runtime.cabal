@@ -42,7 +42,6 @@ library
       Aws.Lambda.Runtime.API.Version
       Aws.Lambda.Runtime.ApiGatewayInfo
       Aws.Lambda.Runtime.ApiInfo
-      Aws.Lambda.Runtime.Common
       Aws.Lambda.Runtime.Context
       Aws.Lambda.Runtime.Environment
       Aws.Lambda.Runtime.Error
