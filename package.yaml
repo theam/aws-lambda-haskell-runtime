@@ -33,6 +33,7 @@ library:
   exposed-modules:
     - Aws.Lambda
     - Aws.Lambda.Runtime
+    - Aws.Lambda.Runtime.Common
 
 tests:
   aws-lambda-haskell-runtime-test:
