@@ -30,6 +30,7 @@ library
   exposed-modules:
       Aws.Lambda
       Aws.Lambda.Runtime
+      Aws.Lambda.Runtime.Common
   other-modules:
       Aws.Lambda.Configuration
       Aws.Lambda.Meta.Common
