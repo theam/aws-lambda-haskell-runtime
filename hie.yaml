@@ -1,0 +1,7 @@
+cradle:
+  stack:
+    - path: "./src"
+      component: "aws-lambda-haskell-runtime:lib"
+
+    - path: "./test"
+      component: "aws-lambda-haskell-runtime:test:aws-lambda-haskell-runtime-test"

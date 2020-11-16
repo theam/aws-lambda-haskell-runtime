@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE FlexibleContexts #-}
 
 {-| Dispatcher generation -}
@@ -24,6 +25,7 @@ import qualified Aws.Lambda.Runtime.Common as Runtime
 import qualified Aws.Lambda.Runtime.Error as Error
 import qualified Control.Exception as Unchecked
 import Data.Typeable (Proxy (..), Typeable, typeRep)
+import qualified System.IO as IO
 
 {-| Helper function that the dispatcher will use to
 decode the JSON that comes as an AWS Lambda event into the
@@ -64,7 +66,9 @@ standaloneLambdaHandlerCase lambdaHandler = do
       Right eventObject -> (do
           result <- $(expressionName (qualifiedHandlerName lambdaHandler)) eventObject contextObject
           either (pure . Left . Runtime.StandaloneLambdaError . toStandaloneLambdaResponse) (pure . Right . Runtime.StandaloneLambdaResult . toStandaloneLambdaResponse) result)
-          `Unchecked.catch` \(handlerError :: Unchecked.SomeException) -> pure . Left . Runtime.StandaloneLambdaError . toStandaloneLambdaResponse . show $ handlerError
+          `Unchecked.catch` \(handlerError :: Unchecked.SomeException) -> do
+              IO.hPutStr IO.stderr $ show handlerError
+              pure . Left . Runtime.StandaloneLambdaError . toStandaloneLambdaResponse . show $ handlerError
       Left err -> pure . Left . Runtime.StandaloneLambdaError . toStandaloneLambdaResponse $ err|]
   pure $ Meta.Match pat (Meta.NormalB body) []
 
@@ -87,7 +91,8 @@ apiGatewayHandlerCase options lambdaHandler = do
         case resultE of
           Right result ->
             either (pure . Left . Runtime.ApiGatewayLambdaError . fmap toApiGatewayResponseBody) (pure . Right . Runtime.ApiGatewayResult . fmap toApiGatewayResponseBody) result
-          Left (handlerError :: Unchecked.SomeException) ->
+          Left (handlerError :: Unchecked.SomeException) -> do
+            IO.hPutStr IO.stderr $ show handlerError
             if (Runtime.propagateImpureExceptions . Runtime.apiGatewayDispatcherOptions $ options)
             then returnErr 500 . toApiGatewayResponseBody . show $ handlerError
             else returnErr 500 . toApiGatewayResponseBody . Text.pack $ "Something went wrong."
