@@ -1,11 +1,13 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.2.
+-- This file has been generated from package.yaml by hpack version 0.33.0.
 --
 -- see: https://github.com/sol/hpack
+--
+-- hash: 0f7704e7c7ec54888d92cf2c38254a4af70e2feb5d0932e1efaafb0d2eeb472f
 
 name:           aws-lambda-haskell-runtime
-version:        3.0.5
+version:        4.0.0
 synopsis:       Haskell runtime for AWS Lambda
 description:    Please see the README on GitHub at <https://github.com/theam/aws-lambda-haskell-runtime#readme>
 category:       AWS
@@ -13,7 +15,7 @@ homepage:       https://github.com/theam/aws-lambda-haskell-runtime#readme
 bug-reports:    https://github.com/theam/aws-lambda-haskell-runtime/issues
 author:         Nikita Tchayka
 maintainer:     hackers@theagilemonkeys.com
-copyright:      2018 The Agile Monkeys SL
+copyright:      2021 The Agile Monkeys SL
 license:        Apache-2.0
 license-file:   LICENSE
 build-type:     Simple
