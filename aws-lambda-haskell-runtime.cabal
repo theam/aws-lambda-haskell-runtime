@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 0f7704e7c7ec54888d92cf2c38254a4af70e2feb5d0932e1efaafb0d2eeb472f
+-- hash: d2415c579a355817f682114fd8f1f599d1652e42955b123e9d5ee8257d4dee54
 
 name:           aws-lambda-haskell-runtime
 version:        4.0.0
@@ -51,7 +51,7 @@ library
   hs-source-dirs:
       src
   default-extensions: TemplateHaskell OverloadedStrings RecordWildCards ScopedTypeVariables DeriveGeneric TypeApplications FlexibleContexts DeriveAnyClass QuasiQuotes
-  ghc-options: -Wall -fno-warn-orphans -optP-Wno-nonportable-include-path -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Widentities -Wredundant-constraints -Wmissing-export-lists -Wpartial-fields -fhide-source-paths -freverse-errors
+  ghc-options: -Wall -Werror -fno-warn-orphans -optP-Wno-nonportable-include-path -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Widentities -Wredundant-constraints -Wmissing-export-lists -Wpartial-fields -fhide-source-paths -freverse-errors
   build-depends:
       aeson
     , base >=4.7 && <5
@@ -75,7 +75,7 @@ test-suite aws-lambda-haskell-runtime-test
   hs-source-dirs:
       test
   default-extensions: TemplateHaskell OverloadedStrings RecordWildCards ScopedTypeVariables DeriveGeneric TypeApplications FlexibleContexts DeriveAnyClass QuasiQuotes
-  ghc-options: -Wall -fno-warn-orphans -optP-Wno-nonportable-include-path -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Widentities -Wredundant-constraints -Wmissing-export-lists -Wpartial-fields -fhide-source-paths -freverse-errors -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -Werror -fno-warn-orphans -optP-Wno-nonportable-include-path -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Widentities -Wredundant-constraints -Wmissing-export-lists -Wpartial-fields -fhide-source-paths -freverse-errors -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
     , hspec

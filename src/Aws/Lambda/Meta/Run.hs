@@ -1,13 +1,13 @@
 module Aws.Lambda.Meta.Run
-  ( generate
-  ) where
-
-import qualified Language.Haskell.TH as Meta
+  ( generate,
+  )
+where
 
 import Aws.Lambda.Meta.Common
 import qualified Aws.Lambda.Meta.Discover as Discover
 import qualified Aws.Lambda.Meta.Dispatch as Dispatch
 import qualified Aws.Lambda.Meta.Main as Main
+import qualified Language.Haskell.TH as Meta
 
 generate :: Main.DispatcherOptions -> Main.DispatcherStrategy -> Meta.DecQ
 generate options strategy = do

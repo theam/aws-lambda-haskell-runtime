@@ -59,6 +59,7 @@ default-extensions:
 
 ghc-options:
   - -Wall
+  - -Werror
   - -fno-warn-orphans
   - -optP-Wno-nonportable-include-path
   - -Wincomplete-uni-patterns

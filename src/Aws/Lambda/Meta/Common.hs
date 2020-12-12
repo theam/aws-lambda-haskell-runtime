@@ -1,10 +1,11 @@
-{-| Helper functions to make code generation easier -}
+-- | Helper functions to make code generation easier
 module Aws.Lambda.Meta.Common
-  ( declarationName
-  , expressionName
-  , getFieldsFrom
-  , constructorName
-  ) where
+  ( declarationName,
+    expressionName,
+    getFieldsFrom,
+    constructorName,
+  )
+where
 
 import Data.Text (Text)
 import qualified Data.Text as Text
@@ -34,8 +35,6 @@ getFieldsFrom :: Text -> [Text] -> Q Pat
 getFieldsFrom name fields = do
   extractedFields <- traverse extractField fields
   pure $ RecP (mkName $ Text.unpack name) extractedFields
- where
-  -- | Helper for extracting fields of records
-  -- think of @personAge@ in @myFunction Person { personAge = personAge } = ...@
-  extractField :: Text -> Q FieldPat
-  extractField n = pure (mkName $ Text.unpack n, VarP $ mkName $ Text.unpack n)
+  where
+    extractField :: Text -> Q FieldPat
+    extractField n = pure (mkName $ Text.unpack n, VarP $ mkName $ Text.unpack n)

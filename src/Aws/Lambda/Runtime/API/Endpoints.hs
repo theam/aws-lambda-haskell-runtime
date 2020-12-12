@@ -1,61 +1,67 @@
 module Aws.Lambda.Runtime.API.Endpoints
-  ( response
-  , invocationError
-  , runtimeInitError
-  , nextInvocation
-  , Endpoint(..)
-  ) where
+  ( response,
+    invocationError,
+    runtimeInitError,
+    nextInvocation,
+    Endpoint (..),
+  )
+where
 
 import qualified Aws.Lambda.Runtime.API.Version as Version
+import Data.Text (Text)
 
-newtype Endpoint =
-  Endpoint String
+newtype Endpoint
+  = Endpoint Text
   deriving (Show)
 
 -- | Endpoint that provides the ID of the next invocation
-nextInvocation :: String -> Endpoint
+nextInvocation :: Text -> Endpoint
 nextInvocation lambdaApi =
-  Endpoint $ concat
-    [ "http://"
-    , lambdaApi
-    , "/"
-    , Version.value
-    , "/runtime/invocation/next"
-    ]
+  Endpoint $
+    mconcat
+      [ "http://",
+        lambdaApi,
+        "/",
+        Version.value,
+        "/runtime/invocation/next"
+      ]
 
 -- | Where the response of the Lambda gets published
-response :: String -> String -> Endpoint
+response :: Text -> Text -> Endpoint
 response lambdaApi requestId =
-  Endpoint $ concat
-    [ "http://"
-    , lambdaApi
-    , "/"
-    , Version.value
-    , "/runtime/invocation/"
-    , requestId
-    , "/response"
-    ]
+  Endpoint $
+    mconcat
+      [ "http://",
+        lambdaApi,
+        "/",
+        Version.value,
+        "/runtime/invocation/",
+        requestId,
+        "/response"
+      ]
 
 -- | Invocation (runtime) errors should be published here
-invocationError :: String -> String -> Endpoint
+invocationError :: Text -> Text -> Endpoint
 invocationError lambdaApi requestId =
-  Endpoint $ concat
-    [ "http://"
-    , lambdaApi
-    , "/"
-    , Version.value
-    , "/runtime/invocation/"
-    , requestId
-    , "/error"
-    ]
+  Endpoint $
+    mconcat
+      [ "http://",
+        lambdaApi,
+        "/",
+        Version.value,
+        "/runtime/invocation/",
+        requestId,
+        "/error"
+      ]
 
 -- | Runtime initialization errors should go here
-runtimeInitError :: String -> Endpoint
+runtimeInitError :: Text -> Endpoint
 runtimeInitError lambdaApi =
-  Endpoint $ concat
-    [ "http://"
-    , lambdaApi
-    , "/"
-    , Version.value
-    , "/runtime/init/error"
-    ]
+  Endpoint $
+    mconcat
+      [ "http://",
+        lambdaApi,
+        "/",
+        Version.value,
+        "/runtime/init/error"
+      ]
