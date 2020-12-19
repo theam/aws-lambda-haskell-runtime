@@ -98,15 +98,15 @@ handlerToCallback dispatcherOptions rawEventObject context handlerToCall =
                 (Left . StandaloneLambdaError . toStandaloneLambdaResponse)
                 (Right . StandaloneLambdaResult . toStandaloneLambdaResponse)
                 <$> handler request context
-            Left _ -> error "TODO: it's an error"
-        APIGatewayHandler handler ->
+            Left err -> return . Left . StandaloneLambdaError . toStandaloneLambdaResponse $ err
+        APIGatewayHandler handler -> do
           case decodeObj @(ApiGatewayRequest request) rawEventObject of
             Right request ->
               either
                 (Left . ApiGatewayLambdaError . fmap toApiGatewayResponseBody)
                 (Right . ApiGatewayResult . fmap toApiGatewayResponseBody)
                 <$> handler request context
-            Left _ -> error "TODO: oh mai fix"
+            Left err -> apiGatewayErr 400 . toApiGatewayResponseBody . Text.pack . show $ err
 
     -- TODO: Design for a bit more type safety
     handleError (exception :: SomeException) = do
@@ -115,7 +115,9 @@ handlerToCallback dispatcherOptions rawEventObject context handlerToCall =
         StandaloneLambdaHandler _ ->
           return . Left . StandaloneLambdaError . toStandaloneLambdaResponse . Text.pack . show $ exception
         APIGatewayHandler _ ->
-          let returnErr statusCode = pure . Left . ApiGatewayLambdaError . mkApiGatewayResponse statusCode
-           in if propagateImpureExceptions . apiGatewayDispatcherOptions $ dispatcherOptions
-                then returnErr 500 . toApiGatewayResponseBody . Text.pack . show $ exception
-                else returnErr 500 . toApiGatewayResponseBody . Text.pack $ "Something went wrong."
+           if propagateImpureExceptions . apiGatewayDispatcherOptions $ dispatcherOptions
+              then apiGatewayErr 500 . toApiGatewayResponseBody . Text.pack . show $ exception
+              else apiGatewayErr 500 . toApiGatewayResponseBody . Text.pack $ "Something went wrong."
+
+    apiGatewayErr statusCode =
+      pure . Left . ApiGatewayLambdaError . mkApiGatewayResponse statusCode
