@@ -13,6 +13,7 @@ module Aws.Lambda.Runtime.Common
     ApiGatewayDispatcherOptions (..),
     DispatcherStrategy (..),
     ToLambdaResponseBody (..),
+    RawEventObject,
     unLambdaResponseBody,
     defaultDispatcherOptions,
   )
@@ -83,9 +84,11 @@ data LambdaResult
   = StandaloneLambdaResult LambdaResponseBody
   | ApiGatewayResult (ApiGatewayResponse ApiGatewayResponseBody)
 
+type RawEventObject = Lazy.ByteString
+
 -- | Options that the generated main expects
 data LambdaOptions context = LambdaOptions
-  { eventObject :: !Lazy.ByteString,
+  { eventObject :: !RawEventObject,
     functionHandler :: !Text,
     executionUuid :: !Text,
     contextObject :: !(Context context)

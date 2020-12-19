@@ -25,6 +25,7 @@ import qualified Data.Text as Text
 import Data.Typeable (Proxy (..), Typeable, typeRep)
 import qualified Language.Haskell.TH as Meta
 import qualified System.IO as IO
+import Aws.Lambda.Utilities (tshow)
 
 -- | Helper function that the dispatcher will use to
 -- decode the JSON that comes as an AWS Lambda event into the
@@ -69,7 +70,7 @@ standaloneLambdaHandlerCase lambdaHandler = do
             )
               `Unchecked.catch` \(handlerError :: Unchecked.SomeException) -> do
                 IO.hPutStr IO.stderr $ show handlerError
-                pure . Left . Runtime.StandaloneLambdaError . toStandaloneLambdaResponse . show $ handlerError
+                pure . Left . Runtime.StandaloneLambdaError . toStandaloneLambdaResponse . tshow $ handlerError
           Left err -> pure . Left . Runtime.StandaloneLambdaError . toStandaloneLambdaResponse $ err
       |]
   pure $ Meta.Match pat (Meta.NormalB body) []
@@ -79,7 +80,7 @@ standaloneLambdaUnmatchedCase = do
   let pattern = Meta.WildP
   body <-
     [e|
-      pure . Left . Runtime.StandaloneLambdaError . toStandaloneLambdaResponse $ ("Handler " <> $(expressionName "functionHandler") <> " does not exist on project" :: String)
+      pure . Left . Runtime.StandaloneLambdaError . toStandaloneLambdaResponse $ ("Handler " <> $(expressionName "functionHandler") <> " does not exist on project" :: Text)
       |]
   pure $ Meta.Match pattern (Meta.NormalB body) []
 
@@ -99,9 +100,9 @@ apiGatewayHandlerCase options lambdaHandler = do
               Left (handlerError :: Unchecked.SomeException) -> do
                 IO.hPutStr IO.stderr $ show handlerError
                 if (Runtime.propagateImpureExceptions . Runtime.apiGatewayDispatcherOptions $ options)
-                  then returnErr 500 . toApiGatewayResponseBody . show $ handlerError
+                  then returnErr 500 . toApiGatewayResponseBody . tshow $ handlerError
                   else returnErr 500 . toApiGatewayResponseBody . Text.pack $ "Something went wrong."
-          Left err -> returnErr 400 . toApiGatewayResponseBody . show $ err
+          Left err -> returnErr 400 . toApiGatewayResponseBody . tshow $ err
       |]
   pure $ Meta.Match pat (Meta.NormalB body) []
 

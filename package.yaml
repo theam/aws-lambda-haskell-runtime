@@ -25,15 +25,13 @@ library:
     - template-haskell
     - text
     - safe-exceptions-checked
+    - exceptions
     - path > 0.7
     - path-io
     - unordered-containers
     - case-insensitive
   source-dirs: src
-  exposed-modules:
-    - Aws.Lambda
-    - Aws.Lambda.Runtime
-    - Aws.Lambda.Runtime.Common
+  # TODO: Don't expose all, this is done for dev purposes only
 
 tests:
   aws-lambda-haskell-runtime-test:
@@ -60,7 +58,6 @@ default-extensions:
 ghc-options:
   - -Wall
   - -Werror
-  - -fno-warn-orphans
   - -optP-Wno-nonportable-include-path
   - -Wincomplete-uni-patterns
   - -Wincomplete-record-updates

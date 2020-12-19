@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d2415c579a355817f682114fd8f1f599d1652e42955b123e9d5ee8257d4dee54
+-- hash: 29e20676c3a3ca16169adbee1405417f078415ddc32c1030c7930561a2eed727
 
 name:           aws-lambda-haskell-runtime
 version:        4.0.0
@@ -29,34 +29,36 @@ source-repository head
 library
   exposed-modules:
       Aws.Lambda
-      Aws.Lambda.Runtime
-      Aws.Lambda.Runtime.Common
-  other-modules:
       Aws.Lambda.Configuration
       Aws.Lambda.Meta.Common
       Aws.Lambda.Meta.Discover
       Aws.Lambda.Meta.Dispatch
       Aws.Lambda.Meta.Main
       Aws.Lambda.Meta.Run
+      Aws.Lambda.Runtime
       Aws.Lambda.Runtime.API.Endpoints
       Aws.Lambda.Runtime.API.Version
       Aws.Lambda.Runtime.ApiGatewayInfo
       Aws.Lambda.Runtime.ApiInfo
+      Aws.Lambda.Runtime.Common
       Aws.Lambda.Runtime.Context
       Aws.Lambda.Runtime.Environment
       Aws.Lambda.Runtime.Error
       Aws.Lambda.Runtime.Publish
+      Aws.Lambda.TestNoTH
       Aws.Lambda.Utilities
+  other-modules:
       Paths_aws_lambda_haskell_runtime
   hs-source-dirs:
       src
   default-extensions: TemplateHaskell OverloadedStrings RecordWildCards ScopedTypeVariables DeriveGeneric TypeApplications FlexibleContexts DeriveAnyClass QuasiQuotes
-  ghc-options: -Wall -Werror -fno-warn-orphans -optP-Wno-nonportable-include-path -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Widentities -Wredundant-constraints -Wmissing-export-lists -Wpartial-fields -fhide-source-paths -freverse-errors
+  ghc-options: -Wall -Werror -optP-Wno-nonportable-include-path -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Widentities -Wredundant-constraints -Wmissing-export-lists -Wpartial-fields -fhide-source-paths -freverse-errors
   build-depends:
       aeson
     , base >=4.7 && <5
     , bytestring
     , case-insensitive
+    , exceptions
     , http-client
     , http-types
     , path >0.7
@@ -75,7 +77,7 @@ test-suite aws-lambda-haskell-runtime-test
   hs-source-dirs:
       test
   default-extensions: TemplateHaskell OverloadedStrings RecordWildCards ScopedTypeVariables DeriveGeneric TypeApplications FlexibleContexts DeriveAnyClass QuasiQuotes
-  ghc-options: -Wall -Werror -fno-warn-orphans -optP-Wno-nonportable-include-path -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Widentities -Wredundant-constraints -Wmissing-export-lists -Wpartial-fields -fhide-source-paths -freverse-errors -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -Werror -optP-Wno-nonportable-include-path -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Widentities -Wredundant-constraints -Wmissing-export-lists -Wpartial-fields -fhide-source-paths -freverse-errors -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
     , hspec
