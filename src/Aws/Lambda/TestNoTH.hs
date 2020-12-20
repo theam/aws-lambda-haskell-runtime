@@ -22,6 +22,10 @@ type HandlerName = Text
 type Handlers m context request response error =
   HM.HashMap HandlerName (Handler m context request response error)
 
+-- Use these to "tag" the handlers and make a safer "handlerToCallback"?
+data APIGatewayHandler
+data StandaloneLambdaHandler
+
 data Handler m context request response error where
   StandaloneLambdaHandler :: (request -> Context context -> m (Either error response)) -> Handler m context request response error
   APIGatewayHandler :: (ApiGatewayRequest request -> Context context -> m (Either (ApiGatewayResponse error) (ApiGatewayResponse response))) -> Handler m context request response error
