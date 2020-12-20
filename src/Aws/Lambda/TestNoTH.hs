@@ -1,12 +1,28 @@
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE RankNTypes #-}
+{-# OPTIONS_GHC -fno-warn-unused-binds #-}
+{-# OPTIONS_GHC -fno-warn-unused-imports #-}
 
-module Aws.Lambda.TestNoTH (Handler (..), IOHandler, HandlerName, Handlers, runNoTH, mainNoTH) where
+module Aws.Lambda.TestNoTH
+  ( Handler (..),
+    IOHandler,
+    HandlerName,
+    Handlers,
+    runNoTH,
+    mainNoTH,
+    addStandaloneLambdaHandler,
+    addAPIGatewayHandler,
+    runLambdaHaskellRuntime,
+  )
+where
 
 import Aws.Lambda
 import Control.Exception (SomeException)
 import Control.Monad.Catch (MonadCatch (catch))
 import Control.Monad.IO.Class (MonadIO (liftIO))
+import Control.Monad.State as State
 import Data.Aeson
 import qualified Data.HashMap.Strict as HM
 import Data.Text
@@ -22,13 +38,64 @@ type HandlerName = Text
 type Handlers m context request response error =
   HM.HashMap HandlerName (Handler m context request response error)
 
--- Use these to "tag" the handlers and make a safer "handlerToCallback"?
+-- tags for more type safety in handlerToCallback?
 data APIGatewayHandler
+
 data StandaloneLambdaHandler
 
+type StandaloneCallback m context request response error =
+  (request -> Context context -> m (Either error response))
+
+type APIGatewayCallback m context request response error =
+  (ApiGatewayRequest request -> Context context -> m (Either (ApiGatewayResponse error) (ApiGatewayResponse response)))
+
 data Handler m context request response error where
-  StandaloneLambdaHandler :: (request -> Context context -> m (Either error response)) -> Handler m context request response error
-  APIGatewayHandler :: (ApiGatewayRequest request -> Context context -> m (Either (ApiGatewayResponse error) (ApiGatewayResponse response))) -> Handler m context request response error
+  -- TODO: MonadError instead of Either?
+  StandaloneLambdaHandler :: StandaloneCallback m context request response error -> Handler m context request response error
+  APIGatewayHandler :: APIGatewayCallback m context request response error -> Handler m context request response error
+
+newtype HandlersM m context request response error a = HandlersM
+  {runHandlersM :: StateT (Handlers m context request response error) IO a}
+  deriving newtype
+    ( Functor,
+      Applicative,
+      Monad,
+      MonadState (Handlers m context request response error)
+    )
+
+addStandaloneLambdaHandler ::
+  HandlerName ->
+  StandaloneCallback m context request response error ->
+  HandlersM m context request response error ()
+addStandaloneLambdaHandler handlerName handler =
+  State.modify (HM.insert handlerName (StandaloneLambdaHandler handler))
+
+addAPIGatewayHandler ::
+  HandlerName ->
+  APIGatewayCallback m context request response error ->
+  HandlersM m context request response error ()
+addAPIGatewayHandler handlerName handler =
+  State.modify (HM.insert handlerName (APIGatewayHandler handler))
+
+runLambdaHaskellRuntime ::
+  forall m context request response error.
+  MonadIO m =>
+  MonadCatch m =>
+  ToLambdaResponseBody error =>
+  ToLambdaResponseBody response =>
+  ToApiGatewayResponseBody error =>
+  ToApiGatewayResponseBody response =>
+  FromJSON (ApiGatewayRequest request) =>
+  FromJSON request =>
+  Typeable request =>
+  DispatcherOptions ->
+  IO context ->
+  (forall a. m a -> IO a) ->
+  HandlersM m context request response error () ->
+  IO ()
+runLambdaHaskellRuntime options initializeContext mToIO initHandlers = do
+  handlers <- fmap snd . flip runStateT HM.empty . runHandlersM $ initHandlers
+  runLambda initializeContext (runNoTH options mToIO handlers)
 
 mainNoTH ::
   forall m context request response error.
@@ -119,9 +186,9 @@ handlerToCallback dispatcherOptions rawEventObject context handlerToCall =
         StandaloneLambdaHandler _ ->
           return . Left . StandaloneLambdaError . toStandaloneLambdaResponse . Text.pack . show $ exception
         APIGatewayHandler _ ->
-           if propagateImpureExceptions . apiGatewayDispatcherOptions $ dispatcherOptions
-              then apiGatewayErr 500 . toApiGatewayResponseBody . Text.pack . show $ exception
-              else apiGatewayErr 500 . toApiGatewayResponseBody . Text.pack $ "Something went wrong."
+          if propagateImpureExceptions . apiGatewayDispatcherOptions $ dispatcherOptions
+            then apiGatewayErr 500 . toApiGatewayResponseBody . Text.pack . show $ exception
+            else apiGatewayErr 500 . toApiGatewayResponseBody . Text.pack $ "Something went wrong."
 
     apiGatewayErr statusCode =
       pure . Left . ApiGatewayLambdaError . mkApiGatewayResponse statusCode

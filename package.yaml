@@ -30,6 +30,7 @@ library:
     - path-io
     - unordered-containers
     - case-insensitive
+    - mtl
   source-dirs: src
   # TODO: Don't expose all, this is done for dev purposes only
 

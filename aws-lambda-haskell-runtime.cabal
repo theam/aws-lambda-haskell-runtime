@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 29e20676c3a3ca16169adbee1405417f078415ddc32c1030c7930561a2eed727
+-- hash: 608a25677f11ad9921ffd77786d22fca71b5f0ceec61b2968e80b77916b17b0f
 
 name:           aws-lambda-haskell-runtime
 version:        4.0.0
@@ -61,6 +61,7 @@ library
     , exceptions
     , http-client
     , http-types
+    , mtl
     , path >0.7
     , path-io
     , safe-exceptions-checked
