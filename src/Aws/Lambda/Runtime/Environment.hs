@@ -14,8 +14,8 @@ module Aws.Lambda.Runtime.Environment
 where
 
 import qualified Aws.Lambda.Runtime.Error as Error
-import Control.Exception.Safe.Checked
-import Data.Text
+import Control.Exception.Safe.Checked (Throws, throw)
+import Data.Text (Text, pack, unpack)
 import qualified System.Environment as Environment
 import qualified Text.Read as Read
 

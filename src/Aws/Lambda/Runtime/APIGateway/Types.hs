@@ -1,23 +1,32 @@
-{-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralisedNewtypeDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Aws.Lambda.Runtime.ApiGatewayInfo
+module Aws.Lambda.Runtime.APIGateway.Types
   ( ApiGatewayRequest (..),
     ApiGatewayRequestContext (..),
     ApiGatewayRequestContextIdentity (..),
     ApiGatewayResponse (..),
     ApiGatewayResponseBody (..),
     ToApiGatewayResponseBody (..),
+    ApiGatewayDispatcherOptions (..),
     mkApiGatewayResponse,
   )
 where
 
-import Aws.Lambda.Utilities
+import Aws.Lambda.Utilities (toJSONText)
 import Data.Aeson
+  ( FromJSON (parseJSON),
+    KeyValue ((.=)),
+    Object,
+    ToJSON (toJSON),
+    Value (Null, Object, String),
+    eitherDecodeStrict,
+    object,
+    (.:),
+  )
 import Data.Aeson.Types (Parser)
 import qualified Data.Aeson.Types as T
 import qualified Data.CaseInsensitive as CI
@@ -26,7 +35,13 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import GHC.Generics (Generic)
-import Network.HTTP.Types
+import Network.HTTP.Types (Header, ResponseHeaders)
+
+-- | API Gateway specific dispatcher options
+newtype ApiGatewayDispatcherOptions = ApiGatewayDispatcherOptions
+  { -- | Should impure exceptions be propagated through the API Gateway interface
+    propagateImpureExceptions :: Bool
+  }
 
 data ApiGatewayRequest body = ApiGatewayRequest
   { apiGatewayRequestResource :: !Text,

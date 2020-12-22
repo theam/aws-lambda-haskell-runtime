@@ -6,7 +6,7 @@ module Aws.Lambda.Runtime.Error
   )
 where
 
-import Control.Exception.Safe.Checked
+import Control.Exception.Safe.Checked (Exception)
 import Data.Aeson (ToJSON (..), Value, object, (.=))
 import Data.Text (Text)
 

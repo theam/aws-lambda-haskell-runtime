@@ -6,12 +6,12 @@ module Aws.Lambda.Utilities
 where
 
 import qualified Aws.Lambda.Runtime.Error as Error
-import Data.Aeson
+import Data.Aeson (FromJSON, ToJSON, eitherDecode, encode)
 import qualified Data.ByteString.Lazy.Char8 as LazyByteString
-import Data.Text
+import Data.Text (Text, pack)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
-import Data.Typeable
+import Data.Typeable (Proxy (..), Typeable, typeRep)
 
 toJSONText :: ToJSON a => a -> Text
 toJSONText = T.decodeUtf8 . LazyByteString.toStrict . encode

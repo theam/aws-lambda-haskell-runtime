@@ -19,6 +19,7 @@ import Data.Aeson
 import Data.Text (Text, unpack)
 import qualified Data.Text.Encoding as T
 import qualified Network.HTTP.Client as Http
+import Aws.Lambda.Runtime.StandaloneLambda.Types
 
 -- | Publishes the result back to AWS Lambda
 result :: LambdaResult t -> Text -> Context context -> Http.Manager -> IO ()
@@ -27,7 +28,7 @@ result lambdaResult lambdaApi context manager = do
   rawRequest <- Http.parseRequest . unpack $ endpoint
 
   let requestBody = case lambdaResult of
-        (StandaloneLambdaResult res) -> Http.RequestBodyBS (T.encodeUtf8 . unLambdaResponseBody $ res)
+        (StandaloneLambdaResult res) -> Http.RequestBodyBS (T.encodeUtf8 . unStandaloneLambdaResponseBody $ res)
         (APIGatewayResult res) -> Http.RequestBodyLBS (encode res)
       request =
         rawRequest

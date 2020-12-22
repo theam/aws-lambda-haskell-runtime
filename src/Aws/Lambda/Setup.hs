@@ -20,11 +20,36 @@ module Aws.Lambda.Setup
 where
 
 import Aws.Lambda
+  ( ApiGatewayDispatcherOptions (propagateImpureExceptions),
+    ApiGatewayRequest,
+    ApiGatewayResponse,
+    Context,
+    HandlerName (..),
+    HandlerType (..),
+    LambdaError (..),
+    LambdaOptions (LambdaOptions),
+    LambdaResult (..),
+    RawEventObject,
+    ToApiGatewayResponseBody (..),
+    mkApiGatewayResponse,
+    runLambda,
+  )
+import Aws.Lambda.Runtime.Configuration
+  ( DispatcherOptions (apiGatewayDispatcherOptions),
+  )
+import Aws.Lambda.Runtime.StandaloneLambda.Types
+  ( ToStandaloneLambdaResponseBody (..),
+  )
 import Aws.Lambda.Utilities (decodeObj)
 import Control.Exception (SomeException)
 import Control.Monad.Catch (MonadCatch (catch), throwM)
 import Control.Monad.State as State
-import Data.Aeson
+  ( MonadIO (..),
+    MonadState,
+    StateT (..),
+    modify,
+  )
+import Data.Aeson (FromJSON)
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Text as Text
 import Data.Typeable (Typeable)
@@ -56,8 +81,8 @@ newtype HandlersM (t :: HandlerType) m context request response error a = Handle
 type RuntimeContext (t :: HandlerType) m context request response error =
   ( MonadIO m,
     MonadCatch m,
-    ToLambdaResponseBody error,
-    ToLambdaResponseBody response,
+    ToStandaloneLambdaResponseBody error,
+    ToStandaloneLambdaResponseBody response,
     ToApiGatewayResponseBody error,
     ToApiGatewayResponseBody response,
     FromJSON (ApiGatewayRequest request),
@@ -108,15 +133,7 @@ runNoTH dispatcherOptions mToIO handlers (LambdaOptions eventObject functionHand
 
 handlerToCallback ::
   forall t m context request response error.
-  MonadIO m =>
-  MonadCatch m =>
-  ToLambdaResponseBody error =>
-  ToLambdaResponseBody response =>
-  ToApiGatewayResponseBody error =>
-  ToApiGatewayResponseBody response =>
-  FromJSON request =>
-  Typeable request =>
-  FromJSON (ApiGatewayRequest request) =>
+  RuntimeContext t m context request response error =>
   DispatcherOptions ->
   RawEventObject ->
   Context context ->

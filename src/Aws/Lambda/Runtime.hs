@@ -6,10 +6,7 @@
 module Aws.Lambda.Runtime
   ( runLambda,
     Runtime.LambdaResult (..),
-    Runtime.DispatcherStrategy (..),
-    Runtime.DispatcherOptions (..),
     Runtime.ApiGatewayDispatcherOptions (..),
-    Runtime.defaultDispatcherOptions,
     Error.Parsing (..),
   )
 where
@@ -21,11 +18,11 @@ import qualified Aws.Lambda.Runtime.Environment as Environment
 import qualified Aws.Lambda.Runtime.Error as Error
 import qualified Aws.Lambda.Runtime.Publish as Publish
 import qualified Control.Exception as Unchecked
-import Control.Exception.Safe.Checked
+import Control.Exception.Safe.Checked (Throws, catch, throw)
 import qualified Control.Exception.Safe.Checked as Checked
 import Control.Monad (forever)
-import Data.Aeson
-import Data.IORef
+import Data.Aeson (ToJSON (toJSON))
+import Data.IORef (newIORef)
 import Data.Text (Text, unpack)
 import qualified Network.HTTP.Client as Http
 import System.IO (hFlush, stderr, stdout)

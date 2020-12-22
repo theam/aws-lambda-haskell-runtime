@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 53915d49dea4ba8437b62cac3b496986549d4322bcee510f02973589b5eeb60a
+-- hash: 29d9fce315204190d46af6a7d03766cfdde5cee14ef4fc93e1faeedfaab57e6f
 
 name:           aws-lambda-haskell-runtime
 version:        4.0.0
@@ -32,13 +32,15 @@ library
       Aws.Lambda.Runtime
       Aws.Lambda.Runtime.API.Endpoints
       Aws.Lambda.Runtime.API.Version
-      Aws.Lambda.Runtime.ApiGatewayInfo
+      Aws.Lambda.Runtime.APIGateway.Types
       Aws.Lambda.Runtime.ApiInfo
       Aws.Lambda.Runtime.Common
+      Aws.Lambda.Runtime.Configuration
       Aws.Lambda.Runtime.Context
       Aws.Lambda.Runtime.Environment
       Aws.Lambda.Runtime.Error
       Aws.Lambda.Runtime.Publish
+      Aws.Lambda.Runtime.StandaloneLambda.Types
       Aws.Lambda.Setup
       Aws.Lambda.Utilities
   other-modules:
