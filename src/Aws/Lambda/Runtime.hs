@@ -82,7 +82,7 @@ invokeWithCallback ::
   Runtime.RunCallback t context ->
   ApiInfo.Event ->
   Context.Context context ->
-  IO Runtime.LambdaResult
+  IO (Runtime.LambdaResult t)
 invokeWithCallback callback event context = do
   handlerName <- Environment.handlerName
   let lambdaOptions =
@@ -99,7 +99,7 @@ invokeWithCallback callback event context = do
     Left lambdaError -> case lambdaError of
       Runtime.StandaloneLambdaError err ->
         throw $ Error.Invocation $ toJSON err
-      Runtime.ApiGatewayLambdaError err ->
+      Runtime.APIGatewayLambdaError err ->
         throw $ Error.Invocation $ toJSON err
     Right value ->
       pure value

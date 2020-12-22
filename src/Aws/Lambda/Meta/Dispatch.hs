@@ -90,13 +90,13 @@ apiGatewayHandlerCase options lambdaHandler = do
   body <-
     [e|
       do
-        let returnErr statusCode = pure . Left . Runtime.ApiGatewayLambdaError . ApiGatewayInfo.mkApiGatewayResponse statusCode
+        let returnErr statusCode = pure . Left . Runtime.APIGatewayLambdaError . ApiGatewayInfo.mkApiGatewayResponse statusCode
         case decodeObj $(expressionName "eventObject") of
           Right eventObject -> do
             resultE <- Unchecked.try $ $(expressionName (qualifiedHandlerName lambdaHandler)) eventObject contextObject
             case resultE of
               Right result ->
-                either (pure . Left . Runtime.ApiGatewayLambdaError . fmap toApiGatewayResponseBody) (pure . Right . Runtime.ApiGatewayResult . fmap toApiGatewayResponseBody) result
+                either (pure . Left . Runtime.APIGatewayLambdaError . fmap toApiGatewayResponseBody) (pure . Right . Runtime.APIGatewayResult . fmap toApiGatewayResponseBody) result
               Left (handlerError :: Unchecked.SomeException) -> do
                 IO.hPutStr IO.stderr $ show handlerError
                 if (Runtime.propagateImpureExceptions . Runtime.apiGatewayDispatcherOptions $ options)
@@ -111,7 +111,7 @@ apiGatewayUnmatchedCase = do
   let pattern = Meta.WildP
   body <-
     [e|
-      pure . Left . Runtime.ApiGatewayLambdaError . ApiGatewayInfo.mkApiGatewayResponse 500 . toApiGatewayResponseBody $ ("Handler " <> $(expressionName "functionHandler") <> " does not exist on project")
+      pure . Left . Runtime.APIGatewayLambdaError . ApiGatewayInfo.mkApiGatewayResponse 500 . toApiGatewayResponseBody $ ("Handler " <> $(expressionName "functionHandler") <> " does not exist on project")
       |]
   pure $ Meta.Match pattern (Meta.NormalB body) []
 

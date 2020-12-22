@@ -1,3 +1,5 @@
+{-# LANGUAGE GADTs #-}
+
 -- | Publishing of results/errors back to the
 -- AWS Lambda runtime API
 module Aws.Lambda.Runtime.Publish
@@ -19,14 +21,14 @@ import qualified Data.Text.Encoding as T
 import qualified Network.HTTP.Client as Http
 
 -- | Publishes the result back to AWS Lambda
-result :: LambdaResult -> Text -> Context context -> Http.Manager -> IO ()
+result :: LambdaResult t -> Text -> Context context -> Http.Manager -> IO ()
 result lambdaResult lambdaApi context manager = do
   let Endpoints.Endpoint endpoint = Endpoints.response lambdaApi (awsRequestId context)
   rawRequest <- Http.parseRequest . unpack $ endpoint
 
   let requestBody = case lambdaResult of
         (StandaloneLambdaResult res) -> Http.RequestBodyBS (T.encodeUtf8 . unLambdaResponseBody $ res)
-        (ApiGatewayResult res) -> Http.RequestBodyLBS (encode res)
+        (APIGatewayResult res) -> Http.RequestBodyLBS (encode res)
       request =
         rawRequest
           { Http.method = "POST",

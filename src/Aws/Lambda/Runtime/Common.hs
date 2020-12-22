@@ -58,7 +58,7 @@ data DispatcherStrategy
 
 -- | Callback that we pass to the dispatcher function
 type RunCallback (t :: HandlerType) context =
-  LambdaOptions context -> IO (Either (LambdaError t) LambdaResult)
+  LambdaOptions context -> IO (Either (LambdaError t) (LambdaResult t))
 
 -- | Wrapper type for lambda response body
 newtype LambdaResponseBody = LambdaResponseBody {unLambdaResponseBody :: Text}
@@ -85,12 +85,12 @@ data HandlerType =
 -- | Wrapper type for lambda execution results
 data LambdaError (t :: HandlerType) where
   StandaloneLambdaError :: LambdaResponseBody -> LambdaError 'StandaloneHandlerType
-  ApiGatewayLambdaError :: ApiGatewayResponse ApiGatewayResponseBody -> LambdaError 'APIGatewayHandlerType
+  APIGatewayLambdaError :: ApiGatewayResponse ApiGatewayResponseBody -> LambdaError 'APIGatewayHandlerType
 
 -- | Wrapper type to handle the result of the user
-data LambdaResult
-  = StandaloneLambdaResult LambdaResponseBody
-  | ApiGatewayResult (ApiGatewayResponse ApiGatewayResponseBody)
+data LambdaResult (t :: HandlerType) where
+  StandaloneLambdaResult :: LambdaResponseBody -> LambdaResult 'StandaloneHandlerType
+  APIGatewayResult :: ApiGatewayResponse ApiGatewayResponseBody -> LambdaResult 'APIGatewayHandlerType
 
 type RawEventObject = Lazy.ByteString
 
