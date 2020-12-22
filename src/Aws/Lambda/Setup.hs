@@ -12,7 +12,7 @@ module Aws.Lambda.Setup
   ( Handler (..),
     HandlerName (..),
     Handlers,
-    runNoTH,
+    run,
     addStandaloneLambdaHandler,
     addAPIGatewayHandler,
     runLambdaHaskellRuntime,
@@ -90,6 +90,33 @@ type RuntimeContext (t :: HandlerType) m context request response error =
     Typeable request
   )
 
+runLambdaHaskellRuntime ::
+  RuntimeContext t m context request response error =>
+  DispatcherOptions ->
+  IO context ->
+  (forall a. m a -> IO a) ->
+  HandlersM t m context request response error () ->
+  IO ()
+runLambdaHaskellRuntime options initializeContext mToIO initHandlers = do
+  handlers <- fmap snd . flip runStateT HM.empty . runHandlersM $ initHandlers
+  runLambda initializeContext (run options mToIO handlers)
+
+run ::
+  RuntimeContext t m context request response error =>
+  DispatcherOptions ->
+  (forall a. m a -> IO a) ->
+  Handlers t m context request response error ->
+  LambdaOptions context ->
+  IO (Either (LambdaError t) (LambdaResult t))
+run dispatcherOptions mToIO handlers (LambdaOptions eventObject functionHandler _executionUuid contextObject) = do
+  let asIOCallbacks = HM.map (mToIO . handlerToCallback dispatcherOptions eventObject contextObject) handlers
+  case HM.lookup functionHandler asIOCallbacks of
+    Just handlerToCall -> handlerToCall
+    Nothing ->
+      throwM $
+        userError $
+          "Could not find handler '" <> (Text.unpack . unHandlerName $ functionHandler) <> "'."
+
 addStandaloneLambdaHandler ::
   HandlerName ->
   StandaloneCallback m context request response error ->
@@ -103,33 +130,6 @@ addAPIGatewayHandler ::
   HandlersM 'APIGatewayHandlerType m context request response error ()
 addAPIGatewayHandler handlerName handler =
   State.modify (HM.insert handlerName (APIGatewayHandler handler))
-
-runLambdaHaskellRuntime ::
-  RuntimeContext t m context request response error =>
-  DispatcherOptions ->
-  IO context ->
-  (forall a. m a -> IO a) ->
-  HandlersM t m context request response error () ->
-  IO ()
-runLambdaHaskellRuntime options initializeContext mToIO initHandlers = do
-  handlers <- fmap snd . flip runStateT HM.empty . runHandlersM $ initHandlers
-  runLambda initializeContext (runNoTH options mToIO handlers)
-
-runNoTH ::
-  RuntimeContext t m context request response error =>
-  DispatcherOptions ->
-  (forall a. m a -> IO a) ->
-  Handlers t m context request response error ->
-  LambdaOptions context ->
-  IO (Either (LambdaError t) (LambdaResult t))
-runNoTH dispatcherOptions mToIO handlers (LambdaOptions eventObject functionHandler _executionUuid contextObject) = do
-  let asIOCallbacks = HM.map (mToIO . handlerToCallback dispatcherOptions eventObject contextObject) handlers
-  case HM.lookup functionHandler asIOCallbacks of
-    Just handlerToCall -> handlerToCall
-    Nothing ->
-      throwM $
-        userError $
-          "Could not find handler '" <> (Text.unpack . unHandlerName $ functionHandler) <> "'."
 
 handlerToCallback ::
   forall t m context request response error.

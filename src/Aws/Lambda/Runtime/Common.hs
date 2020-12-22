@@ -36,9 +36,11 @@ import GHC.Generics (Generic)
 type RunCallback (t :: HandlerType) context =
   LambdaOptions context -> IO (Either (LambdaError t) (LambdaResult t))
 
+-- | A handler name used to configure the lambda in AWS
 newtype HandlerName = HandlerName {unHandlerName :: Text}
   deriving newtype (Eq, Show, Read, Ord, Hashable)
 
+-- | The type of the handler depending on how you proxy the Lambda
 data HandlerType
   = StandaloneHandlerType
   | APIGatewayHandlerType
@@ -53,6 +55,7 @@ data LambdaResult (t :: HandlerType) where
   StandaloneLambdaResult :: StandaloneLambdaResponseBody -> LambdaResult 'StandaloneHandlerType
   APIGatewayResult :: ApiGatewayResponse ApiGatewayResponseBody -> LambdaResult 'APIGatewayHandlerType
 
+-- | The event received by the lambda before any processing
 type RawEventObject = Lazy.ByteString
 
 -- | Options that the generated main expects
