@@ -1,3 +1,4 @@
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_GHC -fno-warn-name-shadowing #-}
@@ -31,7 +32,7 @@ import System.IO (hFlush, stderr, stdout)
 
 -- | Runs the user @haskell_lambda@ executable and posts back the
 -- results. This is called from the layer's @main@ function.
-runLambda :: forall context. IO context -> Runtime.RunCallback context -> IO ()
+runLambda :: forall context t. IO context -> Runtime.RunCallback t context -> IO ()
 runLambda initializeCustomContext callback = do
   manager <- Http.newManager httpManagerSettings
   customContext <- initializeCustomContext
@@ -63,7 +64,7 @@ httpManagerSettings =
 invokeAndRun ::
   Throws Error.Invocation =>
   Throws Error.EnvironmentVariableNotSet =>
-  Runtime.RunCallback context ->
+  Runtime.RunCallback t context ->
   Http.Manager ->
   Text ->
   ApiInfo.Event ->
@@ -78,7 +79,7 @@ invokeAndRun callback manager lambdaApi event context = do
 invokeWithCallback ::
   Throws Error.Invocation =>
   Throws Error.EnvironmentVariableNotSet =>
-  Runtime.RunCallback context ->
+  Runtime.RunCallback t context ->
   ApiInfo.Event ->
   Context.Context context ->
   IO Runtime.LambdaResult

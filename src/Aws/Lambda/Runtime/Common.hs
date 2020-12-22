@@ -1,3 +1,6 @@
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE DeriveLift #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -13,6 +16,7 @@ module Aws.Lambda.Runtime.Common
     ApiGatewayDispatcherOptions (..),
     DispatcherStrategy (..),
     ToLambdaResponseBody (..),
+    HandlerType (..),
     RawEventObject,
     unLambdaResponseBody,
     defaultDispatcherOptions,
@@ -53,8 +57,8 @@ data DispatcherStrategy
   deriving (Lift)
 
 -- | Callback that we pass to the dispatcher function
-type RunCallback context =
-  LambdaOptions context -> IO (Either LambdaError LambdaResult)
+type RunCallback (t :: HandlerType) context =
+  LambdaOptions context -> IO (Either (LambdaError t) LambdaResult)
 
 -- | Wrapper type for lambda response body
 newtype LambdaResponseBody = LambdaResponseBody {unLambdaResponseBody :: Text}
@@ -74,10 +78,14 @@ instance {-# OVERLAPPING #-} ToLambdaResponseBody Text where
 instance ToJSON a => ToLambdaResponseBody a where
   toStandaloneLambdaResponse = LambdaResponseBody . toJSONText
 
+data HandlerType =
+  StandaloneHandlerType |
+  APIGatewayHandlerType
+
 -- | Wrapper type for lambda execution results
-data LambdaError
-  = StandaloneLambdaError LambdaResponseBody
-  | ApiGatewayLambdaError (ApiGatewayResponse ApiGatewayResponseBody)
+data LambdaError (t :: HandlerType) where
+  StandaloneLambdaError :: LambdaResponseBody -> LambdaError 'StandaloneHandlerType
+  ApiGatewayLambdaError :: ApiGatewayResponse ApiGatewayResponseBody -> LambdaError 'APIGatewayHandlerType
 
 -- | Wrapper type to handle the result of the user
 data LambdaResult

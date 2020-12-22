@@ -1,3 +1,5 @@
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -7,7 +9,6 @@
 
 module Aws.Lambda.TestNoTH
   ( Handler (..),
-    IOHandler,
     HandlerName,
     Handlers,
     runNoTH,
@@ -30,55 +31,49 @@ import qualified Data.Text as Text
 import Data.Typeable (Typeable)
 import GHC.IO.Handle.FD (stderr)
 import GHC.IO.Handle.Text (hPutStr)
-
-type IOHandler = Handler IO
+import Aws.Lambda.Runtime.Common
 
 type HandlerName = Text
 
-type Handlers m context request response error =
-  HM.HashMap HandlerName (Handler m context request response error)
+type Handlers t m context request response error =
+  HM.HashMap HandlerName (Handler t m context request response error)
 
--- tags for more type safety in handlerToCallback?
-data APIGatewayHandler
-
-data StandaloneLambdaHandler
-
+-- TODO: MonadError instead of Either?
 type StandaloneCallback m context request response error =
   (request -> Context context -> m (Either error response))
 
 type APIGatewayCallback m context request response error =
   (ApiGatewayRequest request -> Context context -> m (Either (ApiGatewayResponse error) (ApiGatewayResponse response)))
 
-data Handler m context request response error where
-  -- TODO: MonadError instead of Either?
-  StandaloneLambdaHandler :: StandaloneCallback m context request response error -> Handler m context request response error
-  APIGatewayHandler :: APIGatewayCallback m context request response error -> Handler m context request response error
+data Handler (t :: HandlerType) m context request response error where
+  StandaloneLambdaHandler :: StandaloneCallback m context request response error -> Handler 'StandaloneHandlerType m context request response error
+  APIGatewayHandler :: APIGatewayCallback m context request response error -> Handler 'APIGatewayHandlerType m context request response error
 
-newtype HandlersM m context request response error a = HandlersM
-  {runHandlersM :: StateT (Handlers m context request response error) IO a}
+newtype HandlersM (t :: HandlerType) m context request response error a = HandlersM
+  {runHandlersM :: StateT (Handlers t m context request response error) IO a}
   deriving newtype
     ( Functor,
       Applicative,
       Monad,
-      MonadState (Handlers m context request response error)
+      MonadState (Handlers t m context request response error)
     )
 
 addStandaloneLambdaHandler ::
   HandlerName ->
   StandaloneCallback m context request response error ->
-  HandlersM m context request response error ()
+  HandlersM 'StandaloneHandlerType m context request response error ()
 addStandaloneLambdaHandler handlerName handler =
   State.modify (HM.insert handlerName (StandaloneLambdaHandler handler))
 
 addAPIGatewayHandler ::
   HandlerName ->
   APIGatewayCallback m context request response error ->
-  HandlersM m context request response error ()
+  HandlersM 'APIGatewayHandlerType m context request response error ()
 addAPIGatewayHandler handlerName handler =
   State.modify (HM.insert handlerName (APIGatewayHandler handler))
 
 runLambdaHaskellRuntime ::
-  forall m context request response error.
+  forall t m context request response error.
   MonadIO m =>
   MonadCatch m =>
   ToLambdaResponseBody error =>
@@ -91,14 +86,14 @@ runLambdaHaskellRuntime ::
   DispatcherOptions ->
   IO context ->
   (forall a. m a -> IO a) ->
-  HandlersM m context request response error () ->
+  HandlersM t m context request response error () ->
   IO ()
 runLambdaHaskellRuntime options initializeContext mToIO initHandlers = do
   handlers <- fmap snd . flip runStateT HM.empty . runHandlersM $ initHandlers
   runLambda initializeContext (runNoTH options mToIO handlers)
 
 mainNoTH ::
-  forall m context request response error.
+  forall t m context request response error.
   MonadIO m =>
   MonadCatch m =>
   ToLambdaResponseBody error =>
@@ -110,7 +105,7 @@ mainNoTH ::
   Typeable request =>
   DispatcherOptions ->
   (forall a. m a -> IO a) ->
-  Handlers m context request response error ->
+  Handlers t m context request response error ->
   IO context ->
   IO ()
 mainNoTH options mToIO handlers initializeContext =
@@ -118,7 +113,7 @@ mainNoTH options mToIO handlers initializeContext =
 
 -- TODO: GADT for Handler to reduce constraints?
 runNoTH ::
-  forall m context request response error.
+  forall t m context request response error.
   MonadIO m =>
   MonadCatch m =>
   ToLambdaResponseBody error =>
@@ -130,9 +125,9 @@ runNoTH ::
   Typeable request =>
   DispatcherOptions ->
   (forall a. m a -> IO a) ->
-  Handlers m context request response error ->
+  Handlers t m context request response error ->
   LambdaOptions context ->
-  IO (Either LambdaError LambdaResult)
+  IO (Either (LambdaError t) LambdaResult)
 runNoTH dispatcherOptions mToIO handlers (LambdaOptions eventObject functionHandler _executionUuid contextObject) = do
   let asIOCallbacks = HM.map (mToIO . handlerToCallback dispatcherOptions eventObject contextObject) handlers
   case HM.lookup functionHandler asIOCallbacks of
@@ -141,7 +136,7 @@ runNoTH dispatcherOptions mToIO handlers (LambdaOptions eventObject functionHand
 
 -- TODO: Design for a bit more type safety
 handlerToCallback ::
-  forall m context request response error.
+  forall t m context request response error.
   MonadIO m =>
   MonadCatch m =>
   ToLambdaResponseBody error =>
@@ -154,8 +149,8 @@ handlerToCallback ::
   DispatcherOptions ->
   RawEventObject ->
   Context context ->
-  Handler m context request response error ->
-  m (Either LambdaError LambdaResult)
+  Handler t m context request response error ->
+  m (Either (LambdaError t) LambdaResult)
 handlerToCallback dispatcherOptions rawEventObject context handlerToCall =
   call `catch` handleError
   where
