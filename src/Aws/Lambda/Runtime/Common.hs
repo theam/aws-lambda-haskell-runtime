@@ -1,10 +1,10 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE GADTs #-}
 {-# LANGUAGE DeriveLift #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Aws.Lambda.Runtime.Common
@@ -17,6 +17,7 @@ module Aws.Lambda.Runtime.Common
     DispatcherStrategy (..),
     ToLambdaResponseBody (..),
     HandlerType (..),
+    HandlerName (..),
     RawEventObject,
     unLambdaResponseBody,
     defaultDispatcherOptions,
@@ -28,6 +29,7 @@ import Aws.Lambda.Runtime.Context (Context)
 import Aws.Lambda.Utilities
 import Data.Aeson (FromJSON, ToJSON)
 import qualified Data.ByteString.Lazy as Lazy
+import Data.Hashable (Hashable)
 import Data.Text (Text)
 import qualified Data.Text as Text
 import GHC.Generics (Generic)
@@ -78,9 +80,12 @@ instance {-# OVERLAPPING #-} ToLambdaResponseBody Text where
 instance ToJSON a => ToLambdaResponseBody a where
   toStandaloneLambdaResponse = LambdaResponseBody . toJSONText
 
-data HandlerType =
-  StandaloneHandlerType |
-  APIGatewayHandlerType
+newtype HandlerName = HandlerName {unHandlerName :: Text}
+  deriving newtype (Eq, Show, Read, Ord, Hashable)
+
+data HandlerType
+  = StandaloneHandlerType
+  | APIGatewayHandlerType
 
 -- | Wrapper type for lambda execution results
 data LambdaError (t :: HandlerType) where
@@ -97,7 +102,7 @@ type RawEventObject = Lazy.ByteString
 -- | Options that the generated main expects
 data LambdaOptions context = LambdaOptions
   { eventObject :: !RawEventObject,
-    functionHandler :: !Text,
+    functionHandler :: !HandlerName,
     executionUuid :: !Text,
     contextObject :: !(Context context)
   }

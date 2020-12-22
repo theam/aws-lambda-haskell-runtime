@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 608a25677f11ad9921ffd77786d22fca71b5f0ceec61b2968e80b77916b17b0f
+-- hash: 53915d49dea4ba8437b62cac3b496986549d4322bcee510f02973589b5eeb60a
 
 name:           aws-lambda-haskell-runtime
 version:        4.0.0
@@ -29,12 +29,6 @@ source-repository head
 library
   exposed-modules:
       Aws.Lambda
-      Aws.Lambda.Configuration
-      Aws.Lambda.Meta.Common
-      Aws.Lambda.Meta.Discover
-      Aws.Lambda.Meta.Dispatch
-      Aws.Lambda.Meta.Main
-      Aws.Lambda.Meta.Run
       Aws.Lambda.Runtime
       Aws.Lambda.Runtime.API.Endpoints
       Aws.Lambda.Runtime.API.Version
@@ -45,7 +39,7 @@ library
       Aws.Lambda.Runtime.Environment
       Aws.Lambda.Runtime.Error
       Aws.Lambda.Runtime.Publish
-      Aws.Lambda.TestNoTH
+      Aws.Lambda.Setup
       Aws.Lambda.Utilities
   other-modules:
       Paths_aws_lambda_haskell_runtime
@@ -59,6 +53,7 @@ library
     , bytestring
     , case-insensitive
     , exceptions
+    , hashable
     , http-client
     , http-types
     , mtl

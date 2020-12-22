@@ -1,15 +1,16 @@
-{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE RankNTypes #-}
 {-# OPTIONS_GHC -fno-warn-unused-binds #-}
 {-# OPTIONS_GHC -fno-warn-unused-imports #-}
 
-module Aws.Lambda.TestNoTH
+module Aws.Lambda.Setup
   ( Handler (..),
-    HandlerName,
+    HandlerName (..),
     Handlers,
     runNoTH,
     addStandaloneLambdaHandler,
@@ -19,23 +20,20 @@ module Aws.Lambda.TestNoTH
 where
 
 import Aws.Lambda
+import Aws.Lambda.Utilities (decodeObj)
 import Control.Exception (SomeException)
-import Control.Monad.Catch (MonadCatch (catch))
+import Control.Monad.Catch (MonadCatch (catch), throwM)
 import Control.Monad.State as State
 import Data.Aeson
 import qualified Data.HashMap.Strict as HM
-import Data.Text
 import qualified Data.Text as Text
 import Data.Typeable (Typeable)
 import GHC.IO.Handle.FD (stderr)
 import GHC.IO.Handle.Text (hPutStr)
 
-type HandlerName = Text
-
 type Handlers t m context request response error =
   HM.HashMap HandlerName (Handler t m context request response error)
 
--- TODO: MonadError instead of Either?
 type StandaloneCallback m context request response error =
   (request -> Context context -> m (Either error response))
 
@@ -55,6 +53,18 @@ newtype HandlersM (t :: HandlerType) m context request response error a = Handle
       MonadState (Handlers t m context request response error)
     )
 
+type RuntimeContext (t :: HandlerType) m context request response error =
+  ( MonadIO m,
+    MonadCatch m,
+    ToLambdaResponseBody error,
+    ToLambdaResponseBody response,
+    ToApiGatewayResponseBody error,
+    ToApiGatewayResponseBody response,
+    FromJSON (ApiGatewayRequest request),
+    FromJSON request,
+    Typeable request
+  )
+
 addStandaloneLambdaHandler ::
   HandlerName ->
   StandaloneCallback m context request response error ->
@@ -70,16 +80,7 @@ addAPIGatewayHandler handlerName handler =
   State.modify (HM.insert handlerName (APIGatewayHandler handler))
 
 runLambdaHaskellRuntime ::
-  forall t m context request response error.
-  MonadIO m =>
-  MonadCatch m =>
-  ToLambdaResponseBody error =>
-  ToLambdaResponseBody response =>
-  ToApiGatewayResponseBody error =>
-  ToApiGatewayResponseBody response =>
-  FromJSON (ApiGatewayRequest request) =>
-  FromJSON request =>
-  Typeable request =>
+  RuntimeContext t m context request response error =>
   DispatcherOptions ->
   IO context ->
   (forall a. m a -> IO a) ->
@@ -90,16 +91,7 @@ runLambdaHaskellRuntime options initializeContext mToIO initHandlers = do
   runLambda initializeContext (runNoTH options mToIO handlers)
 
 runNoTH ::
-  forall t m context request response error.
-  MonadIO m =>
-  MonadCatch m =>
-  ToLambdaResponseBody error =>
-  ToLambdaResponseBody response =>
-  ToApiGatewayResponseBody error =>
-  ToApiGatewayResponseBody response =>
-  FromJSON (ApiGatewayRequest request) =>
-  FromJSON request =>
-  Typeable request =>
+  RuntimeContext t m context request response error =>
   DispatcherOptions ->
   (forall a. m a -> IO a) ->
   Handlers t m context request response error ->
@@ -109,7 +101,10 @@ runNoTH dispatcherOptions mToIO handlers (LambdaOptions eventObject functionHand
   let asIOCallbacks = HM.map (mToIO . handlerToCallback dispatcherOptions eventObject contextObject) handlers
   case HM.lookup functionHandler asIOCallbacks of
     Just handlerToCall -> handlerToCall
-    Nothing -> error "no handler matches"
+    Nothing ->
+      throwM $
+        userError $
+          "Could not find handler '" <> (Text.unpack . unHandlerName $ functionHandler) <> "'."
 
 handlerToCallback ::
   forall t m context request response error.

@@ -84,7 +84,7 @@ invokeWithCallback ::
   Context.Context context ->
   IO (Runtime.LambdaResult t)
 invokeWithCallback callback event context = do
-  handlerName <- Environment.handlerName
+  handlerName <- Runtime.HandlerName <$> Environment.handlerName
   let lambdaOptions =
         Runtime.LambdaOptions
           { eventObject = ApiInfo.event event,
