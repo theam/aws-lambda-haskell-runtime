@@ -15,6 +15,7 @@ module Aws.Lambda.Setup
     run,
     addStandaloneLambdaHandler,
     addAPIGatewayHandler,
+    addALBHandler,
     runLambdaHaskellRuntime,
   )
 where
@@ -55,6 +56,7 @@ import qualified Data.Text as Text
 import Data.Typeable (Typeable)
 import GHC.IO.Handle.FD (stderr)
 import GHC.IO.Handle.Text (hPutStr)
+import Aws.Lambda.Runtime.ALB.Types
 
 type Handlers t m context request response error =
   HM.HashMap HandlerName (Handler t m context request response error)
@@ -65,9 +67,13 @@ type StandaloneCallback m context request response error =
 type APIGatewayCallback m context request response error =
   (ApiGatewayRequest request -> Context context -> m (Either (ApiGatewayResponse error) (ApiGatewayResponse response)))
 
+type ALBCallback m context request response error =
+  (ALBRequest request -> Context context -> m (Either (ALBResponse error) (ALBResponse response)))
+
 data Handler (t :: HandlerType) m context request response error where
   StandaloneLambdaHandler :: StandaloneCallback m context request response error -> Handler 'StandaloneHandlerType m context request response error
   APIGatewayHandler :: APIGatewayCallback m context request response error -> Handler 'APIGatewayHandlerType m context request response error
+  ALBHandler :: ALBCallback m context request response error -> Handler 'ALBHandlerType m context request response error
 
 newtype HandlersM (t :: HandlerType) m context request response error a = HandlersM
   {runHandlersM :: StateT (Handlers t m context request response error) IO a}
@@ -85,7 +91,10 @@ type RuntimeContext (t :: HandlerType) m context request response error =
     ToStandaloneLambdaResponseBody response,
     ToApiGatewayResponseBody error,
     ToApiGatewayResponseBody response,
+    ToALBResponseBody error,
+    ToALBResponseBody response,
     FromJSON (ApiGatewayRequest request),
+    FromJSON (ALBRequest request),
     FromJSON request,
     Typeable request
   )
@@ -131,6 +140,13 @@ addAPIGatewayHandler ::
 addAPIGatewayHandler handlerName handler =
   State.modify (HM.insert handlerName (APIGatewayHandler handler))
 
+addALBHandler ::
+  HandlerName ->
+  ALBCallback m context request response error ->
+  HandlersM 'ALBHandlerType m context request response error ()
+addALBHandler handlerName handler =
+  State.modify (HM.insert handlerName (ALBHandler handler))
+
 handlerToCallback ::
   forall t m context request response error.
   RuntimeContext t m context request response error =>
@@ -160,16 +176,29 @@ handlerToCallback dispatcherOptions rawEventObject context handlerToCall =
                 (Right . APIGatewayResult . fmap toApiGatewayResponseBody)
                 <$> handler request context
             Left err -> apiGatewayErr 400 . toApiGatewayResponseBody . Text.pack . show $ err
+        ALBHandler handler ->
+          case decodeObj @(ALBRequest request) rawEventObject of
+            Right request ->
+              either
+                (Left . ALBLambdaError . fmap toALBResponseBody)
+                (Right . ALBResult . fmap toALBResponseBody)
+                <$> handler request context
+            Left err -> albErr 400 . toALBResponseBody . Text.pack . show $ err
 
     handleError (exception :: SomeException) = do
       liftIO $ hPutStr stderr . show $ exception
       case handlerToCall of
         StandaloneLambdaHandler _ ->
           return . Left . StandaloneLambdaError . toStandaloneLambdaResponse . Text.pack . show $ exception
+        ALBHandler _ ->
+          albErr 500 . toALBResponseBody . Text.pack . show $ exception
         APIGatewayHandler _ ->
           if propagateImpureExceptions . apiGatewayDispatcherOptions $ dispatcherOptions
             then apiGatewayErr 500 . toApiGatewayResponseBody . Text.pack . show $ exception
             else apiGatewayErr 500 . toApiGatewayResponseBody . Text.pack $ "Something went wrong."
 
     apiGatewayErr statusCode =
-      pure . Left . APIGatewayLambdaError . mkApiGatewayResponse statusCode
+      pure . Left . APIGatewayLambdaError . mkApiGatewayResponse statusCode []
+
+    albErr statusCode =
+      pure . Left . ALBLambdaError . mkALBResponse statusCode []

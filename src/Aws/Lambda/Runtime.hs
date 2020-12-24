@@ -98,6 +98,8 @@ invokeWithCallback callback event context = do
         throw $ Error.Invocation $ toJSON err
       Runtime.APIGatewayLambdaError err ->
         throw $ Error.Invocation $ toJSON err
+      Runtime.ALBLambdaError err ->
+        throw $ Error.Invocation $ toJSON err
     Right value ->
       pure value
 

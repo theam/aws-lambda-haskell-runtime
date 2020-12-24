@@ -205,9 +205,9 @@ apiGatewayResponseToJSON bodyTransformer ApiGatewayResponse {..} =
       "isBase64Encoded" .= apiGatewayResponseIsBase64Encoded
     ]
 
-mkApiGatewayResponse :: Int -> payload -> ApiGatewayResponse payload
-mkApiGatewayResponse code payload =
-  ApiGatewayResponse code [] payload False
+mkApiGatewayResponse :: Int -> ResponseHeaders -> payload -> ApiGatewayResponse payload
+mkApiGatewayResponse code headers payload =
+  ApiGatewayResponse code headers payload False
 
 headerToPair :: Header -> T.Pair
 headerToPair (cibyte, bstr) = k .= v
