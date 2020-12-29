@@ -58,7 +58,7 @@ runtimeInitError err lambdaApi =
   publish err (Endpoints.runtimeInitError lambdaApi)
 
 publish :: ToJSON err => err -> Endpoints.Endpoint -> Context context -> Http.Manager -> IO ()
-publish err (Endpoints.Endpoint endpoint) Context {..} manager = do
+publish err (Endpoints.Endpoint endpoint) _context manager = do
   rawRequest <- Http.parseRequest . unpack $ endpoint
 
   let requestBody = Http.RequestBodyLBS (encode err)
