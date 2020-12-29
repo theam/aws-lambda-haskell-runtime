@@ -33,7 +33,8 @@ library:
     - mtl
     - hashable
   source-dirs: src
-  # TODO: Don't expose all, this is done for dev purposes only
+  exposed-modules:
+    - Aws.Lambda
 
 tests:
   aws-lambda-haskell-runtime-test:

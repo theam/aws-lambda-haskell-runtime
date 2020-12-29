@@ -20,24 +20,32 @@ module Aws.Lambda.Setup
   )
 where
 
-import Aws.Lambda
+import Aws.Lambda.Runtime (runLambda)
+import Aws.Lambda.Runtime.ALB.Types
+  ( ALBRequest,
+    ALBResponse,
+    ToALBResponseBody (..),
+    mkALBResponse,
+  )
+import Aws.Lambda.Runtime.APIGateway.Types
   ( ApiGatewayDispatcherOptions (propagateImpureExceptions),
     ApiGatewayRequest,
     ApiGatewayResponse,
-    Context,
-    HandlerName (..),
+    ToApiGatewayResponseBody (..),
+    mkApiGatewayResponse,
+  )
+import Aws.Lambda.Runtime.Common
+  ( HandlerName (..),
     HandlerType (..),
     LambdaError (..),
     LambdaOptions (LambdaOptions),
     LambdaResult (..),
     RawEventObject,
-    ToApiGatewayResponseBody (..),
-    mkApiGatewayResponse,
-    runLambda,
   )
 import Aws.Lambda.Runtime.Configuration
   ( DispatcherOptions (apiGatewayDispatcherOptions),
   )
+import Aws.Lambda.Runtime.Context (Context)
 import Aws.Lambda.Runtime.StandaloneLambda.Types
   ( ToStandaloneLambdaResponseBody (..),
   )
@@ -56,7 +64,6 @@ import qualified Data.Text as Text
 import Data.Typeable (Typeable)
 import GHC.IO.Handle.FD (stderr)
 import GHC.IO.Handle.Text (hPutStr)
-import Aws.Lambda.Runtime.ALB.Types
 
 type Handlers t m context request response error =
   HM.HashMap HandlerName (Handler t m context request response error)
