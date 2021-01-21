@@ -1,10 +1,4 @@
-cabal-version: 1.12
-
--- This file has been generated from package.yaml by hpack version 0.33.0.
---
--- see: https://github.com/sol/hpack
---
--- hash: 6d1687cfd3e8b52b51a019e2c6e5319807937c58c9d2152979bc81ca92d85ee2
+cabal-version: 3.0
 
 name:           aws-lambda-haskell-runtime
 version:        4.0.0

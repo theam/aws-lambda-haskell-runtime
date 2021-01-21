@@ -81,8 +81,6 @@ import Aws.Lambda
 
 import qualified Lib
 
--- This action is run on each cold start, and the context returned
--- is kept alive while the lambda is run, you can access it in your handler.
 initializeContext :: IO ()
 initializeContext = return ()
 
@@ -124,6 +122,5 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 {-# START_FILE .gitignore #-}
 .stack-work/
-{{name}}.cabal
 build/
 *~
