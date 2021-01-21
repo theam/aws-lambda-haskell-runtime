@@ -65,8 +65,8 @@ import Data.Typeable (Typeable)
 import GHC.IO.Handle.FD (stderr)
 import GHC.IO.Handle.Text (hPutStr)
 
-type Handlers t m context request response error =
-  HM.HashMap HandlerName (Handler t m context request response error)
+type Handlers handlerType m context request response error =
+  HM.HashMap HandlerName (Handler handlerType m context request response error)
 
 type StandaloneCallback m context request response error =
   (request -> Context context -> m (Either error response))
@@ -82,13 +82,13 @@ data Handler (t :: HandlerType) m context request response error where
   APIGatewayHandler :: APIGatewayCallback m context request response error -> Handler 'APIGatewayHandlerType m context request response error
   ALBHandler :: ALBCallback m context request response error -> Handler 'ALBHandlerType m context request response error
 
-newtype HandlersM (t :: HandlerType) m context request response error a = HandlersM
-  {runHandlersM :: StateT (Handlers t m context request response error) IO a}
+newtype HandlersM (handlerType :: HandlerType) m context request response error a = HandlersM
+  {runHandlersM :: StateT (Handlers handlerType m context request response error) IO a}
   deriving newtype
     ( Functor,
       Applicative,
       Monad,
-      MonadState (Handlers t m context request response error)
+      MonadState (Handlers handlerType m context request response error)
     )
 
 type RuntimeContext (t :: HandlerType) m context request response error =
@@ -107,23 +107,23 @@ type RuntimeContext (t :: HandlerType) m context request response error =
   )
 
 runLambdaHaskellRuntime ::
-  RuntimeContext t m context request response error =>
+  RuntimeContext handlerType m context request response error =>
   DispatcherOptions ->
   IO context ->
   (forall a. m a -> IO a) ->
-  HandlersM t m context request response error () ->
+  HandlersM handlerType m context request response error () ->
   IO ()
 runLambdaHaskellRuntime options initializeContext mToIO initHandlers = do
   handlers <- fmap snd . flip runStateT HM.empty . runHandlersM $ initHandlers
   runLambda initializeContext (run options mToIO handlers)
 
 run ::
-  RuntimeContext t m context request response error =>
+  RuntimeContext handlerType m context request response error =>
   DispatcherOptions ->
   (forall a. m a -> IO a) ->
-  Handlers t m context request response error ->
+  Handlers handlerType m context request response error ->
   LambdaOptions context ->
-  IO (Either (LambdaError t) (LambdaResult t))
+  IO (Either (LambdaError handlerType) (LambdaResult handlerType))
 run dispatcherOptions mToIO handlers (LambdaOptions eventObject functionHandler _executionUuid contextObject) = do
   let asIOCallbacks = HM.map (mToIO . handlerToCallback dispatcherOptions eventObject contextObject) handlers
   case HM.lookup functionHandler asIOCallbacks of
@@ -155,13 +155,13 @@ addALBHandler handlerName handler =
   State.modify (HM.insert handlerName (ALBHandler handler))
 
 handlerToCallback ::
-  forall t m context request response error.
-  RuntimeContext t m context request response error =>
+  forall handlerType m context request response error.
+  RuntimeContext handlerType m context request response error =>
   DispatcherOptions ->
   RawEventObject ->
   Context context ->
-  Handler t m context request response error ->
-  m (Either (LambdaError t) (LambdaResult t))
+  Handler handlerType m context request response error ->
+  m (Either (LambdaError handlerType) (LambdaResult handlerType))
 handlerToCallback dispatcherOptions rawEventObject context handlerToCall =
   call `catch` handleError
   where

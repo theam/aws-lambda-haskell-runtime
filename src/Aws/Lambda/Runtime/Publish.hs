@@ -22,7 +22,7 @@ import qualified Data.Text.Encoding as T
 import qualified Network.HTTP.Client as Http
 
 -- | Publishes the result back to AWS Lambda
-result :: LambdaResult t -> Text -> Context context -> Http.Manager -> IO ()
+result :: LambdaResult handlerType -> Text -> Context context -> Http.Manager -> IO ()
 result lambdaResult lambdaApi context manager = do
   let Endpoints.Endpoint endpoint = Endpoints.response lambdaApi (awsRequestId context)
   rawRequest <- Http.parseRequest . unpack $ endpoint

@@ -29,7 +29,7 @@ import System.IO (hFlush, stderr, stdout)
 
 -- | Runs the user @haskell_lambda@ executable and posts back the
 -- results. This is called from the layer's @main@ function.
-runLambda :: forall context t. IO context -> Runtime.RunCallback t context -> IO ()
+runLambda :: forall context handlerType. IO context -> Runtime.RunCallback handlerType context -> IO ()
 runLambda initializeCustomContext callback = do
   manager <- Http.newManager httpManagerSettings
   customContext <- initializeCustomContext
@@ -61,7 +61,7 @@ httpManagerSettings =
 invokeAndRun ::
   Throws Error.Invocation =>
   Throws Error.EnvironmentVariableNotSet =>
-  Runtime.RunCallback t context ->
+  Runtime.RunCallback handlerType context ->
   Http.Manager ->
   Text ->
   ApiInfo.Event ->
@@ -76,10 +76,10 @@ invokeAndRun callback manager lambdaApi event context = do
 invokeWithCallback ::
   Throws Error.Invocation =>
   Throws Error.EnvironmentVariableNotSet =>
-  Runtime.RunCallback t context ->
+  Runtime.RunCallback handlerType context ->
   ApiInfo.Event ->
   Context.Context context ->
-  IO (Runtime.LambdaResult t)
+  IO (Runtime.LambdaResult handlerType)
 invokeWithCallback callback event context = do
   handlerName <- Runtime.HandlerName <$> Environment.handlerName
   let lambdaOptions =
