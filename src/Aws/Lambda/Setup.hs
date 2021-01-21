@@ -77,7 +77,7 @@ type APIGatewayCallback m context request response error =
 type ALBCallback m context request response error =
   (ALBRequest request -> Context context -> m (Either (ALBResponse error) (ALBResponse response)))
 
-data Handler (t :: HandlerType) m context request response error where
+data Handler (handlerType :: HandlerType) m context request response error where
   StandaloneLambdaHandler :: StandaloneCallback m context request response error -> Handler 'StandaloneHandlerType m context request response error
   APIGatewayHandler :: APIGatewayCallback m context request response error -> Handler 'APIGatewayHandlerType m context request response error
   ALBHandler :: ALBCallback m context request response error -> Handler 'ALBHandlerType m context request response error
@@ -91,7 +91,7 @@ newtype HandlersM (handlerType :: HandlerType) m context request response error 
       MonadState (Handlers handlerType m context request response error)
     )
 
-type RuntimeContext (t :: HandlerType) m context request response error =
+type RuntimeContext (handlerType :: HandlerType) m context request response error =
   ( MonadIO m,
     MonadCatch m,
     ToStandaloneLambdaResponseBody error,

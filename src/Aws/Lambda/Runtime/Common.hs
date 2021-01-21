@@ -35,8 +35,8 @@ import GHC.Generics (Generic)
 import Data.String (IsString)
 
 -- | Callback that we pass to the dispatcher function
-type RunCallback (t :: HandlerType) context =
-  LambdaOptions context -> IO (Either (LambdaError t) (LambdaResult t))
+type RunCallback (handlerType :: HandlerType) context =
+  LambdaOptions context -> IO (Either (LambdaError handlerType) (LambdaResult handlerType))
 
 -- | A handler name used to configure the lambda in AWS
 newtype HandlerName = HandlerName {unHandlerName :: Text}
@@ -49,13 +49,13 @@ data HandlerType
   | ALBHandlerType
 
 -- | Wrapper type for lambda execution results
-data LambdaError (t :: HandlerType) where
+data LambdaError (handlerType :: HandlerType) where
   StandaloneLambdaError :: StandaloneLambdaResponseBody -> LambdaError 'StandaloneHandlerType
   APIGatewayLambdaError :: ApiGatewayResponse ApiGatewayResponseBody -> LambdaError 'APIGatewayHandlerType
   ALBLambdaError :: ALBResponse ALBResponseBody -> LambdaError 'ALBHandlerType
 
 -- | Wrapper type to handle the result of the user
-data LambdaResult (t :: HandlerType) where
+data LambdaResult (handlerType :: HandlerType) where
   StandaloneLambdaResult :: StandaloneLambdaResponseBody -> LambdaResult 'StandaloneHandlerType
   APIGatewayResult :: ApiGatewayResponse ApiGatewayResponseBody -> LambdaResult 'APIGatewayHandlerType
   ALBResult :: ALBResponse ALBResponseBody -> LambdaResult 'ALBHandlerType
