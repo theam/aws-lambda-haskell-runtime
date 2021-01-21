@@ -25,10 +25,7 @@ executables:
     - -threaded
     - -rtsopts
     - -O2
-    - -static
     - -with-rtsopts=-N
-    cc-options: -static
-    ld-options: -static -pthread
     dependencies:
     - {{name}}
 
@@ -53,7 +50,6 @@ module Lib where
 
 import GHC.Generics
 import Data.Aeson
-
 import Aws.Lambda
 
 data Person = Person
@@ -72,19 +68,18 @@ handler person context =
     return (Left "A person's age must be positive")
 
 {-# START_FILE app/Main.hs #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-
 module Main where
 
 import Aws.Lambda
-
 import qualified Lib
 
-initializeContext :: IO ()
-initializeContext = return ()
-
-generateLambdaDispatcher StandaloneLambda defaultDispatcherOptions
+main :: IO ()
+main =
+  runLambdaHaskellRuntime
+    defaultDispatcherOptions
+    (pure ())
+    id
+    (addStandaloneLambdaHandler "handler" Lib.handler)
 {-# START_FILE README.md #-}
 # {{name}}
 
