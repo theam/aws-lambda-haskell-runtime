@@ -8,60 +8,53 @@ In this example, we'll create a person age validator.
 
 If you have used the Stack template, you will have a handler that is pre-defined in the `src/Lib.hs` file.
 
-If you are starting from scratch, let's write it bit by bit:
-
-First, we will enable some language extensions in order to work with JSON easier, also, we'll import the required
-modules:
-
-```haskell top hide
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE DeriveAnyClass #-}
-```
+First, we need to enable some language extensions in order to make working with JSON easier. We'll also import a few required modules:
 
 ```haskell
 {-# LANGUAGE DeriveGeneric  #-}
 {-# LANGUAGE DeriveAnyClass #-}
 
 module Lib where
-```
 
-```haskell top
 import Aws.Lambda
 import GHC.Generics
 import Data.Aeson
 ```
 
-The runtime will decode the JSON input that reaches the AWS Lambda handler, so let's create a type
-for persons. We also tell the compiler to derive (auto-implement) the `Generic`, `FromJSON` and `ToJSON` classes
-for us.
+We'll create a basic handler that validates a person's age is positive. Let's create a `Person` type to use.
 
 ```haskell top
 data Person = Person
   { name :: String
   , age  :: Int
-  } deriving (Generic, FromJSON, ToJSON)
+  } -- We kindly ask the compiler to autogenerate JSON instances for us
+  deriving (Generic, FromJSON, ToJSON)
 ```
 
-Now, let's write the handler. It **must** be a function that is called `handler` and has a type signature.
+Now, let's implement the actual handler.
 
-The arguments to this function will always go like this:
+A handler is a function with the following type signature:
 
-* The first argument to this handler will always be the input type we expect (note that it has to implement `FromJSON`).
-* The second argument is the `Aws.Lambda` `Context` type, which has some information regarding our Lambda execution. The `Context` type also takes a `context` parameter, which we can use if we want to have some state that is shared between Lambda calls. For this example, we don't want to have such state, so we'll just use `()`.
+```haskell
+-- Note that request, error and response must all implement ToJSON and FromJSON
+handler :: request -> Context context -> IO (Either error response)
+```
 
-The output will always be an `IO (Either errorType resultType)` where
+For our person validator usecase this means the following:
 
-* `errorType` is whatever custom error type you want to use.
-* `resultType` is what your function will return if everything goes well.
-
-Note that both types must implement `ToJSON`, as the runtime will use it to serialize the values.
-
-For example, here we will check if the age of a `Person` is positive, and will return if it is correct. If not, we
-will return a `String` error:
-
-```haskell top
+```haskell
 handler :: Person -> Context () -> IO (Either String Person)
-handler person context =
+```
+
+This means we expect to be given a `Person` object and we'll return either some `String` as an error or some other `Person` object (that passed validation).
+
+You can ignore the `Context ()` parameter at this point. This is the Lambda context object which is present in every runtime. By specifying `()` as an inner value, we say we don't want to have anything there.
+
+The implementation of our handler will look like this:
+
+```haskell
+handler :: Person -> Context () -> IO (Either String Person)
+handler person _context =
   if age person > 0 then
     pure (Right person)
   else
@@ -69,3 +62,5 @@ handler person context =
 ```
 
 Note how we are using `Right` to return the value in case everything went **right**, and `Left` if something went wrong.
+
+Now let's see how to register this handler into our runtime.

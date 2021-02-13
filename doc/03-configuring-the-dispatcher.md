@@ -4,60 +4,39 @@ title: Configuring the Dispatcher
 
 # Configuring the Dispatcher
 
-The dispatcher is a special main function that checks which handler it has to run,
-and runs it
+The dispatcher is a special main function that checks which handler it has to run, and runs it.
 
-To make the package generate a dispatcher for you, you have to configure it in
-your `app/Main.hs` file to use the `generateLambdaDispatcher` function from `Aws.Lambda`.
-
-The `generateLambdaDispatcher` function has two options: `StandaloneLambda` and `UseWithAPIGateway`.
-
-Use `UseWithAPIGateway` when you'll be exposing your lambda through API Gateway. For more information check the [Use with API Gateway](./04-usage-with-api-gateway.md) page.
-
-Use `StandaloneLambda` when you want to use your lambda as usual. This is what we're going to use for our person age validator function.
-
-To continue the person age validator lambda, activate `TemplateHaskell` for enabling the metaprogramming features of Haskell.
-Then, import the `Aws.Lambda` module:
+This is very easy to do in `aws-lambda-haskell-runtime`. Just use the `runLambdaHaskellRuntime` function.
 
 ```haskell
-{-# LANGUAGE TemplateHaskell     #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+runLambdaHaskellRuntime ::
+  RuntimeContext handlerType m context request response error =>
+  DispatcherOptions ->
+  IO context ->
+  (forall a. m a -> IO a) ->
+  HandlersM handlerType m context request response error () ->
+  IO ()
+```
 
-module Main where
+It may seem like an intimidating type signature, but let's go through each parameter and see what it means.
+
+* `DispatcherOptions` are the configuration options of the dispatcher function. You can just use `defaultDispatcherOptions`.
+* The `IO context` action is how you initialize the context object.
+* `(forall a. m a -> IO a)` is used when you have your handler in a custom monad. It transforms that custom monadic action into `IO`. If your handlers run in `IO`, just use `id`.
+* `HandlersM handlerType m context request response error ()` is the action that registers the handlers under a given name.
+
+For the person validator example we set up in the previous section, it will look like this:
+
+```haskell
 import Aws.Lambda
-```
+import qualified Lib
 
-After this, add the following lines:
-
-```haskell
--- Use this action if you want to have context that is shared between lambda calls.
--- It is called once per every cold start. We do not wish to have a shared context for our lambda, so we simply use Unit.
-initializeContext :: IO ()
-initializeContext = return ()
-
-generateLambdaDispatcher StandaloneLambda defaultDispatcherOptions
-```
-
-This statement will generate something that looks a little bit like this:
-
-```haskell
 main :: IO ()
-main = do
-  handlerName <- getHandlerName
-  context <- getContext
-  input <- getInput
-  case handlerName of
-    "src/Lib.handler" -> do
-      result <- Lib.handler input context
-      publish result
-    "..." -> do
-      ...
-```
-
-In fact, you can check for the generated code by running `stack repl` from
-the root of your project, and issuing:
-
-```text
-:set -ddump-splices
-:l app/Main.hs
+main =
+  runLambdaHaskellRuntime
+    defaultDispatcherOptions
+    (pure ())
+    id $ do
+      -- You could also register multiple handlers
+      addStandaloneLambdaHandler "handler" Lib.handler
 ```
