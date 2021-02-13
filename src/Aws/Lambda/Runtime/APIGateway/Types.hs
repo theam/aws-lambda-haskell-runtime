@@ -109,7 +109,8 @@ data ApiGatewayRequestContext = ApiGatewayRequestContext
     apiGatewayRequestContextRequestId :: !Text,
     apiGatewayRequestContextDomainName :: !Text,
     apiGatewayRequestContextApiId :: !Text,
-    apiGatewayRequestContextIdentity :: !ApiGatewayRequestContextIdentity
+    apiGatewayRequestContextIdentity :: !ApiGatewayRequestContextIdentity,
+    apiGatewayRequestContextAuthorizer :: !Value
   }
   deriving (Show)
 
@@ -130,6 +131,7 @@ instance FromJSON ApiGatewayRequestContext where
       <*> v .: "domainName"
       <*> v .: "apiId"
       <*> v .: "identity"
+      <*> v .: "authorizer"
   parseJSON _ = fail "Expected ApiGatewayRequestContext to be an object."
 
 data ApiGatewayRequestContextIdentity = ApiGatewayRequestContextIdentity
