@@ -67,6 +67,16 @@ handler person context =
   else
     return (Left "A person's age must be positive")
 
+{-# START_FILE stack.yaml #-}
+resolver: {{resolver}}
+
+packages:
+- .
+
+extra-deps:
+- git: https://github.com/dnikolovv/aws-lambda-haskell-runtime.git
+  commit: 3a9d26dee8a39fdbe7bd26bc0ec058f904cdf828
+
 {-# START_FILE app/Main.hs #-}
 module Main where
 
