@@ -68,7 +68,7 @@ handler person context =
     return (Left "A person's age must be positive")
 
 {-# START_FILE stack.yaml #-}
-resolver: {{resolver}}
+resolver: lts-16.31
 
 packages:
 - .
