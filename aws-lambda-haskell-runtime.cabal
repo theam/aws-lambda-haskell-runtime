@@ -47,7 +47,7 @@ library
   hs-source-dirs:
       src
   default-extensions: TemplateHaskell OverloadedStrings RecordWildCards ScopedTypeVariables DeriveGeneric TypeApplications FlexibleContexts DeriveAnyClass QuasiQuotes
-  ghc-options: -Wall -Werror -optP-Wno-nonportable-include-path -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Widentities -Wredundant-constraints -Wmissing-export-lists -Wpartial-fields -fhide-source-paths -freverse-errors
+  ghc-options: -Wall -optP-Wno-nonportable-include-path -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Widentities -Wredundant-constraints -Wmissing-export-lists -Wpartial-fields -fhide-source-paths -freverse-errors
   build-depends:
       aeson
     , base >=4.7 && <5
@@ -74,7 +74,7 @@ test-suite aws-lambda-haskell-runtime-test
   hs-source-dirs:
       test
   default-extensions: TemplateHaskell OverloadedStrings RecordWildCards ScopedTypeVariables DeriveGeneric TypeApplications FlexibleContexts DeriveAnyClass QuasiQuotes
-  ghc-options: -Wall -Werror -optP-Wno-nonportable-include-path -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Widentities -Wredundant-constraints -Wmissing-export-lists -Wpartial-fields -fhide-source-paths -freverse-errors -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -optP-Wno-nonportable-include-path -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Widentities -Wredundant-constraints -Wmissing-export-lists -Wpartial-fields -fhide-source-paths -freverse-errors -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
     , hspec
