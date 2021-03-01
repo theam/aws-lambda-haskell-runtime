@@ -20,7 +20,40 @@ source-repository head
   type: git
   location: https://github.com/theam/aws-lambda-haskell-runtime
 
+common common-options
+  build-depends:
+    base ^>= 4.7
+
+  default-extensions:
+    TemplateHaskell
+    OverloadedStrings
+    RecordWildCards
+    ScopedTypeVariables
+    DeriveGeneric
+    TypeApplications
+    FlexibleContexts
+    DeriveAnyClass
+    QuasiQuotes
+
+  ghc-options:
+    -Wall
+    -- -Werror
+    -optP-Wno-nonportable-include-path
+    -Wincomplete-uni-patterns
+    -Wincomplete-record-updates
+    -Wcompat
+    -Widentities
+    -Wredundant-constraints
+    -Wmissing-export-lists
+    -Wpartial-fields
+    -fhide-source-paths
+    -freverse-errors
+
+  default-language: Haskell2010
+
+
 library
+  import: common-options
   exposed-modules:
       Aws.Lambda
   other-modules:
@@ -40,13 +73,12 @@ library
       Aws.Lambda.Setup
       Aws.Lambda.Utilities
       Paths_aws_lambda_haskell_runtime
+  autogen-modules:
+      Paths_aws_lambda_haskell_runtime
   hs-source-dirs:
       src
-  default-extensions: TemplateHaskell OverloadedStrings RecordWildCards ScopedTypeVariables DeriveGeneric TypeApplications FlexibleContexts DeriveAnyClass QuasiQuotes
-  ghc-options: -Wall -Werror -optP-Wno-nonportable-include-path -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Widentities -Wredundant-constraints -Wmissing-export-lists -Wpartial-fields -fhide-source-paths -freverse-errors
   build-depends:
       aeson
-    , base >=4.7 && <5
     , bytestring
     , case-insensitive
     , exceptions
@@ -60,18 +92,18 @@ library
     , template-haskell
     , text
     , unordered-containers
-  default-language: Haskell2010
 
 test-suite aws-lambda-haskell-runtime-test
+  import: common-options
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
       Paths_aws_lambda_haskell_runtime
   hs-source-dirs:
       test
-  default-extensions: TemplateHaskell OverloadedStrings RecordWildCards ScopedTypeVariables DeriveGeneric TypeApplications FlexibleContexts DeriveAnyClass QuasiQuotes
-  ghc-options: -Wall -Werror -optP-Wno-nonportable-include-path -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Widentities -Wredundant-constraints -Wmissing-export-lists -Wpartial-fields -fhide-source-paths -freverse-errors -threaded -rtsopts -with-rtsopts=-N
+  ghc-options:
+    -threaded
+    -rtsopts
+    -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
-    , hspec
-  default-language: Haskell2010
+     hspec
