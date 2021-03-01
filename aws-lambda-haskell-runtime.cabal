@@ -1,7 +1,11 @@
-cabal-version: 3.0
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.3.
+--
+-- see: https://github.com/sol/hpack
 
 name:           aws-lambda-haskell-runtime
-version:        4.0.0
+version:        4.0.1
 synopsis:       Haskell runtime for AWS Lambda
 description:    Please see the README on GitHub at <https://github.com/theam/aws-lambda-haskell-runtime#readme>
 category:       AWS
