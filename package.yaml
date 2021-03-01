@@ -1,10 +1,10 @@
 name: aws-lambda-haskell-runtime
-version: 3.0.5
+version: 4.0.0
 github: "theam/aws-lambda-haskell-runtime"
 license: Apache-2.0
 author: Nikita Tchayka
 maintainer: hackers@theagilemonkeys.com
-copyright: 2018 The Agile Monkeys SL
+copyright: 2021 The Agile Monkeys SL
 
 extra-source-files:
   - README.md
@@ -25,15 +25,16 @@ library:
     - template-haskell
     - text
     - safe-exceptions-checked
+    - exceptions
     - path > 0.7
     - path-io
     - unordered-containers
     - case-insensitive
+    - mtl
+    - hashable
   source-dirs: src
   exposed-modules:
     - Aws.Lambda
-    - Aws.Lambda.Runtime
-    - Aws.Lambda.Runtime.Common
 
 tests:
   aws-lambda-haskell-runtime-test:
@@ -59,7 +60,7 @@ default-extensions:
 
 ghc-options:
   - -Wall
-  - -fno-warn-orphans
+  - -Werror
   - -optP-Wno-nonportable-include-path
   - -Wincomplete-uni-patterns
   - -Wincomplete-record-updates

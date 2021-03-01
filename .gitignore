@@ -28,6 +28,9 @@ cabal.project.local~
 .HTF/
 .ghc.environment.*
 
+# VSCode
+.vscode/settings.json
+
 # IntelliJ
 .idea
 *.iml

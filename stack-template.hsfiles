@@ -25,10 +25,7 @@ executables:
     - -threaded
     - -rtsopts
     - -O2
-    - -static
     - -with-rtsopts=-N
-    cc-options: -static
-    ld-options: -static -pthread
     dependencies:
     - {{name}}
 
@@ -37,23 +34,21 @@ default-extensions:
   - OverloadedLists
   - OverloadedStrings
   - DeriveGeneric
+
 {-# START_FILE Setup.hs #-}
 import Distribution.Simple
 main = defaultMain
+
 {-# START_FILE Makefile #-}
 all:
-	@mkdir -p build
-	@rm -rf ./build/*
-	@stack clean --docker
-	@stack build --docker
-	@cp `stack --docker path --local-install-root`/bin/bootstrap build
-	@cd build && zip function.zip bootstrap && rm bootstrap && cd ..
+	# You can then tag the image and upload it to a registry of your choice
+	@docker build . -t my-haskell-lambda-image
+
 {-# START_FILE src/Lib.hs #-}
 module Lib where
 
 import GHC.Generics
 import Data.Aeson
-
 import Aws.Lambda
 
 data Person = Person
@@ -71,22 +66,84 @@ handler person context =
   else
     return (Left "A person's age must be positive")
 
-{-# START_FILE app/Main.hs #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# START_FILE Dockerfile #-}
+ARG OUTPUT_DIR=/root/output
+ARG EXECUTABLE_NAME=bootstrap
 
+FROM lambci/lambda:build-provided as build
+
+COPY . .
+
+SHELL ["/bin/bash", "--rcfile", "~/.profile", "-c"]
+
+USER root
+
+# Installing Haskell Stack
+RUN curl -sSL https://get.haskellstack.org/ | sh
+
+# Build the lambda
+COPY . /root/lambda-function/
+
+RUN pwd
+
+RUN cd /root/lambda-function
+WORKDIR /root/lambda-function/
+
+RUN ls
+
+RUN stack clean --full
+RUN stack build
+
+ARG OUTPUT_DIR
+
+RUN mkdir -p ${OUTPUT_DIR} && \
+    mkdir -p ${OUTPUT_DIR}/lib
+
+ARG EXECUTABLE_NAME
+
+RUN cp $(stack path --local-install-root)/bin/${EXECUTABLE_NAME} ${OUTPUT_DIR}/${EXECUTABLE_NAME}
+
+ENTRYPOINT sh
+
+FROM public.ecr.aws/lambda/provided:al2 as deploy
+
+ARG EXECUTABLE_NAME
+
+WORKDIR ${LAMBDA_RUNTIME_DIR}
+
+ARG OUTPUT_DIR
+
+COPY --from=build ${OUTPUT_DIR} .
+
+RUN ls
+RUN mv ${EXECUTABLE_NAME} bootstrap || true
+RUN ls
+
+CMD [ "handler" ]
+
+{-# START_FILE stack.yaml #-}
+resolver: lts-16.31
+
+packages:
+- .
+
+extra-deps:
+- git: https://github.com/dnikolovv/aws-lambda-haskell-runtime.git
+  commit: 3a9d26dee8a39fdbe7bd26bc0ec058f904cdf828
+
+{-# START_FILE app/Main.hs #-}
 module Main where
 
 import Aws.Lambda
-
 import qualified Lib
 
--- This action is run on each cold start, and the context returned
--- is kept alive while the lambda is run, you can access it in your handler.
-initializeContext :: IO ()
-initializeContext = return ()
-
-generateLambdaDispatcher StandaloneLambda defaultDispatcherOptions
+main :: IO ()
+main =
+  runLambdaHaskellRuntime
+    defaultDispatcherOptions
+    (pure ())
+    id
+    (addStandaloneLambdaHandler "handler" Lib.handler)
 {-# START_FILE README.md #-}
 # {{name}}
 
@@ -124,6 +181,5 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 {-# START_FILE .gitignore #-}
 .stack-work/
-{{name}}.cabal
 build/
 *~

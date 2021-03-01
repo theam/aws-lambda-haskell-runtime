@@ -1,6 +1,5 @@
 name: CI
 
-# Trigger the workflow on push or pull request, but only for the master branch
 on:
   pull_request:
   push:
@@ -8,34 +7,33 @@ on:
 
 jobs:
   build:
-    name: ghc ${{ matrix.ghc }}
-    runs-on: ubuntu-16.04
-    strategy:
-      matrix:
-        cabal: ["2.4"]
-        ghc:
-          - "8.6.5"
-
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-      if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.ref == 'refs/heads/master'
-
-    - uses: actions/setup-haskell@v1
-      name: Setup Haskell
+    
+    # Needed for the add-path command
+    - name: ACTIONS_ALLOW_UNSECURE_COMMANDS
+      id: ACTIONS_ALLOW_UNSECURE_COMMANDS
+      run: echo 'ACTIONS_ALLOW_UNSECURE_COMMANDS=true' >> $GITHUB_ENV
+    
+    - uses: actions/checkout@v1
+    
+    - uses: mstksg/setup-stack@v1
+    
+    - uses: actions/cache@v1
+      name: Cache ~/.stack
       with:
-        ghc-version: ${{ matrix.ghc }}
-        cabal-version: ${{ matrix.cabal }}
+        path: ~/.stack
+        key: ${{ runner.os }}-stack-${{ hashFiles('stack.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-stack-
 
     - uses: actions/cache@v1
-      name: Cache ~/.cabal/store
+      name: Cache .stack-work
       with:
-        path: ~/.cabal/store
-        key: ${{ runner.os }}-${{ matrix.ghc }}-cabal
-
-    - name: Build
-      run: |
-        cabal v2-update
-        cabal v2-build --enable-tests --enable-benchmarks
-    - name: Test
-      run: |
-        cabal v2-test --enable-tests
+        path: .stack-work
+        key: ${{ runner.os }}-stack-work-${{ hashFiles('stack.yaml') }}-${{ hashFiles('**/*.hs') }}
+        restore-keys: |
+          ${{ runner.os }}-stack-work-
+    
+    - name: Compile with Stack
+      run: stack test --fast

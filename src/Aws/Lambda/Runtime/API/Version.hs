@@ -1,7 +1,10 @@
 module Aws.Lambda.Runtime.API.Version
-  ( value
-  ) where
+  ( value,
+  )
+where
+
+import Data.Text (Text)
 
 -- | Version of the AWS Lambda runtime REST API
-value :: String
+value :: Text
 value = "2018-06-01"
