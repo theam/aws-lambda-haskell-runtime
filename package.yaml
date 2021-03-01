@@ -60,7 +60,7 @@ default-extensions:
 
 ghc-options:
   - -Wall
-  - -Werror
+  #  - -Werror
   - -optP-Wno-nonportable-include-path
   - -Wincomplete-uni-patterns
   - -Wincomplete-record-updates
