@@ -26,6 +26,7 @@ import Data.Aeson
     eitherDecodeStrict,
     object,
     (.:),
+    (.:?)
   )
 import Data.Aeson.Types (Parser)
 import qualified Data.Aeson.Types as T
@@ -110,7 +111,7 @@ data ApiGatewayRequestContext = ApiGatewayRequestContext
     apiGatewayRequestContextDomainName :: !Text,
     apiGatewayRequestContextApiId :: !Text,
     apiGatewayRequestContextIdentity :: !ApiGatewayRequestContextIdentity,
-    apiGatewayRequestContextAuthorizer :: !Value
+    apiGatewayRequestContextAuthorizer :: !(Maybe Value)
   }
   deriving (Show)
 
@@ -131,7 +132,7 @@ instance FromJSON ApiGatewayRequestContext where
       <*> v .: "domainName"
       <*> v .: "apiId"
       <*> v .: "identity"
-      <*> v .: "authorizer"
+      <*> v .:? "authorizer"
   parseJSON _ = fail "Expected ApiGatewayRequestContext to be an object."
 
 data ApiGatewayRequestContextIdentity = ApiGatewayRequestContextIdentity
