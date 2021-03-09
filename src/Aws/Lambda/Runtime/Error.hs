@@ -7,7 +7,8 @@ module Aws.Lambda.Runtime.Error
 where
 
 import Control.Exception.Safe.Checked (Exception)
-import Data.Aeson (ToJSON (..), Value, object, (.=))
+import Data.Aeson (ToJSON (..), object, (.=))
+import qualified Data.ByteString.Lazy as LBS
 import Data.Text (Text)
 
 newtype EnvironmentVariableNotSet
@@ -36,9 +37,5 @@ instance ToJSON Parsing where
       ]
 
 newtype Invocation
-  = Invocation Value
+  = Invocation LBS.ByteString
   deriving (Show, Exception)
-
-instance ToJSON Invocation where
-  -- We return the user error as it is
-  toJSON (Invocation err) = err
