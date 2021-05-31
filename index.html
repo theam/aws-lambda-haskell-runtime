@@ -1,0 +1,526 @@
+<!DOCTYPE HTML><html><head><title>AWS λ Runtime - Home</title><meta charset="utf-8"><meta content="summary" name="twitter:card"><meta content="https://s3-eu-west-1.amazonaws.com/worldwideapps/assets/tintin-hexcolor &quot;#662480&quot;.png" name="twitter:site"><meta content="AWS λ Runtime - Home" name="twitter:title"><meta content="Build fast and solid serverless applications" name="twitter:description"><meta content="The Agile Monkeys" name="twitter:creator"><meta content="https://s3-eu-west-1.amazonaws.com/worldwideapps/assets/tintin-hexcolor &quot;#662480&quot;.png" name="twitter:image"><meta itemprop="og:type" content="website"><meta itemprop="og:site_name" content="theam"><meta itemprop="og:title" content="AWS λ Runtime - Home"><meta itemprop="og:url" content="theam/aws-lambda-haskell-runtime"><meta itemprop="og:image" content="https://s3-eu-west-1.amazonaws.com/worldwideapps/assets/tintin-hexcolor &quot;#662480&quot;.png"><meta itemprop="og:description" content="Build fast and solid serverless applications"><link href="https://fonts.googleapis.com/css?family=Lato|Lato:500" rel="stylesheet"><link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet"><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/tomorrow-night.min.css" rel="stylesheet"><link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css" rel="stylesheet"><link href="https://s3-eu-west-1.amazonaws.com/worldwideapps/assets/favicon-custom.ico" rel="shortcut icon"><link href="https://cdn.jsdelivr.net/npm/katex@0.10.0-alpha/dist/katex.min.css" rel="stylesheet"><style>
+html
+{
+  height     : 100%;
+  min-height : 100%;
+}
+
+body
+{
+  height      : 100%;
+  min-height  : 100%;
+  font-family : "Lato", sans-serif;
+  font-size   : 1em;
+  overflow-x  : hidden;
+}
+
+body a
+{
+  color : rgba(147,101,166,77.0);
+}
+
+body a:hover
+{
+  color : rgba(117,57,140,26.0);
+}
+
+h1
+{
+  font-family : "Lato", sans-serif;
+  font-weight : 500;
+  font-size   : 1em;
+}
+
+h2
+{
+  font-family : "Lato", sans-serif;
+  font-weight : 500;
+  font-size   : 2.44099em;
+}
+
+h3
+{
+  font-family : "Lato", sans-serif;
+  font-weight : 500;
+  font-size   : 5.95848em;
+}
+
+h1
+{
+  font-size : 2.44099em;
+}
+
+h2
+{
+  font-size : 1.953em;
+}
+
+h3
+{
+  font-size : 1.56299em;
+}
+
+blockquote
+{
+  border-left  : solid 4px #dddddd;
+  padding-left : 1rem;
+  color        : #777777;
+}
+
+.next-prev
+{
+  margin-top    : 5%;
+  margin-bottom : 5%;
+}
+
+#header-container
+{
+  margin-top    : 5rem;
+  margin-bottom : 5rem;
+  text-align    : center;
+}
+
+#header-container img
+{
+  max-height : 7rem;
+}
+
+.cover-heading
+{
+  font-size     : 800%;
+  margin-bottom : 1.56299rem;
+}
+
+.cover-container
+{
+  background-color : #662480;
+}
+
+.watermark
+{
+  position    : absolute;
+  top         : 0px;
+  left        : 0px;
+  max-height  : 1.25039rem;
+  margin-top  : 1.25039rem;
+  margin-left : 1.25039rem;
+}
+
+.cover-heading-subtitle
+{
+  margin-top : 3rem;
+  font-size  : 1.953rem;
+  color      : #ffffff;
+}
+
+.vertical-auto
+{
+  margin-top    : auto;
+  margin-bottom : auto;
+}
+
+.content
+{
+  margin-top    : 5%;
+  margin-bottom : 5%;
+}
+
+#wrapper
+{
+  padding-left       : 0px;
+  -webkit-transition : all 0.5s ease 0.0s;
+  -moz-transition    : all 0.5s ease 0.0s;
+  -ms-transition     : all 0.5s ease 0.0s;
+  -o-transition      : all 0.5s ease 0.0s;
+  transition         : all 0.5s ease 0.0s;
+}
+
+#wrapper.toggled
+{
+  padding-left : 250px;
+}
+
+#wrapper.toggled #sidebar-wrapper
+{
+  width : 250px;
+}
+
+#page-content-wrapper#wrapper.toggled
+{
+  position     : absolute;
+  margin-right : -250px;
+}
+
+#page-content-wrapper
+{
+  width      : 100%;
+  position   : absolute;
+  margin-top : 3rem;
+  padding    : 15px 15px 15px 15px;
+}
+
+#page-content-wrapper img
+{
+  max-width : 100%;
+}
+
+#sidebar-wrapper
+{
+  z-index            : 1000;
+  position           : fixed;
+  left               : 250px;
+  width              : 0px;
+  margin-left        : -250px;
+  overflow-y         : hidden;
+  overflow-x         : hidden;
+  -webkit-transition : all 0.5s ease 0.0s;
+  -moz-transition    : all 0.5s ease 0.0s;
+  -ms-transition     : all 0.5s ease 0.0s;
+  -o-transition      : all 0.5s ease 0.0s;
+  transition         : all 0.5s ease 0.0s;
+}
+
+.sidebar-nav
+{
+  position        : absolute;
+  top             : 0px;
+  width           : 250px;
+  margin          : 0px 0px 0px 0px;
+  padding         : 0px 0px 0px 0px;
+  list-style-type : none;
+}
+
+.sidebar-nav li
+{
+  text-indent : 20px;
+  line-height : 40px;
+}
+
+.sidebar-nav li a
+{
+  display         : block;
+  text-decoration : none;
+  font-weight     : bold;
+  color           : rgba(193,167,204,153.0);
+}
+
+.sidebar-nav li a:hover
+{
+  text-decoration : none;
+  color           : rgba(209,189,216,178.0);
+}
+
+.sidebar-nav li .tintin-fg-active
+{
+  color : #ffffff;
+}
+
+#menu-toggle
+{
+  position : absolute;
+}
+
+#menu-toggle img
+{
+  position : absolute;
+  left     : 0px;
+}
+
+#menu-toggle .rotateIn
+{
+  z-index : 999;
+}
+
+.tintin-doc-topbar
+{
+  height : 3rem;
+}
+
+.tintin-doc-topbar a
+{
+  margin-left : 1rem;
+  margin-top  : 0rem;
+  width       : 1.5rem;
+}
+
+.filter-gray
+{
+  position     : relative;
+  bottom       : 3px;
+  margin-left  : 0.25rem;
+  margin-right : 1rem;
+  height       : 1rem;
+}
+
+.footer-theam
+{
+  position    : relative;
+  bottom      : 1px;
+  margin-left : -0.25rem;
+  height      : 1.75rem;
+}
+
+.tintin-doc-footer
+{
+  bottom : 0px;
+  height : -15rem;
+  width  : 100%;
+  color  : rgba(0,0,0,0.3);
+}
+
+.main-container
+{
+  min-height : 100%;
+  position   : relative;
+}
+
+#content
+{
+  min-height : 95%;
+}
+
+.sidebar-nav > .sidebar-brand
+{
+  height         : 3rem;
+  font-size      : 2rem;
+  font-family    : "Lato", sans-serif;
+  font-weight    : 500;
+  padding-top    : 2.5rem;
+  padding-bottom : 2.5rem;
+  margin-bottom  : 1.5rem;
+}
+
+.sidebar-nav > .sidebar-brand img
+{
+  height : 1.5rem;
+}
+
+.tintin-navbar
+{
+  font-weight      : bold;
+  background-color : rgba(132,79,153,51.0);
+}
+
+.tintin-navbar .left-part
+{
+  padding-left : 0px !important;
+}
+
+.tintin-navbar ul
+{
+  margin-top      : 1rem;
+  list-style-type : none;
+}
+
+.tintin-navbar ul li
+{
+  margin-right : 1rem;
+  display      : inline;
+}
+
+.tintin-navbar ul li a
+{
+  color : rgba(193,167,204,153.0);
+}
+
+.tintin-navbar ul li a:hover
+{
+  text-decoration : none;
+  color           : rgba(209,189,216,178.0);
+}
+
+
+.tintin-navbar .tintin-navbar-active a
+{
+  color : #ffffff;
+}
+
+.tintin-navbar .tintin-navbar-active a:hover
+{
+  text-decoration : none;
+  color           : rgba(204,204,204,51.0);
+}
+
+.tintin-bg-70
+{
+  background-color : rgba(132,79,153,51.0);
+}
+
+.tintin-bg-custom
+{
+  background-color : #662480;
+}
+
+.tintin-fg-custom
+{
+  color : #662480;
+}
+
+.tintin-fg-active
+{
+  color : #ffffff;
+}
+
+.tintin-fg-disabled
+{
+  color : #000000;
+}
+
+footer
+{
+  position         : relative;
+  bottom           : 0px;
+  left             : 0px;
+  width            : 100%;
+  padding-top      : 30px;
+  padding-bottom   : 30px;
+  color            : #ffffff;
+  background-color : rgba(132,79,153,51.0);
+  text-align       : center;
+}
+
+footer a
+{
+  color : rgba(193,167,204,153.0);
+}
+
+footer a:hover
+{
+  text-decoration : none;
+  color           : rgba(209,189,216,178.0);
+}
+
+footer .author
+{
+  margin-top : 1.19999em;
+  font-size  : 1.19999em;
+}
+
+footer .site-generated-message
+{
+  font-size     : 0.8em;
+  margin-top    : 3em;
+  margin-bottom : 3em;
+}
+
+.container
+{
+  max-width : 50rem;
+}
+
+@media screen and (min-width: 768px)
+{
+
+#wrapper
+{
+  padding-left : 0px;
+}
+
+#wrapper .toggled
+{
+  padding-left : 250px;
+}
+
+#wrapper .toggled #sidebar-wrapper
+{
+  width : 250px;
+}
+
+#wrapper .toggled #page-content-wrapper
+{
+  position     : relative;
+  margin-right : 0px;
+}
+
+#sidebar-wrapper
+{
+  width : 0px;
+}
+
+#page-content-wrapper
+{
+  padding  : 20px 20px 20px 20px;
+  position : relative;
+}
+
+}
+
+/* Generated with Clay, http://fvisser.nl/clay */</style></head><body class="tintin-fg-black tintin-bg-white"><div class="tintin-navigation tintin-bg-custom"><div class="cover-container d-flex p-3 mx-auto flex-column tintin-fg-white"><main role="main" class="masthead mb-auto"><div class="container"><div class="row align-items-center"><div id="header-container" class="col"><img src="https://i.imgur.com/I64VEiF.png" class="cover-heading"><p class="cover-heading-subtitle">Build fast and solid serverless applications</p></div></div></div></main></div><nav style="width: 100%;" class="tintin-navbar"><div class="container d-flex align-items-center"><div class="mr-auto"><ul class="left-part"><li class="tintin-navbar-active"><a href="index.html" class>Home</a></li><li class><a href="01-getting-started.html" class>Docs</a></li></ul></div><div class><ul class><li class><a href="https://github.com/theam/aws-lambda-haskell-runtime" class>View on GitHub</a></li></ul></div></div></nav></div><section id="content" class="animated fadeIn"><div class="container"><div class="content"><div><h1>Haskell Runtime for AWS Lambda</h1>
+<p><a href="https://circleci.com/gh/theam/aws-lambda-haskell-runtime"><img src="https://circleci.com/gh/theam/aws-lambda-haskell-runtime.svg?style=shield" alt="CircleCI" /></a>
+<a href="http://makeapullrequest.com"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=shield" alt="PRs Welcome" /></a>
+<a href="https://hackage.haskell.org/package/aws-lambda-haskell-runtime"><img src="https://img.shields.io/hackage/v/aws-lambda-haskell-runtime.svg" alt="Hackage version" /></a>
+<a href="https://github.com/ellerbrock/open-source-badges/"><img src="https://badges.frapsoft.com/os/v1/open-source.png?v=103" alt="Open Source Love png1" /></a>
+<a href="https://github.com/ndmitchell/hlint"><img src="https://img.shields.io/badge/code%20style-HLint-brightgreen.svg" alt="Linter" /></a></p>
+<p><strong>aws-lambda-haskell-runtime</strong> allows you to use Haskell as a first-class citizen of AWS Lambda. It allows you to deploy projects built with Haskell, and select the handler as you would do with Node.js. It discovers which modules of the project implement a handler for AWS, and generates a dispatcher dynamically, so you don&#39;t have to worry about wiring the lambda calls, as it uses the
+handler name specified in the AWS Lambda console.</p>
+<p>It makes deploying Haskell code to AWS very easy:</p>
+<pre class="haskell"><code>module WordCount where
+
+import Aws.Lambda
+
+handler :: String -&gt; Context () -&gt; IO (Either String Int)
+handler someText _ = do
+  let wordsCount = length (words someText)
+  if wordsCount &gt; 0 then
+    pure (Right wordsCount)
+  else
+    pure (Left &quot;Sorry, your text was empty&quot;)
+</code></pre>
+<p>Then, in the <code>Main</code> module:</p>
+<pre class="haskell"><code>import Aws.Lambda
+import qualified WordCount
+
+initializeContext :: IO ()
+initializeContext = return ()
+
+generateLambdaDispatcher StandaloneLambda defaultDispatcherOptions
+</code></pre>
+<h1>Performance</h1>
+<p>Performance is overall good, meaning that it faster than Java apps on AWS Lambda, but still not as fast as Node.js:</p>
+<p><style>
+table, th, td {
+margin: 0 auto;
+border: 1px solid black;
+padding: 4px;
+}
+</style>
+<table>
+<thead>
+<tr>
+<th><strong>Runtime</strong></th>
+<th><strong>Best Cold Start</strong></th>
+<th><strong>Worst Cold Start</strong></th>
+<th><strong>execution time</strong></th>
+<th><strong>Max memory used</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Haskell</strong></td>
+<td>60.30 ms</td>
+<td>98.38 ms</td>
+<td>0.86 ms</td>
+<td><strong>48 MB</strong></td>
+</tr>
+<tr>
+<td><strong>Java</strong></td>
+<td>790 ms</td>
+<td>812 ms</td>
+<td>0.89 ms</td>
+<td>109 MB</td>
+</tr>
+<tr>
+<td><strong>Node.js</strong></td>
+<td>3.85 ms</td>
+<td>43.8 ms</td>
+<td>0.26 ms</td>
+<td>66 MB</td>
+</tr>
+</tbody>
+</table>
+<br/></p>
+<h1>A bit of background</h1>
+<p>We were there when <a href="https://twitter.com/Werner">Werner Vogels</a> announced the new custom lambda runtimes on stage, and we couldn’t have been more excited. It was definitely one of our favorite announcements that morning. We have been trying Haskell (and other flavors of Haskell, like Eta and PureScript) on AWS lambda since we started working on Serverless more than a year ago. From the beginning we felt like Haskell fit like a glove in AWS Lambda — it produces fast and reliable binaries and it’s a pure functional language! There’s nothing like a pure functional language to write Lambda Functions, right?</p>
+<p>Well, the reality is that Haskell didn’t work as well as the supported languages did. We had to apply ugly hacks to make it work, like compiling an executable/dynamic library and then wrapping it around in a Node.js module that performed a native call. We always ended up switching to TypeScript or other better supported languages for production projects. But now since AWS started supporting <a href="https://docs.aws.amazon.com/lambda/latest/dg/runtimes-custom.html">custom lambda runtimes</a>, that’s all in the past!</p>
+<p>Excited as we are? Keep reading! 👇</p>
+</div></div></div></section><div class="row next-prev"><div class="col-md-4 ml-auto"><a href="01-getting-started.html">Next: Getting Started &gt;</a></div></div><footer><div class="container"><div class="row"><div class="col"><p class="author">Developed by <a href="https://www.theagilemonkeys.com" target="blank">The Agile Monkeys</a></p><p class="site-generated-message">Site generated with <a href="https://theam.github.io/tintin" class="tintin-logo"><img src="https://s3-eu-west-1.amazonaws.com/worldwideapps/assets/logo.svg" class="filter-gray"></a><span>&mdash; &copy; 2019 </span><a href="https://www.theagilemonkeys.com">The Agile Monkeys</a></p></div></div></div></footer><script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script><script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/haskell.min.js"></script><script src="https://cdn.rawgit.com/icons8/bower-webicon/v0.10.7/jquery-webicon.min.js"></script><script>hljs.initHighlightingOnLoad()</script><script>$(function () {$("#menu-toggle").click(function(e) {e.preventDefault();$("#wrapper").toggleClass("toggled");$("#menu-toggle img").toggleClass("rotateIn rotateOut");})});</script><script src="https://cdn.jsdelivr.net/npm/katex@0.10.0-alpha/dist/katex.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0/contrib/auto-render.min.js"></script><script>renderMathInElement(document.body);</script></body></html>
