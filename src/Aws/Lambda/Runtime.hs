@@ -17,11 +17,12 @@ import qualified Aws.Lambda.Runtime.Context as Context
 import qualified Aws.Lambda.Runtime.Environment as Environment
 import qualified Aws.Lambda.Runtime.Error as Error
 import qualified Aws.Lambda.Runtime.Publish as Publish
+import Aws.Lambda.Runtime.StandaloneLambda.Types (StandaloneLambdaResponseBody (..))
 import qualified Control.Exception as Unchecked
 import Control.Exception.Safe.Checked (Throws, catch, throw)
 import qualified Control.Exception.Safe.Checked as Checked
 import Control.Monad (forever)
-import Data.Aeson (ToJSON (toJSON))
+import Data.Aeson (encode)
 import Data.IORef (newIORef)
 import Data.Text (Text, unpack)
 import qualified Network.HTTP.Client as Http
@@ -94,12 +95,14 @@ invokeWithCallback callback event context = do
   flushOutput
   case result of
     Left lambdaError -> case lambdaError of
-      Runtime.StandaloneLambdaError err ->
-        throw $ Error.Invocation $ toJSON err
+      Runtime.StandaloneLambdaError (StandaloneLambdaResponseBodyPlain err) ->
+        throw $ Error.Invocation $ encode err
+      Runtime.StandaloneLambdaError (StandaloneLambdaResponseBodyJson err) ->
+        throw $ Error.Invocation err
       Runtime.APIGatewayLambdaError err ->
-        throw $ Error.Invocation $ toJSON err
+        throw $ Error.Invocation $ encode err
       Runtime.ALBLambdaError err ->
-        throw $ Error.Invocation $ toJSON err
+        throw $ Error.Invocation $ encode err
     Right value ->
       pure value
 
