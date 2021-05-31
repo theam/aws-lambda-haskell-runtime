@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.3.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
 
@@ -46,7 +46,16 @@ library
       Paths_aws_lambda_haskell_runtime
   hs-source-dirs:
       src
-  default-extensions: TemplateHaskell OverloadedStrings RecordWildCards ScopedTypeVariables DeriveGeneric TypeApplications FlexibleContexts DeriveAnyClass QuasiQuotes
+  default-extensions:
+      TemplateHaskell
+      OverloadedStrings
+      RecordWildCards
+      ScopedTypeVariables
+      DeriveGeneric
+      TypeApplications
+      FlexibleContexts
+      DeriveAnyClass
+      QuasiQuotes
   ghc-options: -Wall -optP-Wno-nonportable-include-path -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Widentities -Wredundant-constraints -Wmissing-export-lists -Wpartial-fields -fhide-source-paths -freverse-errors
   build-depends:
       aeson
@@ -73,7 +82,16 @@ test-suite aws-lambda-haskell-runtime-test
       Paths_aws_lambda_haskell_runtime
   hs-source-dirs:
       test
-  default-extensions: TemplateHaskell OverloadedStrings RecordWildCards ScopedTypeVariables DeriveGeneric TypeApplications FlexibleContexts DeriveAnyClass QuasiQuotes
+  default-extensions:
+      TemplateHaskell
+      OverloadedStrings
+      RecordWildCards
+      ScopedTypeVariables
+      DeriveGeneric
+      TypeApplications
+      FlexibleContexts
+      DeriveAnyClass
+      QuasiQuotes
   ghc-options: -Wall -optP-Wno-nonportable-include-path -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Widentities -Wredundant-constraints -Wmissing-export-lists -Wpartial-fields -fhide-source-paths -freverse-errors -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5

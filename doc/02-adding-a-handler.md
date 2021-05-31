@@ -10,7 +10,7 @@ If you have used the Stack template, you will have a handler that is pre-defined
 
 First, we need to enable some language extensions in order to make working with JSON easier. We'll also import a few required modules:
 
-```haskell
+```haskell top
 {-# LANGUAGE DeriveGeneric  #-}
 {-# LANGUAGE DeriveAnyClass #-}
 
