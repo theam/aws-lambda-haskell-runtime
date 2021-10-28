@@ -8,6 +8,8 @@ module Aws.Lambda.Runtime
     Runtime.LambdaResult (..),
     Runtime.ApiGatewayDispatcherOptions (..),
     Error.Parsing (..),
+    StandaloneLambdaResponseBody(..),
+    toStandaloneLambdaResponse,
   )
 where
 
@@ -17,7 +19,10 @@ import qualified Aws.Lambda.Runtime.Context as Context
 import qualified Aws.Lambda.Runtime.Environment as Environment
 import qualified Aws.Lambda.Runtime.Error as Error
 import qualified Aws.Lambda.Runtime.Publish as Publish
-import Aws.Lambda.Runtime.StandaloneLambda.Types (StandaloneLambdaResponseBody (..))
+import Aws.Lambda.Runtime.StandaloneLambda.Types
+    ( StandaloneLambdaResponseBody (..)
+    , toStandaloneLambdaResponse
+    )
 import qualified Control.Exception as Unchecked
 import Control.Exception.Safe.Checked (Throws, catch, throw)
 import qualified Control.Exception.Safe.Checked as Checked
