@@ -78,6 +78,8 @@ SHELL ["/bin/bash", "--rcfile", "~/.profile", "-c"]
 
 USER root
 
+RUN yum update -y ca-certificates
+
 # Installing Haskell Stack
 RUN curl -sSL https://get.haskellstack.org/ | sh
 
