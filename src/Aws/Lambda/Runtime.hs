@@ -43,12 +43,14 @@ runLambda initializeCustomContext callback = do
     -- Purposefully shadowing to prevent using the initial "empty" context
     context <- Context.setEventData context event
 
-    ( ( ( invokeAndRun callback manager lambdaApi event context
-            `Checked.catch` \err -> Publish.parsingError err lambdaApi context manager
+    ( ( ( ( invokeAndRun callback manager lambdaApi event context
+              `Checked.catch` \err -> Publish.parsingError err lambdaApi context manager
+          )
+            `Checked.catch` \err -> Publish.invocationError err lambdaApi context manager
         )
-          `Checked.catch` \err -> Publish.invocationError err lambdaApi context manager
+          `Checked.catch` \(err :: Error.EnvironmentVariableNotSet) -> Publish.runtimeInitError err lambdaApi context manager
       )
-        `Checked.catch` \(err :: Error.EnvironmentVariableNotSet) -> Publish.runtimeInitError err lambdaApi context manager
+        `Unchecked.catch` \(err :: Error.HandlerNotFound) -> Publish.handlerNotFoundError err lambdaApi context manager
       )
       `Unchecked.catch` \err -> Publish.invocationError err lambdaApi context manager
 

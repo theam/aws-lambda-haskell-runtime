@@ -2,6 +2,7 @@
 module Aws.Lambda.Runtime.Error
   ( EnvironmentVariableNotSet (..),
     Parsing (..),
+    HandlerNotFound (..),
     Invocation (..),
   )
 where
@@ -34,6 +35,16 @@ instance ToJSON Parsing where
     object
       [ "errorType" .= ("Parsing" :: Text),
         "errorMessage" .= ("Could not parse '" <> valueName <> "': " <> errorMessage)
+      ]
+
+newtype HandlerNotFound = HandlerNotFound Text
+  deriving (Show, Exception)
+
+instance ToJSON HandlerNotFound where
+  toJSON (HandlerNotFound handler) =
+    object
+      [ "errorType" .= ("Runtime.HandlerNotFound" :: Text),
+        "errorMessage" .= ("Could not find handler '" <> handler <> "'.")
       ]
 
 newtype Invocation
