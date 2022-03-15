@@ -4,6 +4,8 @@ module Aws.Lambda.Runtime.Error
     Parsing (..),
     HandlerNotFound (..),
     Invocation (..),
+    ErrorType (..),
+    toReadableType
   )
 where
 
@@ -50,3 +52,9 @@ instance ToJSON HandlerNotFound where
 newtype Invocation
   = Invocation LBS.ByteString
   deriving (Show, Exception)
+
+data ErrorType = InvocationError | InitializationError
+
+toReadableType :: ErrorType -> Text
+toReadableType InvocationError = "Invocation Error"
+toReadableType InitializationError = "Initialization Error"

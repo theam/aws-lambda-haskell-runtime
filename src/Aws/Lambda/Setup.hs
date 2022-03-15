@@ -43,7 +43,7 @@ import Aws.Lambda.Runtime.Common
     RawEventObject,
   )
 import Aws.Lambda.Runtime.Configuration
-  ( DispatcherOptions (apiGatewayDispatcherOptions),
+  ( DispatcherOptions (apiGatewayDispatcherOptions, DispatcherOptions, errorLogger),
   )
 import Aws.Lambda.Runtime.Context (Context)
 import Aws.Lambda.Runtime.StandaloneLambda.Types
@@ -114,9 +114,9 @@ runLambdaHaskellRuntime ::
   (forall a. m a -> IO a) ->
   HandlersM handlerType m context request response error () ->
   IO ()
-runLambdaHaskellRuntime options initializeContext mToIO initHandlers = do
+runLambdaHaskellRuntime options@DispatcherOptions{errorLogger=logger} initializeContext mToIO initHandlers = do
   handlers <- fmap snd . flip runStateT HM.empty . runHandlersM $ initHandlers
-  runLambda initializeContext (run options mToIO handlers)
+  runLambda logger initializeContext (run options mToIO handlers)
 
 run ::
   RuntimeContext handlerType m context request response error =>

@@ -2,6 +2,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_GHC -fno-warn-name-shadowing #-}
+{-# LANGUAGE RankNTypes #-}
 
 module Aws.Lambda.Runtime
   ( runLambda,
@@ -27,11 +28,12 @@ import Data.IORef (newIORef)
 import Data.Text (Text, unpack)
 import qualified Network.HTTP.Client as Http
 import System.IO (hFlush, stderr, stdout)
+import Aws.Lambda.Runtime.Configuration ( flushOutput, ErrorLogger )
 
 -- | Runs the user @haskell_lambda@ executable and posts back the
 -- results. This is called from the layer's @main@ function.
-runLambda :: forall context handlerType. IO context -> Runtime.RunCallback handlerType context -> IO ()
-runLambda initializeCustomContext callback = do
+runLambda :: forall context handlerType. ErrorLogger -> IO context -> Runtime.RunCallback handlerType context -> IO ()
+runLambda logger initializeCustomContext callback = do
   manager <- Http.newManager httpManagerSettings
   customContext <- initializeCustomContext
   customContextRef <- newIORef customContext
@@ -43,16 +45,16 @@ runLambda initializeCustomContext callback = do
     -- Purposefully shadowing to prevent using the initial "empty" context
     context <- Context.setEventData context event
 
-    ( ( ( ( invokeAndRun callback manager lambdaApi event context
-              `Checked.catch` \err -> Publish.parsingError err lambdaApi context manager
+    ( ( ( ( invokeAndRun logger callback manager lambdaApi event context
+              `Checked.catch` \err -> Publish.parsingError logger err lambdaApi context manager
           )
-            `Checked.catch` \err -> Publish.invocationError err lambdaApi context manager
+            `Checked.catch` \err -> Publish.invocationError logger err lambdaApi context manager
         )
-          `Checked.catch` \(err :: Error.EnvironmentVariableNotSet) -> Publish.runtimeInitError err lambdaApi context manager
+          `Checked.catch` \(err :: Error.EnvironmentVariableNotSet) -> Publish.runtimeInitError logger err lambdaApi context manager
       )
-        `Unchecked.catch` \(err :: Error.HandlerNotFound) -> Publish.handlerNotFoundError err lambdaApi context manager
+        `Unchecked.catch` \(err :: Error.HandlerNotFound) -> Publish.handlerNotFoundError logger err lambdaApi context manager
       )
-      `Unchecked.catch` \err -> Publish.invocationError err lambdaApi context manager
+      `Unchecked.catch` \err -> Publish.invocationError logger err lambdaApi context manager
 
 httpManagerSettings :: Http.ManagerSettings
 httpManagerSettings =
@@ -64,17 +66,18 @@ httpManagerSettings =
 invokeAndRun ::
   Throws Error.Invocation =>
   Throws Error.EnvironmentVariableNotSet =>
+  ErrorLogger ->
   Runtime.RunCallback handlerType context ->
   Http.Manager ->
   Text ->
   ApiInfo.Event ->
   Context.Context context ->
   IO ()
-invokeAndRun callback manager lambdaApi event context = do
+invokeAndRun logger callback manager lambdaApi event context = do
   result <- invokeWithCallback callback event context
 
   Publish.result result lambdaApi context manager
-    `catch` \err -> Publish.invocationError err lambdaApi context manager
+    `catch` \err -> Publish.invocationError logger err lambdaApi context manager
 
 invokeWithCallback ::
   Throws Error.Invocation =>
@@ -115,9 +118,3 @@ variableNotSet (Error.EnvironmentVariableNotSet env) =
 errorParsing :: Error.Parsing -> IO a
 errorParsing Error.Parsing {..} =
   error ("Failed parsing " <> unpack errorMessage <> ", got" <> unpack actualValue)
-
--- | Flush standard output ('stdout') and standard error output ('stderr') handlers
-flushOutput :: IO ()
-flushOutput = do
-  hFlush stdout
-  hFlush stderr
