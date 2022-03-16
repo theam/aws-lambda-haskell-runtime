@@ -192,7 +192,6 @@ handlerToCallback dispatcherOptions rawEventObject context handlerToCall =
             Left err -> albErr 400 . toALBResponseBody . Text.pack . show $ err
 
     handleError (exception :: SomeException) = do
-      liftIO $ hPutStr stderr . show $ exception
       case handlerToCall of
         StandaloneLambdaHandler _ ->
           return . Left . StandaloneLambdaError . toStandaloneLambdaResponse . Text.pack . show $ exception
