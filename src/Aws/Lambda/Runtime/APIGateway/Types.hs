@@ -100,15 +100,15 @@ data ApiGatewayRequestContext = ApiGatewayRequestContext
   { apiGatewayRequestContextResourceId :: !Text,
     apiGatewayRequestContextResourcePath :: !Text,
     apiGatewayRequestContextHttpMethod :: !Text,
-    apiGatewayRequestContextExtendedRequestId :: !Text,
+    apiGatewayRequestContextExtendedRequestId :: !(Maybe Text),
     apiGatewayRequestContextRequestTime :: !Text,
     apiGatewayRequestContextPath :: !Text,
     apiGatewayRequestContextAccountId :: !Text,
     apiGatewayRequestContextProtocol :: !Text,
     apiGatewayRequestContextStage :: !Text,
-    apiGatewayRequestContextDomainPrefix :: !Text,
+    apiGatewayRequestContextDomainPrefix :: !(Maybe Text),
     apiGatewayRequestContextRequestId :: !Text,
-    apiGatewayRequestContextDomainName :: !Text,
+    apiGatewayRequestContextDomainName :: !(Maybe Text),
     apiGatewayRequestContextApiId :: !Text,
     apiGatewayRequestContextIdentity :: !ApiGatewayRequestContextIdentity,
     apiGatewayRequestContextAuthorizer :: !(Maybe Value)
@@ -121,15 +121,15 @@ instance FromJSON ApiGatewayRequestContext where
       <$> v .: "resourceId"
       <*> v .: "path"
       <*> v .: "httpMethod"
-      <*> v .: "extendedRequestId"
+      <*> v .:? "extendedRequestId"
       <*> v .: "requestTime"
       <*> v .: "path"
       <*> v .: "accountId"
       <*> v .: "protocol"
       <*> v .: "stage"
-      <*> v .: "domainPrefix"
+      <*> v .:? "domainPrefix"
       <*> v .: "requestId"
-      <*> v .: "domainName"
+      <*> v .:? "domainName"
       <*> v .: "apiId"
       <*> v .: "identity"
       <*> v .:? "authorizer"
@@ -156,11 +156,11 @@ instance FromJSON ApiGatewayRequestContextIdentity where
     ApiGatewayRequestContextIdentity
       <$> v .: "cognitoIdentityPoolId"
       <*> v .: "accountId"
-      <*> v .: "cognitoIdentityId"
+      <*> v .:? "cognitoIdentityId"
       <*> v .: "caller"
       <*> v .: "sourceIp"
-      <*> v .: "principalOrgId"
-      <*> v .: "accessKey"
+      <*> v .:? "principalOrgId"
+      <*> v .:? "accessKey"
       <*> v .: "cognitoAuthenticationType"
       <*> v .: "cognitoAuthenticationProvider"
       <*> v .: "userArn"
