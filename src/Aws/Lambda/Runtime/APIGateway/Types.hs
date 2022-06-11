@@ -29,6 +29,7 @@ import Data.Aeson
     (.:?)
   )
 import Data.Aeson.Types (Parser)
+import qualified Data.Aeson.Key as K
 import qualified Data.Aeson.Types as T
 import qualified Data.CaseInsensitive as CI
 import Data.HashMap.Strict (HashMap)
@@ -70,7 +71,7 @@ instance FromJSON body => FromJSON (ApiGatewayRequest body) where
   parseJSON = parseApiGatewayRequest parseObjectFromStringField
 
 -- We need this because API Gateway is going to send us the payload as a JSON string
-parseObjectFromStringField :: FromJSON a => Object -> Text -> Parser (Maybe a)
+parseObjectFromStringField :: FromJSON a => Object -> T.Key -> Parser (Maybe a)
 parseObjectFromStringField obj fieldName = do
   fieldContents <- obj .: fieldName
   case fieldContents of
@@ -81,7 +82,7 @@ parseObjectFromStringField obj fieldName = do
     Null -> pure Nothing
     other -> T.typeMismatch "String or Null" other
 
-parseApiGatewayRequest :: (Object -> Text -> Parser (Maybe body)) -> Value -> Parser (ApiGatewayRequest body)
+parseApiGatewayRequest :: (Object -> T.Key -> Parser (Maybe body)) -> Value -> Parser (ApiGatewayRequest body)
 parseApiGatewayRequest bodyParser (Object v) =
   ApiGatewayRequest
     <$> v .: "resource"
@@ -215,5 +216,5 @@ mkApiGatewayResponse code headers payload =
 headerToPair :: Header -> T.Pair
 headerToPair (cibyte, bstr) = k .= v
   where
-    k = (T.decodeUtf8 . CI.original) cibyte
+    k = (K.fromText . T.decodeUtf8 . CI.original) cibyte
     v = T.decodeUtf8 bstr
