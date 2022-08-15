@@ -4,7 +4,6 @@
 {-# LANGUAGE GeneralisedNewtypeDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-
 module Aws.Lambda.Runtime.APIGateway.Types
   ( ApiGatewayRequest (..),
     ApiGatewayRequestContext (..),
