@@ -3,7 +3,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralisedNewtypeDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 
 module Aws.Lambda.Runtime.APIGateway.Types
