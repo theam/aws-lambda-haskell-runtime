@@ -20,12 +20,14 @@ import Data.Aeson
     KeyValue ((.=)),
     Object,
     ToJSON (toJSON),
+    Key,
     Value (Null, Object, String),
     eitherDecodeStrict,
     object,
     (.:),
   )
 import Data.Aeson.Types (Parser)
+import Data.Aeson.Key (fromText)
 import qualified Data.Aeson.Types as T
 import qualified Data.CaseInsensitive as CI
 import Data.HashMap.Strict (HashMap)
@@ -59,7 +61,7 @@ instance FromJSON body => FromJSON (ALBRequest body) where
   parseJSON = parseALBRequest parseObjectFromStringField
 
 -- We need this because API Gateway is going to send us the payload as a JSON string
-parseObjectFromStringField :: FromJSON a => Object -> Text -> Parser (Maybe a)
+parseObjectFromStringField :: FromJSON a => Object -> Key -> Parser (Maybe a)
 parseObjectFromStringField obj fieldName = do
   fieldContents <- obj .: fieldName
   case fieldContents of
@@ -70,7 +72,7 @@ parseObjectFromStringField obj fieldName = do
     Null -> pure Nothing
     other -> T.typeMismatch "String or Null" other
 
-parseALBRequest :: (Object -> Text -> Parser (Maybe body)) -> Value -> Parser (ALBRequest body)
+parseALBRequest :: (Object -> Key -> Parser (Maybe body)) -> Value -> Parser (ALBRequest body)
 parseALBRequest bodyParser (Object v) =
   ALBRequest
     <$> v .: "path"
@@ -167,5 +169,5 @@ mkALBResponse code headers payload =
 headerToPair :: Header -> T.Pair
 headerToPair (cibyte, bstr) = k .= v
   where
-    k = (T.decodeUtf8 . CI.original) cibyte
+    k = fromText $ (T.decodeUtf8 . CI.original) cibyte
     v = T.decodeUtf8 bstr
