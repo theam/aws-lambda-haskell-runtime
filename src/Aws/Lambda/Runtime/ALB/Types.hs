@@ -25,6 +25,7 @@ import Data.Aeson
     object,
     (.:),
   )
+import Data.Aeson.Key (fromText) 
 import Data.Aeson.Types (Parser)
 import qualified Data.Aeson.Types as T
 import qualified Data.CaseInsensitive as CI
@@ -50,10 +51,11 @@ data ALBRequest body = ALBRequest
 -- We special case String and Text in order
 -- to avoid unneeded encoding which will wrap them in quotes and break parsing
 instance {-# OVERLAPPING #-} FromJSON (ALBRequest Text) where
-  parseJSON = parseALBRequest (.:)
+  parseJSON = parseALBRequest (\ obj text -> obj .: (fromText text) )
 
 instance {-# OVERLAPPING #-} FromJSON (ALBRequest String) where
-  parseJSON = parseALBRequest (.:)
+  parseJSON = parseALBRequest (\ obj text -> obj .: (fromText text) )
+
 
 instance FromJSON body => FromJSON (ALBRequest body) where
   parseJSON = parseALBRequest parseObjectFromStringField
@@ -61,7 +63,7 @@ instance FromJSON body => FromJSON (ALBRequest body) where
 -- We need this because API Gateway is going to send us the payload as a JSON string
 parseObjectFromStringField :: FromJSON a => Object -> Text -> Parser (Maybe a)
 parseObjectFromStringField obj fieldName = do
-  fieldContents <- obj .: fieldName
+  fieldContents <- obj .: (fromText fieldName)
   case fieldContents of
     String stringContents ->
       case eitherDecodeStrict (T.encodeUtf8 stringContents) of
@@ -165,7 +167,7 @@ mkALBResponse code headers payload =
     codeDescription other = tshow other
 
 headerToPair :: Header -> T.Pair
-headerToPair (cibyte, bstr) = k .= v
+headerToPair (cibyte, bstr) = (fromText k) .= v
   where
     k = (T.decodeUtf8 . CI.original) cibyte
     v = T.decodeUtf8 bstr

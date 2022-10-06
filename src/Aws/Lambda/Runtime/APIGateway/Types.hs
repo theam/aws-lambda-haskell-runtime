@@ -28,6 +28,7 @@ import Data.Aeson
     (.:),
     (.:?)
   )
+import Data.Aeson.Key (fromText) 
 import Data.Aeson.Types (Parser)
 import qualified Data.Aeson.Types as T
 import qualified Data.CaseInsensitive as CI
@@ -37,6 +38,7 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import GHC.Generics (Generic)
 import Network.HTTP.Types (Header, ResponseHeaders)
+
 
 -- | API Gateway specific dispatcher options
 newtype ApiGatewayDispatcherOptions = ApiGatewayDispatcherOptions
@@ -58,13 +60,16 @@ data ApiGatewayRequest body = ApiGatewayRequest
   }
   deriving (Show)
 
+
+
 -- We special case String and Text in order
 -- to avoid unneeded encoding which will wrap them in quotes and break parsing
 instance {-# OVERLAPPING #-} FromJSON (ApiGatewayRequest Text) where
-  parseJSON = parseApiGatewayRequest (.:)
+  parseJSON = parseApiGatewayRequest (\ obj text -> obj .: (fromText text) )
 
 instance {-# OVERLAPPING #-} FromJSON (ApiGatewayRequest String) where
-  parseJSON = parseApiGatewayRequest (.:)
+  parseJSON = parseApiGatewayRequest (\ obj text -> obj .: (fromText text) )
+
 
 instance FromJSON body => FromJSON (ApiGatewayRequest body) where
   parseJSON = parseApiGatewayRequest parseObjectFromStringField
@@ -72,7 +77,7 @@ instance FromJSON body => FromJSON (ApiGatewayRequest body) where
 -- We need this because API Gateway is going to send us the payload as a JSON string
 parseObjectFromStringField :: FromJSON a => Object -> Text -> Parser (Maybe a)
 parseObjectFromStringField obj fieldName = do
-  fieldContents <- obj .: fieldName
+  fieldContents <- obj .: (fromText fieldName)
   case fieldContents of
     String stringContents ->
       case eitherDecodeStrict (T.encodeUtf8 stringContents) of
@@ -80,6 +85,10 @@ parseObjectFromStringField obj fieldName = do
         Left err -> fail err
     Null -> pure Nothing
     other -> T.typeMismatch "String or Null" other
+
+
+
+
 
 parseApiGatewayRequest :: (Object -> Text -> Parser (Maybe body)) -> Value -> Parser (ApiGatewayRequest body)
 parseApiGatewayRequest bodyParser (Object v) =
@@ -215,5 +224,5 @@ mkApiGatewayResponse code headers payload =
 headerToPair :: Header -> T.Pair
 headerToPair (cibyte, bstr) = k .= v
   where
-    k = (T.decodeUtf8 . CI.original) cibyte
+    k = fromText $ (T.decodeUtf8 . CI.original) cibyte
     v = T.decodeUtf8 bstr
