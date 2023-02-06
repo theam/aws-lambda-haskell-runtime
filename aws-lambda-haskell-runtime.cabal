@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.4.
+-- This file has been generated from package.yaml by hpack version 0.35.1.
 --
 -- see: https://github.com/sol/hpack
 
@@ -13,7 +13,7 @@ homepage:       https://github.com/theam/aws-lambda-haskell-runtime#readme
 bug-reports:    https://github.com/theam/aws-lambda-haskell-runtime/issues
 author:         Nikita Tchayka
 maintainer:     hackers@theagilemonkeys.com
-copyright:      2021 The Agile Monkeys SL
+copyright:      2023 The Agile Monkeys SL
 license:        Apache-2.0
 license-file:   LICENSE
 build-type:     Simple
