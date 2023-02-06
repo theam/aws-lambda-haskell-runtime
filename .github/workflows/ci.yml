@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,3 +18,25 @@ jobs:
         with:
           ghc-version: 9.0.2
           stack-version: 2.9.3
+
+      # Attempt to load cached dependencies
+      - name: Cache Stack dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.stack
+            .stack-work
+          key: ${{ runner.os }}-stack-${{ hashFiles('stack.yaml') }}
+
+      - name: Build and test
+        run: |
+          stack build --test --no-run-tests --bench --no-run-benchmarks --haddock --no-haddock-deps --no-haddock-hyperlink-source --fast
+
+      # Save cached dependencies
+      - name: Cache Stack dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.stack
+            .stack-work
+          key: ${{ runner.os }}-stack-${{ hashFiles('stack.yaml') }}
