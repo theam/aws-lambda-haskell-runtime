@@ -40,8 +40,8 @@ jobs:
 
       - name: Publish to Hackage
         run: |
-          export $HACKAGE_USERNAME="${{ secrets.HACKAGE_USERNAME }}}}"
-          export $HACKAGE_PASSWORD="${{ secrets.HACKAGE_PASSWORD }}}}}}"
+          export HACKAGE_USERNAME="${{ secrets.HACKAGE_USERNAME }}}}"
+          export HACKAGE_PASSWORD="${{ secrets.HACKAGE_PASSWORD }}}}}}"
           stack upload .
 
       - name: Push changes
