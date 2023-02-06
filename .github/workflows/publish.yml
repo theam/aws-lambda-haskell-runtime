@@ -39,10 +39,10 @@ jobs:
           fi
 
       - name: Publish to Hackage
-        run: stack upload .
-        env:
-          HACKAGE_USERNAME: ${{ secrets.HACKAGE_USERNAME }}
-          HACKAGE_PASSWORD: ${{ secrets.HACKAGE_PASSWORD }}
+        run: |
+          export $HACKAGE_USERNAME="${{ secrets.HACKAGE_USERNAME }}}}"
+          export $HACKAGE_PASSWORD="${{ secrets.HACKAGE_PASSWORD }}}}}}"
+          stack upload .
 
       - name: Push changes
         uses: ad-m/github-push-action@master
