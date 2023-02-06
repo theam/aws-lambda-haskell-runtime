@@ -40,10 +40,7 @@ jobs:
 
       - name: Publish to Hackage
         run: |
-          echo "publishing to hackage"
-          echo "username: $HACKAGE_USERNAME"
-          echo "password: $HACKAGE_PASSWORD"
-          echo "$HACKAGE_PASSWORD" | stack publish --username "$HACKAGE_USERNAME" --password-stdin
+          echo "$HACKAGE_PASSWORD" | stack upload . --username "$HACKAGE_USERNAME" --password-stdin
 
       - name: Push changes
         uses: ad-m/github-push-action@master
