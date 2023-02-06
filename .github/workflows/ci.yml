@@ -1,39 +1,43 @@
-name: CI
+name: Build & test
 
 on:
   pull_request:
-  push:
-    branches: [master]
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    steps:
-    
-    # Needed for the add-path command
-    - name: ACTIONS_ALLOW_UNSECURE_COMMANDS
-      id: ACTIONS_ALLOW_UNSECURE_COMMANDS
-      run: echo 'ACTIONS_ALLOW_UNSECURE_COMMANDS=true' >> $GITHUB_ENV
-    
-    - uses: actions/checkout@v1
-    
-    - uses: mstksg/setup-stack@v1
-    
-    - uses: actions/cache@v1
-      name: Cache ~/.stack
-      with:
-        path: ~/.stack
-        key: ${{ runner.os }}-stack-${{ hashFiles('stack.yaml') }}
-        restore-keys: |
-          ${{ runner.os }}-stack-
 
-    - uses: actions/cache@v1
-      name: Cache .stack-work
-      with:
-        path: .stack-work
-        key: ${{ runner.os }}-stack-work-${{ hashFiles('stack.yaml') }}-${{ hashFiles('**/*.hs') }}
-        restore-keys: |
-          ${{ runner.os }}-stack-work-
-    
-    - name: Compile with Stack
-      run: stack test --fast
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - uses: haskell/actions/setup@v2
+        with:
+          ghc-version: "9.0.2" # Exact version of ghc to use
+          # cabal-version: 'latest'. Omitted, but defaults to 'latest'
+          enable-stack: true
+          stack-version: "2.9.3"
+
+      # Attempt to load cached dependencies
+      - name: Cache Stack dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.stack
+            .stack-work
+          key: ${{ runner.os }}-stack-${{ hashFiles('stack.yaml') }}
+
+      - name: Build and test
+        run: |
+          stack build --test --no-run-tests --bench --no-run-benchmarks --haddock --no-haddock-deps --no-haddock-hyperlink-source --fast
+
+      # Save cached dependencies
+      - name: Cache Stack dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.stack
+            .stack-work
+          key: ${{ runner.os }}-stack-${{ hashFiles('stack.yaml') }}

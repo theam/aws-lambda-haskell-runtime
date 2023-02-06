@@ -4,7 +4,7 @@ github: "theam/aws-lambda-haskell-runtime"
 license: Apache-2.0
 author: Nikita Tchayka
 maintainer: hackers@theagilemonkeys.com
-copyright: 2021 The Agile Monkeys SL
+copyright: 2023 The Agile Monkeys SL
 
 extra-source-files:
   - README.md
@@ -18,7 +18,7 @@ dependencies:
 
 library:
   dependencies:
-    - aeson
+    - aeson > 2
     - bytestring
     - http-client
     - http-types

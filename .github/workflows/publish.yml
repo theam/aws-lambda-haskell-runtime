@@ -1,0 +1,54 @@
+name: Publish Package
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  HACKAGE_USERNAME: ${{ secrets.HACKAGE_USERNAME }}
+  HACKAGE_PASSWORD: ${{ secrets.HACKAGE_PASSWORD }}
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Stack
+        uses: actions/setup-haskell@v1
+        with:
+          ghc-version: 8.10.2
+          stack-version: 2.5.1
+
+      - name: Bump version field
+        run: |
+          if grep -q "feat" <<< "$GITHUB_REF"; then
+            echo "feat: bumping minor version"
+            stack exec bump-version minor package.yaml
+          elif grep -q "fix" <<< "$GITHUB_REF"; then
+            echo "fix: bumping patch version"
+            stack exec bump-version patch package.yaml
+          elif grep -q "breaking" <<< "$GITHUB_REF"; then
+            echo "breaking: bumping major version"
+            stack exec bump-version major package.yaml
+          else
+            echo "no version bump required"
+          fi
+
+      - name: Publish to Hackage
+        run: |
+          echo "publishing to hackage"
+          echo "username: $HACKAGE_USERNAME"
+          echo "password: $HACKAGE_PASSWORD"
+          echo "$HACKAGE_PASSWORD" | stack publish --username "$HACKAGE_USERNAME" --password-stdin
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          branch: main
+          force: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
