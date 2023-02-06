@@ -49,10 +49,10 @@ jobs:
           fi
 
       - name: Publish to Hackage
-        run: |
-          export HACKAGE_USERNAME="${{ secrets.HACKAGE_USERNAME }}}}"
-          export HACKAGE_PASSWORD="${{ secrets.HACKAGE_PASSWORD }}}}}}"
-          stack upload .
+        run: stack upload .
+        env:
+          HACKAGE_USERNAME: ${{ secrets.HACKAGE_USERNAME }}
+          HACKAGE_PASSWORD: ${{ secrets.HACKAGE_PASSWORD }}
 
       # Attempt to load cached dependencies
       - name: Cache Stack dependencies
