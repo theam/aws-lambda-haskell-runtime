@@ -17,11 +17,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Setup Stack
-        uses: actions/setup-haskell@v1
+      - uses: haskell/actions/setup@v2
         with:
-          ghc-version: 8.10.2
-          stack-version: 2.5.1
+          ghc-version: "9.0.2" # Exact version of ghc to use
+          # cabal-version: 'latest'. Omitted, but defaults to 'latest'
+          enable-stack: true
+          stack-version: "2.9.3"
+
+      # Attempt to load cached dependencies
+      - name: Cache Stack dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.stack
+            .stack-work
+          key: ${{ runner.os }}-stack-${{ hashFiles('stack.yaml') }}
 
       - name: Bump version field
         run: |
@@ -43,6 +53,15 @@ jobs:
           export HACKAGE_USERNAME="${{ secrets.HACKAGE_USERNAME }}}}"
           export HACKAGE_PASSWORD="${{ secrets.HACKAGE_PASSWORD }}}}}}"
           stack upload .
+
+      # Attempt to load cached dependencies
+      - name: Cache Stack dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.stack
+            .stack-work
+          key: ${{ runner.os }}-stack-${{ hashFiles('stack.yaml') }}
 
       - name: Push changes
         uses: ad-m/github-push-action@master
