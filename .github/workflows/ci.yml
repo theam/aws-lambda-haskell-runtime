@@ -13,10 +13,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Setup Stack
-        uses: actions/setup-haskell@v1
+      - uses: haskell/actions/setup@v2
         with:
-          stack-version: 2.9.3
+          ghc-version: "9.0.2" # Exact version of ghc to use
+          # cabal-version: 'latest'. Omitted, but defaults to 'latest'
+          enable-stack: true
+          stack-version: "2.9.3"
 
       # Attempt to load cached dependencies
       - name: Cache Stack dependencies
