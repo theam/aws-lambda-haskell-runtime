@@ -21,7 +21,7 @@ If you are testing the package, or you are starting a new project, we have provi
 To use it, enter the following command:
 
 ```bash
-stack new my-haskell-lambda https://github.com/theam/aws-lambda-haskell-runtime/raw/master/stack-template.hsfiles
+stack new my-haskell-lambda https://raw.githubusercontent.com/theam/aws-lambda-haskell-runtime/main/stack-template.hsfiles
 ```
 
 This will create a `my-haskell-lambda` directory with the following structure:
