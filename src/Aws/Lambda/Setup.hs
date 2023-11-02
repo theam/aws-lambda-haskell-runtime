@@ -43,7 +43,7 @@ import Aws.Lambda.Runtime.Common
     RawEventObject,
   )
 import Aws.Lambda.Runtime.Configuration
-  ( DispatcherOptions (apiGatewayDispatcherOptions),
+  ( DispatcherOptions (apiGatewayDispatcherOptions, DispatcherOptions, errorLogger),
   )
 import Aws.Lambda.Runtime.Context (Context)
 import Aws.Lambda.Runtime.StandaloneLambda.Types
@@ -64,6 +64,7 @@ import qualified Data.Text as Text
 import Data.Typeable (Typeable)
 import GHC.IO.Handle.FD (stderr)
 import GHC.IO.Handle.Text (hPutStr)
+import qualified Aws.Lambda.Runtime.Error as Error
 
 type Handlers handlerType m context request response error =
   HM.HashMap HandlerName (Handler handlerType m context request response error)
@@ -113,9 +114,9 @@ runLambdaHaskellRuntime ::
   (forall a. m a -> IO a) ->
   HandlersM handlerType m context request response error () ->
   IO ()
-runLambdaHaskellRuntime options initializeContext mToIO initHandlers = do
+runLambdaHaskellRuntime options@DispatcherOptions{errorLogger=logger} initializeContext mToIO initHandlers = do
   handlers <- fmap snd . flip runStateT HM.empty . runHandlersM $ initHandlers
-  runLambda initializeContext (run options mToIO handlers)
+  runLambda logger initializeContext (run options mToIO handlers)
 
 run ::
   RuntimeContext handlerType m context request response error =>
@@ -129,9 +130,7 @@ run dispatcherOptions mToIO handlers (LambdaOptions eventObject functionHandler 
   case HM.lookup functionHandler asIOCallbacks of
     Just handlerToCall -> handlerToCall
     Nothing ->
-      throwM $
-        userError $
-          "Could not find handler '" <> (Text.unpack . unHandlerName $ functionHandler) <> "'."
+      throwM $ Error.HandlerNotFound (unHandlerName functionHandler)
 
 addStandaloneLambdaHandler ::
   HandlerName ->
@@ -193,7 +192,6 @@ handlerToCallback dispatcherOptions rawEventObject context handlerToCall =
             Left err -> albErr 400 . toALBResponseBody . Text.pack . show $ err
 
     handleError (exception :: SomeException) = do
-      liftIO $ hPutStr stderr . show $ exception
       case handlerToCall of
         StandaloneLambdaHandler _ ->
           return . Left . StandaloneLambdaError . toStandaloneLambdaResponse . Text.pack . show $ exception
