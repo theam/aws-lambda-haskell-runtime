@@ -6,6 +6,7 @@ module Aws.Lambda.Runtime.Publish
   ( result,
     invocationError,
     parsingError,
+    handlerNotFoundError,
     runtimeInitError,
   )
 where
@@ -51,6 +52,14 @@ invocationError (Error.Invocation err) lambdaApi context =
 -- | Publishes a parsing error back to AWS Lambda
 parsingError :: Error.Parsing -> Text -> Context context -> Http.Manager -> IO ()
 parsingError err lambdaApi context =
+  publish
+    (encode err)
+    (Endpoints.invocationError lambdaApi $ awsRequestId context)
+    context
+
+-- | Publishes a HandlerNotFound error back to AWS Lambda
+handlerNotFoundError :: Error.HandlerNotFound -> Text -> Context context -> Http.Manager -> IO ()
+handlerNotFoundError err lambdaApi context =
   publish
     (encode err)
     (Endpoints.invocationError lambdaApi $ awsRequestId context)

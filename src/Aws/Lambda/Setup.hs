@@ -64,6 +64,7 @@ import qualified Data.Text as Text
 import Data.Typeable (Typeable)
 import GHC.IO.Handle.FD (stderr)
 import GHC.IO.Handle.Text (hPutStr)
+import qualified Aws.Lambda.Runtime.Error as Error
 
 type Handlers handlerType m context request response error =
   HM.HashMap HandlerName (Handler handlerType m context request response error)
@@ -129,9 +130,7 @@ run dispatcherOptions mToIO handlers (LambdaOptions eventObject functionHandler 
   case HM.lookup functionHandler asIOCallbacks of
     Just handlerToCall -> handlerToCall
     Nothing ->
-      throwM $
-        userError $
-          "Could not find handler '" <> (Text.unpack . unHandlerName $ functionHandler) <> "'."
+      throwM $ Error.HandlerNotFound (unHandlerName functionHandler)
 
 addStandaloneLambdaHandler ::
   HandlerName ->
