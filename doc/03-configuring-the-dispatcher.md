@@ -30,6 +30,7 @@ For the person validator example we set up in the previous section, it will look
 ```haskell
 import Aws.Lambda
 import qualified Lib
+import qualified Data.Text as T
 
 main :: IO ()
 main =
@@ -38,5 +39,5 @@ main =
     (pure ())
     id $ do
       -- You could also register multiple handlers
-      addStandaloneLambdaHandler "handler" Lib.handler
+      addStandaloneLambdaHandler (HandlerName $ T.pack "handler") Lib.handler
 ```
