@@ -19,8 +19,7 @@ import qualified Aws.Lambda.Runtime.Error as Error
 import qualified Aws.Lambda.Runtime.Publish as Publish
 import Aws.Lambda.Runtime.StandaloneLambda.Types (StandaloneLambdaResponseBody (..))
 import qualified Control.Exception as Unchecked
-import Control.Exception.Safe.Checked (Throws, catch, throw)
-import qualified Control.Exception.Safe.Checked as Checked
+import Control.Exception.Safe
 import Control.Monad (forever)
 import Data.Aeson (encode)
 import Data.IORef (newIORef)
@@ -44,11 +43,11 @@ runLambda initializeCustomContext callback = do
     context <- Context.setEventData context event
 
     ( ( ( invokeAndRun callback manager lambdaApi event context
-            `Checked.catch` \err -> Publish.parsingError err lambdaApi context manager
+            `catch` \err -> Publish.parsingError err lambdaApi context manager
         )
-          `Checked.catch` \err -> Publish.invocationError err lambdaApi context manager
+          `catch` \err -> Publish.invocationError err lambdaApi context manager
       )
-        `Checked.catch` \(err :: Error.EnvironmentVariableNotSet) -> Publish.runtimeInitError err lambdaApi context manager
+        `catch` \(err :: Error.EnvironmentVariableNotSet) -> Publish.runtimeInitError err lambdaApi context manager
       )
       `Unchecked.catch` \err -> Publish.invocationError err lambdaApi context manager
 
@@ -60,8 +59,6 @@ httpManagerSettings =
     }
 
 invokeAndRun ::
-  Throws Error.Invocation =>
-  Throws Error.EnvironmentVariableNotSet =>
   Runtime.RunCallback handlerType context ->
   Http.Manager ->
   Text ->
@@ -75,8 +72,6 @@ invokeAndRun callback manager lambdaApi event context = do
     `catch` \err -> Publish.invocationError err lambdaApi context manager
 
 invokeWithCallback ::
-  Throws Error.Invocation =>
-  Throws Error.EnvironmentVariableNotSet =>
   Runtime.RunCallback handlerType context ->
   ApiInfo.Event ->
   Context.Context context ->

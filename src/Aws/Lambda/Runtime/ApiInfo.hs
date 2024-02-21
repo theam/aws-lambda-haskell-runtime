@@ -6,8 +6,7 @@ where
 
 import qualified Aws.Lambda.Runtime.API.Endpoints as Endpoints
 import qualified Aws.Lambda.Runtime.Error as Error
-import Control.Exception (IOException)
-import Control.Exception.Safe.Checked
+import Control.Exception.Safe
 import qualified Control.Monad as Monad
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as ByteString
@@ -29,7 +28,7 @@ data Event = Event
   deriving (Show)
 
 -- | Performs a GET to the endpoint that provides the next event
-fetchEvent :: Throws Error.Parsing => Http.Manager -> Text -> IO Event
+fetchEvent :: Http.Manager -> Text -> IO Event
 fetchEvent manager lambdaApi = do
   response <- fetchApiData manager lambdaApi
   let body = Http.responseBody response
@@ -42,7 +41,7 @@ fetchApiData manager lambdaApi = do
   request <- Http.parseRequest . Text.unpack $ endpoint
   keepRetrying $ Http.httpLbs request manager
 
-reduceEvent :: Throws Error.Parsing => Event -> (Http.HeaderName, ByteString) -> IO Event
+reduceEvent :: Event -> (Http.HeaderName, ByteString) -> IO Event
 reduceEvent event header =
   case header of
     ("Lambda-Runtime-Deadline-Ms", value) ->

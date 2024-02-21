@@ -7,8 +7,6 @@ where
 
 import qualified Aws.Lambda.Runtime.ApiInfo as ApiInfo
 import qualified Aws.Lambda.Runtime.Environment as Environment
-import qualified Aws.Lambda.Runtime.Error as Error
-import Control.Exception.Safe.Checked (Throws)
 import Data.IORef (IORef)
 import Data.Text (Text)
 
@@ -28,8 +26,6 @@ data Context context = Context
 
 -- | Initializes the context out of the environment
 initialize ::
-  Throws Error.Parsing =>
-  Throws Error.EnvironmentVariableNotSet =>
   IORef context ->
   IO (Context context)
 initialize customContextRef = do
