@@ -19,10 +19,10 @@ jobs:
 
       - uses: haskell/actions/setup@v2
         with:
-          ghc-version: "9.0.2" # Exact version of ghc to use
+          ghc-version: "9.6.4" # Exact version of ghc to use
           # cabal-version: 'latest'. Omitted, but defaults to 'latest'
           enable-stack: true
-          stack-version: "2.9.3"
+          stack-version: "2.15.1"
 
       # Attempt to load cached dependencies
       - name: Cache Stack dependencies

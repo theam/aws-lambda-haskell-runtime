@@ -3,38 +3,10 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages:
-- completed:
-    hackage: require-0.4.2@sha256:f28dc58dd927e98a709dd926ace92704c09db34dd33a278e1d5aa22cac133984,3625
-    pantry-tree:
-      sha256: 1fe2c5947db887175c819c3a0a55d9dcbb5823d28d0a5f588ea1db2d370bd1e1
-      size: 718
-  original:
-    hackage: require-0.4.2
-- completed:
-    hackage: cheapskate-0.1.1.2@sha256:b8ae3cbb826610ea45e6840b7fde0af2c2ea6690cb311edfe9683f61c0a50d96,3072
-    pantry-tree:
-      sha256: f3d8b45723bf9851163e50b900b5397e22dca07af70c2c6145a5aea34e3a0e49
-      size: 866
-  original:
-    hackage: cheapskate-0.1.1.2@sha256:b8ae3cbb826610ea45e6840b7fde0af2c2ea6690cb311edfe9683f61c0a50d96,3072
-- completed:
-    hackage: inliterate-0.1.0@sha256:61b17ab3cef803512c264e27e463390b47af59d7d2b3a2a89bea2eac0cf84266,1853
-    pantry-tree:
-      sha256: 2cea999a63449b913f6186c3b8b276050e7a1a7195f5e94ac94fa4007da36558
-      size: 618
-  original:
-    hackage: inliterate-0.1.0@sha256:61b17ab3cef803512c264e27e463390b47af59d7d2b3a2a89bea2eac0cf84266,1853
-- completed:
-    hackage: megaparsec-7.0.5@sha256:45e1f1348fab2783646fdb4d9e6097568981a740951c7356d36d794e2baba305,3902
-    pantry-tree:
-      sha256: 1f8baf6e07326f8c8a2dd31de6b2860427f158b0892c52ba5fe9ffeb6cd3bf7f
-      size: 1428
-  original:
-    hackage: megaparsec-7.0.5@sha256:45e1f1348fab2783646fdb4d9e6097568981a740951c7356d36d794e2baba305,3902
+packages: []
 snapshots:
 - completed:
-    sha256: 65b9809265860e085b4f61d4eb00d5d73e41190693620385a69cc9d9df7a901d
-    size: 619164
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/19/18.yaml
-  original: lts-19.18
+    sha256: 2fdd7d3e54540062ef75ca0a73ca3a804c527dbf8a4cadafabf340e66ac4af40
+    size: 712469
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/22/11.yaml
+  original: lts-22.11
