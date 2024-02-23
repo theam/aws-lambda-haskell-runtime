@@ -67,12 +67,11 @@ handler person context =
     return (Left "A person's age must be positive")
 
 {-# START_FILE Dockerfile #-}
+# Loosely based on https://timwspence.github.io/blog/posts/2019-08-02-optimized-docker-builds-for-haskell-stack.html
 ARG OUTPUT_DIR=/root/output
 ARG EXECUTABLE_NAME=bootstrap
 
-FROM lambci/lambda:build-provided as build
-
-COPY . .
+FROM lambci/lambda:build-provided.al2 as build
 
 SHELL ["/bin/bash", "--rcfile", "~/.profile", "-c"]
 
@@ -83,17 +82,18 @@ RUN yum update -y ca-certificates
 # Installing Haskell Stack
 RUN curl -sSL https://get.haskellstack.org/ | sh
 
+WORKDIR /root/lambda-function/
+
+# Build the deps
+RUN stack clean --full
+RUN yum install -y gmp-devel ncurses-devel # Add more build time dependencies here if needed. EG: postgresql-devel
+
+COPY stack.yaml package.yaml stack.yaml.lock /root/lambda-function/
+RUN stack build --dependencies-only
+
 # Build the lambda
 COPY . /root/lambda-function/
 
-RUN pwd
-
-RUN cd /root/lambda-function
-WORKDIR /root/lambda-function/
-
-RUN ls
-
-RUN stack clean --full
 RUN stack build
 
 ARG OUTPUT_DIR
@@ -103,11 +103,14 @@ RUN mkdir -p ${OUTPUT_DIR} && \
 
 ARG EXECUTABLE_NAME
 
-RUN cp $(stack path --local-install-root)/bin/${EXECUTABLE_NAME} ${OUTPUT_DIR}/${EXECUTABLE_NAME}
+RUN mv $(stack path --local-install-root)/bin/${EXECUTABLE_NAME} ${OUTPUT_DIR}/${EXECUTABLE_NAME}
 
 ENTRYPOINT sh
 
 FROM public.ecr.aws/lambda/provided:al2 as deploy
+
+# Install any runtime dependencies. EG:
+# RUN yum install -y postgresql
 
 ARG EXECUTABLE_NAME
 
@@ -117,9 +120,7 @@ ARG OUTPUT_DIR
 
 COPY --from=build ${OUTPUT_DIR} .
 
-RUN ls
 RUN mv ${EXECUTABLE_NAME} bootstrap || true
-RUN ls
 
 CMD [ "handler" ]
 
